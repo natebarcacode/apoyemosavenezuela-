@@ -7,13 +7,47 @@ import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
 import ModalCentro from '@/components/ModalCentro'
 import ModalNegocio from '@/components/ModalNegocio'
-import { Search, Package, Store, MapPin, Users, X } from 'lucide-react'
+import { Search, Package, Store, MapPin, Users, X, Clock, Zap, Infinity } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/BrandIcons'
 
 const MapaCentros = dynamic(() => import('@/components/MapaCentros'), { ssr: false })
 const MapaNegocios = dynamic(() => import('@/components/MapaNegocios'), { ssr: false })
 
 type Tab = 'centros' | 'negocios'
+type UrgenciaFiltro = 'todos' | 'hoy' | 'semana' | 'permanente'
+
+function nivelUrgencia(fechaFin?: string | null): 'hoy' | 'semana' | 'normal' | 'permanente' | 'expirado' {
+  if (!fechaFin) return 'permanente'
+  const h = (new Date(fechaFin).getTime() - Date.now()) / 3600000
+  if (h <= 0) return 'expirado'
+  if (h < 24) return 'hoy'
+  if (h < 168) return 'semana'
+  return 'normal'
+}
+
+function urgenciaScore(fechaFin?: string | null) {
+  const n = nivelUrgencia(fechaFin)
+  if (n === 'hoy') return 0
+  if (n === 'semana') return 1
+  if (n === 'normal') return 2
+  if (n === 'permanente') return 3
+  return 4
+}
+
+function sortPorUrgencia<T extends { fecha_fin?: string | null }>(items: T[]): T[] {
+  return [...items].sort((a, b) => urgenciaScore(a.fecha_fin) - urgenciaScore(b.fecha_fin))
+}
+
+function groupByZona<T extends { zona: string }>(items: T[]): { zona: string; items: T[] }[] {
+  const map = new Map<string, T[]>()
+  for (const item of items) {
+    if (!map.has(item.zona)) map.set(item.zona, [])
+    map.get(item.zona)!.push(item)
+  }
+  return Array.from(map.entries())
+    .map(([zona, items]) => ({ zona, items }))
+    .sort((a, b) => a.zona.localeCompare(b.zona))
+}
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>('centros')
@@ -26,6 +60,7 @@ export default function Home() {
   const [modalNegocio, setModalNegocio] = useState<NegocioSolidario | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [zonasFiltro, setZonasFiltro] = useState<string[]>([])
+  const [urgenciaFiltro, setUrgenciaFiltro] = useState<UrgenciaFiltro>('todos')
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -49,27 +84,42 @@ export default function Home() {
 
   const q = busqueda.toLowerCase().trim()
 
-  const centrosFiltrados = centros.filter(c => {
+  const centrosFiltrados = sortPorUrgencia(centros.filter(c => {
     const matchB = q === '' ||
       c.nombre.toLowerCase().includes(q) ||
       c.direccion.toLowerCase().includes(q) ||
       c.zona.toLowerCase().includes(q) ||
       c.que_acepta.some(i => i.toLowerCase().includes(q))
     const matchZ = zonasFiltro.length === 0 || zonasFiltro.includes(c.zona)
-    return matchB && matchZ
-  })
+    const nivel = nivelUrgencia(c.fecha_fin)
+    const matchU = urgenciaFiltro === 'todos' ||
+      (urgenciaFiltro === 'hoy' && nivel === 'hoy') ||
+      (urgenciaFiltro === 'semana' && (nivel === 'hoy' || nivel === 'semana')) ||
+      (urgenciaFiltro === 'permanente' && nivel === 'permanente')
+    return matchB && matchZ && matchU
+  }))
 
-  const negociosFiltrados = negocios.filter(n => {
+  const negociosFiltrados = sortPorUrgencia(negocios.filter(n => {
     const matchB = q === '' ||
       n.nombre.toLowerCase().includes(q) ||
       n.iniciativa.toLowerCase().includes(q) ||
       n.zona.toLowerCase().includes(q) ||
       (n.tipo && n.tipo.toLowerCase().includes(q))
     const matchZ = zonasFiltro.length === 0 || zonasFiltro.includes(n.zona)
-    return matchB && matchZ
-  })
+    const nivel = nivelUrgencia(n.fecha_fin)
+    const matchU = urgenciaFiltro === 'todos' ||
+      (urgenciaFiltro === 'hoy' && nivel === 'hoy') ||
+      (urgenciaFiltro === 'semana' && (nivel === 'hoy' || nivel === 'semana')) ||
+      (urgenciaFiltro === 'permanente' && nivel === 'permanente')
+    return matchB && matchZ && matchU
+  }))
 
-  const filtrosActivos = q !== '' || zonasFiltro.length > 0
+  // Agrupar por zona solo cuando no hay filtros activos (para reducir scroll)
+  const agruparPorZona = q === '' && zonasFiltro.length === 0 && urgenciaFiltro === 'todos'
+  const centrosAgrupados = agruparPorZona ? groupByZona(centrosFiltrados) : null
+  const negociosAgrupados = agruparPorZona ? groupByZona(negociosFiltrados) : null
+
+  const filtrosActivos = q !== '' || zonasFiltro.length > 0 || urgenciaFiltro !== 'todos'
 
   function toggleZona(z: string) {
     setZonasFiltro(prev =>
@@ -80,6 +130,7 @@ export default function Home() {
   function limpiarFiltros() {
     setBusqueda('')
     setZonasFiltro([])
+    setUrgenciaFiltro('todos')
   }
 
   function abrirCentro(c: CentroAcopio) {
@@ -102,6 +153,7 @@ export default function Home() {
     setTab(t)
     setBusqueda('')
     setZonasFiltro([])
+    setUrgenciaFiltro('todos')
     setSeleccionado(null)
     setSeleccionadoNegocio(null)
   }
@@ -223,10 +275,38 @@ export default function Home() {
             )}
           </div>
 
-          {/* Fila 2: chips de zona */}
+          {/* Fila 2: chips de urgencia */}
+          <div className="flex flex-wrap gap-1.5">
+            <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1 self-center">
+              <Clock size={11} /> Cierra:
+            </span>
+            {([
+              { id: 'todos', label: 'Todos', icon: null },
+              { id: 'hoy', label: 'Hoy', icon: <Zap size={10} /> },
+              { id: 'semana', label: 'Esta semana', icon: <Clock size={10} /> },
+              { id: 'permanente', label: 'Sin fecha', icon: <Infinity size={10} /> },
+            ] as const).map(op => (
+              <button
+                key={op.id}
+                onClick={() => setUrgenciaFiltro(op.id)}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                  urgenciaFiltro === op.id
+                    ? op.id === 'hoy' ? 'bg-red-500 text-white border-red-500'
+                    : op.id === 'semana' ? 'bg-orange-400 text-white border-orange-400'
+                    : op.id === 'permanente' ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-gray-700 text-white border-gray-700'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                }`}
+              >
+                {op.icon}{op.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Fila 3: chips de zona */}
           {zonas.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1">
+              <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1 self-center">
                 <MapPin size={11} /> Zona:
               </span>
               {zonas.map(z => (
@@ -247,7 +327,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Contador de resultados */}
+          {/* Contador */}
           {filtrosActivos && (
             <p className="text-xs text-gray-400">
               {tab === 'centros'
@@ -265,7 +345,7 @@ export default function Home() {
           </div>
         ) : tab === 'centros' ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Lista */}
+            {/* Lista centros */}
             <div
               className="flex flex-col gap-2 overflow-y-auto pr-0.5"
               style={{ maxHeight: 'calc(100vh - 230px)', scrollbarWidth: 'thin', scrollbarColor: '#E5E7EB transparent' }}
@@ -275,17 +355,40 @@ export default function Home() {
                   <Package size={32} className="opacity-20" />
                   <p className="text-sm">No hay centros con esos filtros</p>
                 </div>
-              ) : centrosFiltrados.map(centro => (
-                <div key={centro.id} id={`centro-${centro.id}`}>
-                  <TarjetaCentro
-                    centro={centro}
-                    seleccionado={seleccionado?.id === centro.id}
-                    onClick={() => abrirCentro(centro)}
-                  />
-                </div>
-              ))}
+              ) : centrosAgrupados ? (
+                centrosAgrupados.map(({ zona, items }) => (
+                  <div key={zona}>
+                    <div className="flex items-center gap-2 px-1 pt-2 pb-1">
+                      <MapPin size={11} className="text-gray-400 shrink-0" />
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{zona}</p>
+                      <span className="text-[11px] text-gray-300">· {items.length}</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      {items.map(centro => (
+                        <div key={centro.id} id={`centro-${centro.id}`}>
+                          <TarjetaCentro
+                            centro={centro}
+                            seleccionado={seleccionado?.id === centro.id}
+                            onClick={() => abrirCentro(centro)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                centrosFiltrados.map(centro => (
+                  <div key={centro.id} id={`centro-${centro.id}`}>
+                    <TarjetaCentro
+                      centro={centro}
+                      seleccionado={seleccionado?.id === centro.id}
+                      onClick={() => abrirCentro(centro)}
+                    />
+                  </div>
+                ))
+              )}
             </div>
-            {/* Mapa */}
+            {/* Mapa centros */}
             <div
               className="rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky top-[105px]"
               style={{ height: 'calc(100vh - 230px)' }}
@@ -295,7 +398,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Lista */}
+            {/* Lista negocios */}
             <div
               className="flex flex-col gap-2 overflow-y-auto pr-0.5"
               style={{ maxHeight: 'calc(100vh - 230px)', scrollbarWidth: 'thin', scrollbarColor: '#E5E7EB transparent' }}
@@ -305,17 +408,40 @@ export default function Home() {
                   <Store size={32} className="opacity-20" />
                   <p className="text-sm">No hay negocios con esos filtros</p>
                 </div>
-              ) : negociosFiltrados.map(n => (
-                <div key={n.id} id={`negocio-${n.id}`}>
-                  <TarjetaNegocio
-                    negocio={n}
-                    seleccionado={seleccionadoNegocio?.id === n.id}
-                    onClick={() => abrirNegocio(n)}
-                  />
-                </div>
-              ))}
+              ) : negociosAgrupados ? (
+                negociosAgrupados.map(({ zona, items }) => (
+                  <div key={zona}>
+                    <div className="flex items-center gap-2 px-1 pt-2 pb-1">
+                      <MapPin size={11} className="text-gray-400 shrink-0" />
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{zona}</p>
+                      <span className="text-[11px] text-gray-300">· {items.length}</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      {items.map(n => (
+                        <div key={n.id} id={`negocio-${n.id}`}>
+                          <TarjetaNegocio
+                            negocio={n}
+                            seleccionado={seleccionadoNegocio?.id === n.id}
+                            onClick={() => abrirNegocio(n)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                negociosFiltrados.map(n => (
+                  <div key={n.id} id={`negocio-${n.id}`}>
+                    <TarjetaNegocio
+                      negocio={n}
+                      seleccionado={seleccionadoNegocio?.id === n.id}
+                      onClick={() => abrirNegocio(n)}
+                    />
+                  </div>
+                ))
+              )}
             </div>
-            {/* Mapa */}
+            {/* Mapa negocios */}
             <div
               className="rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky top-[105px]"
               style={{ height: 'calc(100vh - 230px)' }}
