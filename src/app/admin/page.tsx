@@ -626,21 +626,21 @@ export default function AdminPage() {
                     setFormCentro((f) => ({ ...f, lat, lng, direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
                   }
                 />
-                <div className="mt-2 flex gap-2">
-                  <input
-                    id="maps-link-centro"
-                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                    placeholder="O pega un link de Google Maps para sacar las coordenadas"
-                    onPaste={async (e) => {
-                      const url = e.clipboardData.getData('text')
-                      const result = await resolverCoordsDeGoogleMaps(url)
-                      if (typeof result === 'string') { alert(result); return }
-                      setFormCentro(f => ({ ...f, lat: result.lat, lng: result.lng }))
-                      ;(e.target as HTMLInputElement).value = ''
-                    }}
-                    onChange={() => {}}
-                  />
-                </div>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Pegar link de Google Maps (opcional)</label>
+                <input
+                  className="w-full rounded-xl border border-dashed border-blue-300 bg-blue-50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-blue-300"
+                  placeholder="Pega aquí el link de Google Maps y las coordenadas se llenan solas"
+                  onPaste={async (e) => {
+                    const url = e.clipboardData.getData('text')
+                    const result = await resolverCoordsDeGoogleMaps(url)
+                    if (typeof result === 'string') { alert(result); return }
+                    setFormCentro(f => ({ ...f, lat: result.lat, lng: result.lng }))
+                    ;(e.target as HTMLInputElement).value = ''
+                  }}
+                  onChange={() => {}}
+                />
               </div>
               <div className="sm:col-span-2">
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Dirección *</label>
@@ -840,20 +840,23 @@ export default function AdminPage() {
                     setFormNegocio((f) => ({ ...f, lat, lng, direccion: direccion || f.direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
                   }
                 />
-                <div className="mt-2 flex gap-2">
-                  <input
-                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                    placeholder="O pega un link de Google Maps para sacar las coordenadas"
-                    onPaste={async (e) => {
-                      const url = e.clipboardData.getData('text')
-                      const result = await resolverCoordsDeGoogleMaps(url)
-                      if (typeof result === 'string') { alert(result); return }
-                      setFormNegocio(f => ({ ...f, lat: result.lat, lng: result.lng }))
-                      ;(e.target as HTMLInputElement).value = ''
-                    }}
-                    onChange={() => {}}
-                  />
-                </div>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Pegar link de Google Maps (opcional)</label>
+                <input
+                  className="w-full rounded-xl border border-dashed border-blue-300 bg-blue-50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-blue-300"
+                  placeholder="Pega aquí el link de Google Maps y las coordenadas se llenan solas"
+                  onPaste={async (e) => {
+                    const url = e.clipboardData.getData('text')
+                    const result = await resolverCoordsDeGoogleMaps(url)
+                    if (typeof result === 'string') { alert(result); return }
+                    setFormNegocio(f => ({ ...f, lat: result.lat, lng: result.lng }))
+                    ;(e.target as HTMLInputElement).value = ''
+                  }}
+                  onChange={() => {}}
+                />
+              </div>
+              <div className="sm:col-span-2">
                 {formNegocio.lat && formNegocio.lng && (
                   <div className="mt-2">
                     <a
