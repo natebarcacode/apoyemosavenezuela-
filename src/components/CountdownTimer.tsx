@@ -5,6 +5,7 @@ import { Clock } from 'lucide-react'
 
 type Props = {
   fechaFin: string
+  label?: string
 }
 
 function calcular(fechaFin: string) {
@@ -17,7 +18,7 @@ function calcular(fechaFin: string) {
   return { d, h: h % 24, m, s, totalHoras: h }
 }
 
-export default function CountdownTimer({ fechaFin }: Props) {
+export default function CountdownTimer({ fechaFin, label = 'Cierra' }: Props) {
   const [tiempo, setTiempo] = useState(() => calcular(fechaFin))
 
   useEffect(() => {
@@ -40,10 +41,10 @@ export default function CountdownTimer({ fechaFin }: Props) {
   const proximo = totalHoras >= 24 && totalHoras < 48
 
   const texto = d > 0
-    ? `Cierra en ${d}d ${h}h ${m}m`
+    ? `${label} en ${d}d ${h}h ${m}m`
     : h > 0
-    ? `Cierra en ${h}h ${m}m ${s}s`
-    : `Cierra en ${m}m ${s}s`
+    ? `${label} en ${h}h ${m}m ${s}s`
+    : `${label} en ${m}m ${s}s`
 
   if (urgente) {
     return (

@@ -139,7 +139,7 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
                   </span>
                 </span>
               </div>
-              <CountdownTimer fechaFin={negocio.fecha_fin} />
+              <CountdownTimer fechaFin={negocio.fecha_fin} label="Iniciativa termina" />
             </>
           )}
         </div>
