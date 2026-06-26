@@ -31,6 +31,7 @@ const FORM_NEGOCIO_VACIO = () => ({
   direccion: '', instagram: '', sitio_web: '', vigencia: '',
   horarios: horarioVacio(),
   fecha_inicio: '', fecha_fin: '',
+  lat: '', lng: '',
 })
 
 type Tab = 'centros' | 'negocios' | 'categorias'
@@ -147,6 +148,8 @@ export default function AdminPage() {
       nombre: n.nombre, tipo: n.tipo, iniciativa: n.iniciativa, zona: n.zona,
       direccion: n.direccion ?? '', instagram: n.instagram ?? '',
       sitio_web: n.sitio_web ?? '', vigencia: n.vigencia ?? '',
+      lat: n.lat != null ? String(n.lat) : '',
+      lng: n.lng != null ? String(n.lng) : '',
       horarios: DIAS_SEMANA.map(dia => {
         const found = (n.horarios ?? []).find((h: {dia:string}) => h.dia === dia)
         return found ? { dia, activo: true, apertura: (found as {apertura:string}).apertura || '', cierre: (found as {cierre:string}).cierre || '' } : { dia, activo: false, apertura: '', cierre: '' }
@@ -206,6 +209,8 @@ export default function AdminPage() {
       nombre: f.nombre, tipo: f.tipo, iniciativa: f.iniciativa, zona: f.zona,
       direccion: f.direccion || null, instagram: f.instagram || null,
       sitio_web: f.sitio_web || null, vigencia: f.vigencia || null,
+      lat: f.lat ? parseFloat(f.lat) : null,
+      lng: f.lng ? parseFloat(f.lng) : null,
       horarios: f.horarios.filter((h: {activo:boolean}) => h.activo).map(({dia, apertura, cierre}: {dia:string,apertura:string,cierre:string}) => ({ dia, apertura, cierre })),
       fecha_inicio: f.fecha_inicio || null,
       fecha_fin: f.fecha_fin || null,
@@ -734,8 +739,8 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <BuscadorUbicacion
-                  onSeleccionar={({ direccion, zona, nombre }) =>
-                    setFormNegocio((f) => ({ ...f, direccion: direccion || f.direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
+                  onSeleccionar={({ lat, lng, direccion, zona, nombre }) =>
+                    setFormNegocio((f) => ({ ...f, lat, lng, direccion: direccion || f.direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
                   }
                 />
               </div>

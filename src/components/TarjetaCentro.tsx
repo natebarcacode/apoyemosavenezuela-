@@ -1,14 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { CentroAcopio, HorarioDia } from '@/lib/supabase'
-import { Clock, MapPin, Package, Navigation, Calendar } from 'lucide-react'
+import { Clock, MapPin, Package, Navigation, Calendar, ChevronDown } from 'lucide-react'
 import CountdownTimer from './CountdownTimer'
-
-type Props = {
-  centro: CentroAcopio
-  seleccionado?: boolean
-  onClick: () => void
-}
 
 function formatHora(t: string) {
   const [h, m] = t.split(':').map(Number)
@@ -40,75 +35,147 @@ function urgencia(fechaFin?: string) {
   return 'normal'
 }
 
+type Props = {
+  centro: CentroAcopio
+  seleccionado?: boolean
+  onClick: () => void
+}
+
 export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) {
+  const [abierto, setAbierto] = useState(false)
+  const nivel = urgencia(centro.fecha_fin)
   const wazeUrl = `https://waze.com/ul?ll=${centro.lat},${centro.lng}&navigate=yes`
   const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${centro.lat},${centro.lng}`
-  const nivel = urgencia(centro.fecha_fin)
+
+  useEffect(() => {
+    if (seleccionado) setAbierto(true)
+  }, [seleccionado])
+
+  function handleClick() {
+    setAbierto(p => !p)
+    onClick()
+  }
 
   const borderClass = seleccionado
-    ? 'border-red-500 bg-red-50 shadow-md'
+    ? 'border-red-400 shadow-md shadow-red-100 ring-2 ring-red-200 ring-offset-1'
     : nivel === 'urgente'
-    ? 'border-red-400 bg-red-50 hover:shadow-sm'
+    ? 'border-red-200 shadow-sm hover:shadow-md'
     : nivel === 'proximo'
-    ? 'border-yellow-400 bg-yellow-50 hover:shadow-sm'
+    ? 'border-yellow-200 shadow-sm hover:shadow-md'
     : nivel === 'expirado'
-    ? 'border-gray-200 bg-gray-50 opacity-60'
-    : 'border-gray-200 bg-white hover:border-red-300 hover:shadow-sm'
+    ? 'border-gray-100 opacity-50'
+    : 'border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200'
+
+  const iconBg = nivel === 'urgente' ? 'bg-red-100' : nivel === 'proximo' ? 'bg-yellow-100' : 'bg-red-50'
+  const iconColor = nivel === 'proximo' ? 'text-yellow-500' : 'text-red-500'
 
   return (
-    <div onClick={onClick} className={`cursor-pointer rounded-xl border p-4 transition-all ${borderClass}`}>
-      <h3 className="font-bold text-gray-900 text-base leading-tight">{centro.nombre}</h3>
-
-      <div className="mt-2 flex items-start gap-1.5 text-sm text-gray-600">
-        <MapPin size={14} className="mt-0.5 shrink-0 text-red-500" />
-        <span>{centro.direccion}</span>
+    <div
+      onClick={handleClick}
+      className={`cursor-pointer bg-white rounded-2xl border transition-all duration-200 overflow-hidden ${borderClass}`}
+    >
+      {/* Header — siempre visible */}
+      <div className="flex items-center gap-3 px-4 py-3.5">
+        <div className={`w-9 h-9 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+          <Package size={16} className={iconColor} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-900 text-sm leading-tight">{centro.nombre}</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {centro.zona}
+            {centro.que_acepta.length > 0 && (
+              <span className="ml-1.5 text-gray-300">· {centro.que_acepta.length} insumos</span>
+            )}
+          </p>
+        </div>
+        <ChevronDown
+          size={15}
+          className={`text-gray-300 shrink-0 transition-transform duration-300 ${abierto ? 'rotate-180' : ''}`}
+        />
       </div>
 
-      {centro.horarios && centro.horarios.length > 0 && (
-        <div className="mt-1.5 flex flex-col gap-0.5">
-          {agruparHorarios(centro.horarios).map((g, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-xs text-gray-500">
-              <Clock size={13} className="shrink-0 text-red-400" />
-              <span>{g.dias.join(' · ')}{g.horas ? `  ${g.horas}` : ''}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      {centro.fecha_inicio && (
-        <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
-          <Calendar size={13} className="shrink-0 text-red-400" />
-          <span>Desde {new Date(centro.fecha_inicio).toLocaleDateString('es-PA', { day: 'numeric', month: 'short' })}</span>
-        </div>
-      )}
+      {/* Contenido desplegable */}
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${abierto ? 'max-h-[700px]' : 'max-h-0'}`}>
+        <div className="border-t border-gray-100 px-4 pt-3 pb-4 flex flex-col gap-3">
 
-      {centro.que_acepta.length > 0 && (
-        <div className="mt-2 flex items-start gap-1.5">
-          <Package size={14} className="mt-0.5 shrink-0 text-red-500" />
-          <div className="flex flex-wrap gap-1">
-            {centro.que_acepta.map((item) => (
-              <span key={item} className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                {item}
+          {/* Dirección */}
+          <div className="flex items-start gap-2 text-sm text-gray-600">
+            <MapPin size={13} className="text-red-400 mt-0.5 shrink-0" />
+            <span>{centro.direccion}</span>
+          </div>
+
+          {/* Horario */}
+          {centro.horarios && centro.horarios.length > 0 && (
+            <div className="flex items-start gap-2">
+              <Clock size={13} className="text-red-400 mt-0.5 shrink-0" />
+              <div className="flex flex-col gap-0.5">
+                {agruparHorarios(centro.horarios).map((g, i) => (
+                  <span key={i} className="text-sm text-gray-600">
+                    {g.dias.join(' · ')}
+                    {g.horas && <span className="text-gray-400 ml-2">{g.horas}</span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fecha inicio */}
+          {centro.fecha_inicio && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Calendar size={13} className="text-red-400 shrink-0" />
+              <span>
+                Desde {new Date(centro.fecha_inicio).toLocaleDateString('es-PA', { day: 'numeric', month: 'long' })}
               </span>
-            ))}
+            </div>
+          )}
+
+          {/* Insumos */}
+          {centro.que_acepta.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Acepta</p>
+              <div className="flex flex-wrap gap-1.5">
+                {centro.que_acepta.map(item => (
+                  <span
+                    key={item}
+                    className="rounded-full bg-red-50 border border-red-100 px-2.5 py-0.5 text-xs font-medium text-red-600"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notas */}
+          {centro.notas && (
+            <p className="text-xs text-gray-500 italic bg-gray-50 rounded-xl px-3 py-2.5 leading-relaxed">
+              {centro.notas}
+            </p>
+          )}
+
+          {/* Countdown */}
+          {centro.fecha_fin && <CountdownTimer fechaFin={centro.fecha_fin} />}
+
+          {/* Navegación */}
+          <div className="flex gap-2 pt-0.5" onClick={e => e.stopPropagation()}>
+            <a
+              href={wazeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#33CCFF] py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+            >
+              <Navigation size={13} /> Waze
+            </a>
+            <a
+              href={gmapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#4285F4] py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+            >
+              <Navigation size={13} /> Google Maps
+            </a>
           </div>
         </div>
-      )}
-
-      {centro.notas && (
-        <p className="mt-2 text-xs text-gray-500 italic">{centro.notas}</p>
-      )}
-
-      {centro.fecha_fin && <CountdownTimer fechaFin={centro.fecha_fin} />}
-
-      <div className="mt-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
-        <a href={wazeUrl} target="_blank" rel="noopener noreferrer"
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#33CCFF] py-2 text-xs font-bold text-white hover:opacity-90 transition-opacity">
-          <Navigation size={13} /> Waze
-        </a>
-        <a href={gmapsUrl} target="_blank" rel="noopener noreferrer"
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#4285F4] py-2 text-xs font-bold text-white hover:opacity-90 transition-opacity">
-          <Navigation size={13} /> Google Maps
-        </a>
       </div>
     </div>
   )

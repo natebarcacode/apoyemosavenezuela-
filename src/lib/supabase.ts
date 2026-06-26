@@ -39,6 +39,8 @@ export type NegocioSolidario = {
   fecha_inicio?: string
   fecha_fin?: string
   activo: boolean
+  lat?: number
+  lng?: number
 }
 
 export type CentroAcopio = {
