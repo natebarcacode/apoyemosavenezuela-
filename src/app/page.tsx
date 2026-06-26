@@ -317,7 +317,7 @@ export default function Home() {
         >
           <div>
             <p className="font-bold text-white text-sm">¿Conoces un centro o negocio solidario?</p>
-            <p className="text-sm text-white/60 mt-1">Escríbenos y lo publicamos aquí gratis.</p>
+            <p className="text-sm text-white/60 mt-1">Escríbenos y lo publicamos aquí.</p>
           </div>
           <a
             href="mailto:apoyemosavenezuela@gmail.com"
