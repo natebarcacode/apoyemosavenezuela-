@@ -319,29 +319,6 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Cierra en */}
-              <div className="flex flex-wrap gap-1.5">
-                <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1 self-center"><Clock size={11} /> Cierra:</span>
-                {([
-                  { id: 'todos', label: 'Todos', icon: null },
-                  { id: 'hoy', label: 'Hoy', icon: <Zap size={10} /> },
-                  { id: 'semana', label: 'Esta semana', icon: <Clock size={10} /> },
-                  { id: 'permanente', label: 'Sin fecha', icon: <Infinity size={10} /> },
-                ] as const).map(op => (
-                  <button key={op.id} onClick={() => setUrgenciaFiltro(op.id)}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                      urgenciaFiltro === op.id
-                        ? op.id === 'hoy' ? 'bg-red-500 text-white border-red-500'
-                        : op.id === 'semana' ? 'bg-orange-400 text-white border-orange-400'
-                        : op.id === 'permanente' ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-gray-700 text-white border-gray-700'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                    }`}>
-                    {op.icon}{op.label}
-                  </button>
-                ))}
-              </div>
-
               {/* Zona */}
               {zonas.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
