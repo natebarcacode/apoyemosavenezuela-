@@ -195,6 +195,19 @@ export default function AdminPage() {
     }))
   }
 
+  function toggleGrupoCompleto(nombreGrupo: string) {
+    const insumos = categorias.filter(c => c.grupo === nombreGrupo).map(c => c.nombre)
+    setFormCentro((f) => {
+      const todosSeleccionados = insumos.every(i => f.que_acepta.includes(i))
+      return {
+        ...f,
+        que_acepta: todosSeleccionados
+          ? f.que_acepta.filter(x => !insumos.includes(x))
+          : [...new Set([...f.que_acepta, ...insumos])],
+      }
+    })
+  }
+
   if (!autenticado) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -440,17 +453,62 @@ export default function AdminPage() {
                     <span className="ml-2 text-gray-400 font-normal">— agrega categorías primero en el tab Categorías</span>
                   )}
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {categorias.map((cat) => (
-                    <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-                        formCentro.que_acepta.includes(cat.nombre)
-                          ? 'bg-red-500 text-white border-red-500'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-red-300'
-                      }`}>
-                      {cat.nombre}
-                    </button>
-                  ))}
+                <div className="flex flex-col gap-3">
+                  {grupos.map((grupo) => {
+                    const insumos = categorias.filter(c => c.grupo === grupo.nombre)
+                    if (insumos.length === 0) return null
+                    const todosSeleccionados = insumos.every(i => formCentro.que_acepta.includes(i.nombre))
+                    const algunoSeleccionado = insumos.some(i => formCentro.que_acepta.includes(i.nombre))
+                    return (
+                      <div key={grupo.id} className="rounded-xl border border-gray-200 p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleGrupoCompleto(grupo.nombre)}
+                            className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border transition-colors ${
+                              todosSeleccionados
+                                ? 'bg-red-500 text-white border-red-500'
+                                : algunoSeleccionado
+                                ? 'bg-red-100 text-red-600 border-red-300'
+                                : 'bg-gray-100 text-gray-600 border-gray-200 hover:border-red-300'
+                            }`}
+                          >
+                            {todosSeleccionados ? '✓ ' : algunoSeleccionado ? '— ' : '+ '}{grupo.nombre}
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 pl-1">
+                          {insumos.map((cat) => (
+                            <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
+                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                                formCentro.que_acepta.includes(cat.nombre)
+                                  ? 'bg-red-500 text-white border-red-500'
+                                  : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                              }`}>
+                              {cat.nombre}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {/* Insumos sin grupo */}
+                  {categorias.filter(c => !c.grupo).length > 0 && (
+                    <div className="rounded-xl border border-gray-200 p-3">
+                      <p className="text-xs font-bold text-gray-500 mb-2">Sin categoría</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {categorias.filter(c => !c.grupo).map((cat) => (
+                          <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                              formCentro.que_acepta.includes(cat.nombre)
+                                ? 'bg-red-500 text-white border-red-500'
+                                : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                            }`}>
+                            {cat.nombre}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div>
