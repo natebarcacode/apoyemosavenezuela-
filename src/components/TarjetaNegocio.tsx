@@ -1,6 +1,6 @@
 'use client'
 
-import { NegocioSolidario } from '@/lib/supabase'
+import { NegocioSolidario, HorarioDia } from '@/lib/supabase'
 import { MapPin, Clock, AtSign, Globe, Store, Calendar } from 'lucide-react'
 
 function formatHora(t: string) {
@@ -8,6 +8,20 @@ function formatHora(t: string) {
   const ampm = h >= 12 ? 'pm' : 'am'
   const h12 = h % 12 || 12
   return m === 0 ? `${h12}${ampm}` : `${h12}:${String(m).padStart(2, '0')}${ampm}`
+}
+
+function agruparHorarios(horarios: HorarioDia[]) {
+  const map = new Map<string, string[]>()
+  for (const h of horarios) {
+    const key = `${h.apertura}|${h.cierre}`
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(h.dia)
+  }
+  return Array.from(map.entries()).map(([key, dias]) => {
+    const [ap, ci] = key.split('|')
+    const horas = ap && ci ? `${formatHora(ap)} – ${formatHora(ci)}` : ''
+    return { dias, horas }
+  })
 }
 import CountdownTimer from './CountdownTimer'
 
@@ -61,15 +75,14 @@ export default function TarjetaNegocio({ negocio }: Props) {
             <span>{negocio.zona}{negocio.direccion ? ` — ${negocio.direccion}` : ''}</span>
           </div>
         )}
-        {negocio.dias_abierto && negocio.dias_abierto.length > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Clock size={12} className="text-yellow-500 shrink-0" />
-            <span>
-              {negocio.dias_abierto.join(' · ')}
-              {(negocio.hora_apertura || negocio.hora_cierre) && (
-                <> &nbsp;{negocio.hora_apertura && formatHora(negocio.hora_apertura)}{negocio.hora_cierre && ` – ${formatHora(negocio.hora_cierre)}`}</>
-              )}
-            </span>
+        {negocio.horarios && negocio.horarios.length > 0 && (
+          <div className="flex flex-col gap-0.5">
+            {agruparHorarios(negocio.horarios).map((g, i) => (
+              <div key={i} className="flex items-center gap-1.5 text-xs text-gray-500">
+                <Clock size={12} className="text-yellow-500 shrink-0" />
+                <span>{g.dias.join(' · ')}{g.horas ? `  ${g.horas}` : ''}</span>
+              </div>
+            ))}
           </div>
         )}
         {negocio.fecha_inicio && (

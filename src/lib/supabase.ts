@@ -5,6 +5,12 @@ export type GrupoCategoria = {
   nombre: string
 }
 
+export type HorarioDia = {
+  dia: string
+  apertura: string
+  cierre: string
+}
+
 export type Categoria = {
   id: number
   nombre: string
@@ -21,9 +27,7 @@ export type NegocioSolidario = {
   instagram?: string
   sitio_web?: string
   vigencia?: string
-  dias_abierto?: string[]
-  hora_apertura?: string
-  hora_cierre?: string
+  horarios?: HorarioDia[]
   fecha_inicio?: string
   fecha_fin?: string
   activo: boolean
@@ -39,9 +43,7 @@ export type CentroAcopio = {
   lng: number
   activo: boolean
   notas?: string
-  dias_abierto?: string[]
-  hora_apertura?: string
-  hora_cierre?: string
+  horarios?: HorarioDia[]
   fecha_inicio?: string
   fecha_fin?: string
 }

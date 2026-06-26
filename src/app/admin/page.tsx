@@ -17,19 +17,21 @@ const TIPOS_NEGOCIO = [
 
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
-const FORM_CENTRO_VACIO = {
+const horarioVacio = () => DIAS_SEMANA.map(dia => ({ dia, activo: false, apertura: '', cierre: '' }))
+
+const FORM_CENTRO_VACIO = () => ({
   nombre: '', direccion: '', zona: '',
   que_acepta: [] as string[], lat: '', lng: '', notas: '',
-  dias_abierto: [] as string[], hora_apertura: '', hora_cierre: '',
+  horarios: horarioVacio(),
   fecha_inicio: '', fecha_fin: '',
-}
+})
 
-const FORM_NEGOCIO_VACIO = {
+const FORM_NEGOCIO_VACIO = () => ({
   nombre: '', tipo: 'restaurante', iniciativa: '', zona: '',
   direccion: '', instagram: '', sitio_web: '', vigencia: '',
-  dias_abierto: [] as string[], hora_apertura: '', hora_cierre: '',
+  horarios: horarioVacio(),
   fecha_inicio: '', fecha_fin: '',
-}
+})
 
 type Tab = 'centros' | 'negocios' | 'categorias'
 
@@ -47,8 +49,8 @@ export default function AdminPage() {
   const [nuevoGrupo, setNuevoGrupo] = useState('')
   const dragId = useRef<number | null>(null)
 
-  const [formCentro, setFormCentro] = useState(FORM_CENTRO_VACIO)
-  const [formNegocio, setFormNegocio] = useState(FORM_NEGOCIO_VACIO)
+  const [formCentro, setFormCentro] = useState(FORM_CENTRO_VACIO())
+  const [formNegocio, setFormNegocio] = useState(FORM_NEGOCIO_VACIO())
   const [editandoId, setEditandoId] = useState<number | null>(null)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [guardando, setGuardando] = useState(false)
@@ -114,8 +116,8 @@ export default function AdminPage() {
   }
 
   function abrirNuevo() {
-    if (tab === 'centros') setFormCentro(FORM_CENTRO_VACIO)
-    else setFormNegocio(FORM_NEGOCIO_VACIO)
+    if (tab === 'centros') setFormCentro(FORM_CENTRO_VACIO())
+    else setFormNegocio(FORM_NEGOCIO_VACIO())
     setEditandoId(null)
     setMostrarForm(true)
   }
@@ -124,9 +126,10 @@ export default function AdminPage() {
     setFormCentro({
       nombre: c.nombre, direccion: c.direccion, zona: c.zona,
       que_acepta: c.que_acepta, lat: String(c.lat), lng: String(c.lng), notas: c.notas ?? '',
-      dias_abierto: c.dias_abierto ?? [],
-      hora_apertura: c.hora_apertura ?? '',
-      hora_cierre: c.hora_cierre ?? '',
+      horarios: DIAS_SEMANA.map(dia => {
+        const found = (c.horarios ?? []).find((h: {dia:string}) => h.dia === dia)
+        return found ? { dia, activo: true, apertura: (found as {apertura:string}).apertura || '', cierre: (found as {cierre:string}).cierre || '' } : { dia, activo: false, apertura: '', cierre: '' }
+      }),
       fecha_inicio: c.fecha_inicio ? c.fecha_inicio.slice(0, 10) : '',
       fecha_fin: c.fecha_fin ? c.fecha_fin.slice(0, 16) : '',
     })
@@ -139,9 +142,10 @@ export default function AdminPage() {
       nombre: n.nombre, tipo: n.tipo, iniciativa: n.iniciativa, zona: n.zona,
       direccion: n.direccion ?? '', instagram: n.instagram ?? '',
       sitio_web: n.sitio_web ?? '', vigencia: n.vigencia ?? '',
-      dias_abierto: n.dias_abierto ?? [],
-      hora_apertura: n.hora_apertura ?? '',
-      hora_cierre: n.hora_cierre ?? '',
+      horarios: DIAS_SEMANA.map(dia => {
+        const found = (n.horarios ?? []).find((h: {dia:string}) => h.dia === dia)
+        return found ? { dia, activo: true, apertura: (found as {apertura:string}).apertura || '', cierre: (found as {cierre:string}).cierre || '' } : { dia, activo: false, apertura: '', cierre: '' }
+      }),
       fecha_inicio: n.fecha_inicio ?? '',
       fecha_fin: n.fecha_fin ? n.fecha_fin.slice(0, 16) : '',
     })
@@ -165,9 +169,7 @@ export default function AdminPage() {
       nombre: f.nombre, direccion: f.direccion, zona: f.zona,
       que_acepta: f.que_acepta, lat: parseFloat(f.lat), lng: parseFloat(f.lng),
       notas: f.notas || null,
-      dias_abierto: f.dias_abierto,
-      hora_apertura: f.hora_apertura || null,
-      hora_cierre: f.hora_cierre || null,
+      horarios: f.horarios.filter((h: {activo:boolean}) => h.activo).map(({dia, apertura, cierre}: {dia:string,apertura:string,cierre:string}) => ({ dia, apertura, cierre })),
       fecha_inicio: f.fecha_inicio || null,
       fecha_fin: f.fecha_fin || null,
     }
@@ -192,9 +194,7 @@ export default function AdminPage() {
       nombre: f.nombre, tipo: f.tipo, iniciativa: f.iniciativa, zona: f.zona,
       direccion: f.direccion || null, instagram: f.instagram || null,
       sitio_web: f.sitio_web || null, vigencia: f.vigencia || null,
-      dias_abierto: f.dias_abierto,
-      hora_apertura: f.hora_apertura || null,
-      hora_cierre: f.hora_cierre || null,
+      horarios: f.horarios.filter((h: {activo:boolean}) => h.activo).map(({dia, apertura, cierre}: {dia:string,apertura:string,cierre:string}) => ({ dia, apertura, cierre })),
       fecha_inicio: f.fecha_inicio || null,
       fecha_fin: f.fecha_fin || null,
     }
@@ -215,11 +215,9 @@ export default function AdminPage() {
     return m === 0 ? `${h12}${ampm}` : `${h12}:${String(m).padStart(2, '0')}${ampm}`
   }
 
-  function mensajeCentro(c: CentroAcopio | typeof FORM_CENTRO_VACIO, tipo: 'nuevo' | 'actualizado' | 'cierre') {
-    const dias = (c.dias_abierto ?? []).join(' · ')
-    const horario = dias
-      ? `${dias}${(c.hora_apertura && c.hora_cierre) ? ` · ${fmtHora(c.hora_apertura)} a ${fmtHora(c.hora_cierre)}` : c.hora_apertura ? ` · desde ${fmtHora(c.hora_apertura)}` : ''}`
-      : ''
+  function mensajeCentro(c: CentroAcopio | ReturnType<typeof FORM_CENTRO_VACIO>, tipo: 'nuevo' | 'actualizado' | 'cierre') {
+    const horarios = (c.horarios ?? []) as {dia:string,apertura:string,cierre:string}[]
+    const horario = horarios.map(h => `${h.dia}${h.apertura && h.cierre ? ` ${fmtHora(h.apertura)}-${fmtHora(h.cierre)}` : ''}`).join(' · ')
     const insumos = Array.isArray(c.que_acepta) && c.que_acepta.length ? c.que_acepta.join(', ') : ''
     const cierre = c.fecha_fin ? new Date(c.fecha_fin).toLocaleString('es-PA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''
 
@@ -238,11 +236,9 @@ export default function AdminPage() {
     return m
   }
 
-  function mensajeNegocio(n: NegocioSolidario | typeof FORM_NEGOCIO_VACIO, tipo: 'nuevo' | 'actualizado' | 'cierre') {
-    const dias = (n.dias_abierto ?? []).join(' · ')
-    const horario = dias
-      ? `${dias}${(n.hora_apertura && n.hora_cierre) ? ` · ${fmtHora(n.hora_apertura)} a ${fmtHora(n.hora_cierre)}` : n.hora_apertura ? ` · desde ${fmtHora(n.hora_apertura)}` : ''}`
-      : ''
+  function mensajeNegocio(n: NegocioSolidario | ReturnType<typeof FORM_NEGOCIO_VACIO>, tipo: 'nuevo' | 'actualizado' | 'cierre') {
+    const horarios = (n.horarios ?? []) as {dia:string,apertura:string,cierre:string}[]
+    const horario = horarios.map(h => `${h.dia}${h.apertura && h.cierre ? ` ${fmtHora(h.apertura)}-${fmtHora(h.cierre)}` : ''}`).join(' · ')
     const cierre = n.fecha_fin ? new Date(n.fecha_fin).toLocaleString('es-PA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''
 
     if (tipo === 'cierre') {
@@ -558,37 +554,31 @@ export default function AdminPage() {
                   placeholder="Ej: Ciudad de Panamá" />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-2 block">Días abierto</label>
-                <div className="flex flex-wrap gap-2">
-                  {DIAS_SEMANA.map((dia) => (
-                    <button key={dia} type="button"
-                      onClick={() => setFormCentro((f) => ({
-                        ...f,
-                        dias_abierto: f.dias_abierto.includes(dia)
-                          ? f.dias_abierto.filter(d => d !== dia)
-                          : [...f.dias_abierto, dia],
-                      }))}
-                      className={`rounded-full px-3 py-1.5 text-xs font-bold border transition-colors ${
-                        formCentro.dias_abierto.includes(dia)
-                          ? 'bg-red-500 text-white border-red-500'
-                          : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
-                      }`}>
-                      {dia}
-                    </button>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Horario</label>
+                <div className="rounded-xl border border-gray-200 overflow-hidden">
+                  {formCentro.horarios.map((h, i) => (
+                    <div key={h.dia} className={`flex items-center gap-3 px-3 py-2 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                      <button type="button"
+                        onClick={() => setFormCentro(f => ({ ...f, horarios: f.horarios.map(x => x.dia === h.dia ? { ...x, activo: !x.activo } : x) }))}
+                        className={`w-10 shrink-0 text-xs font-bold rounded-full py-1 border transition-colors ${h.activo ? 'bg-red-500 text-white border-red-500' : 'text-gray-400 border-gray-200 hover:border-red-300'}`}>
+                        {h.dia}
+                      </button>
+                      {h.activo ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <input type="time" value={h.apertura}
+                            onChange={e => setFormCentro(f => ({ ...f, horarios: f.horarios.map(x => x.dia === h.dia ? { ...x, apertura: e.target.value } : x) }))}
+                            className="flex-1 rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-red-300" />
+                          <span className="text-xs text-gray-400">a</span>
+                          <input type="time" value={h.cierre}
+                            onChange={e => setFormCentro(f => ({ ...f, horarios: f.horarios.map(x => x.dia === h.dia ? { ...x, cierre: e.target.value } : x) }))}
+                            className="flex-1 rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-red-300" />
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-300 italic">Cerrado</span>
+                      )}
+                    </div>
                   ))}
                 </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Hora de apertura</label>
-                <input type="time" value={formCentro.hora_apertura}
-                  onChange={(e) => setFormCentro({ ...formCentro, hora_apertura: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Hora de cierre diario</label>
-                <input type="time" value={formCentro.hora_cierre}
-                  onChange={(e) => setFormCentro({ ...formCentro, hora_cierre: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha de inicio (opcional)</label>
@@ -758,37 +748,31 @@ export default function AdminPage() {
                   placeholder="https://..." />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-2 block">Días abierto</label>
-                <div className="flex flex-wrap gap-2">
-                  {DIAS_SEMANA.map((dia) => (
-                    <button key={dia} type="button"
-                      onClick={() => setFormNegocio((f) => ({
-                        ...f,
-                        dias_abierto: f.dias_abierto.includes(dia)
-                          ? f.dias_abierto.filter(d => d !== dia)
-                          : [...f.dias_abierto, dia],
-                      }))}
-                      className={`rounded-full px-3 py-1.5 text-xs font-bold border transition-colors ${
-                        formNegocio.dias_abierto.includes(dia)
-                          ? 'bg-yellow-500 text-white border-yellow-500'
-                          : 'bg-white text-gray-500 border-gray-200 hover:border-yellow-300'
-                      }`}>
-                      {dia}
-                    </button>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Horario</label>
+                <div className="rounded-xl border border-gray-200 overflow-hidden">
+                  {formNegocio.horarios.map((h, i) => (
+                    <div key={h.dia} className={`flex items-center gap-3 px-3 py-2 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                      <button type="button"
+                        onClick={() => setFormNegocio(f => ({ ...f, horarios: f.horarios.map(x => x.dia === h.dia ? { ...x, activo: !x.activo } : x) }))}
+                        className={`w-10 shrink-0 text-xs font-bold rounded-full py-1 border transition-colors ${h.activo ? 'bg-yellow-500 text-white border-yellow-500' : 'text-gray-400 border-gray-200 hover:border-yellow-300'}`}>
+                        {h.dia}
+                      </button>
+                      {h.activo ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <input type="time" value={h.apertura}
+                            onChange={e => setFormNegocio(f => ({ ...f, horarios: f.horarios.map(x => x.dia === h.dia ? { ...x, apertura: e.target.value } : x) }))}
+                            className="flex-1 rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-yellow-300" />
+                          <span className="text-xs text-gray-400">a</span>
+                          <input type="time" value={h.cierre}
+                            onChange={e => setFormNegocio(f => ({ ...f, horarios: f.horarios.map(x => x.dia === h.dia ? { ...x, cierre: e.target.value } : x) }))}
+                            className="flex-1 rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-yellow-300" />
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-300 italic">Cerrado</span>
+                      )}
+                    </div>
                   ))}
                 </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Hora de apertura</label>
-                <input type="time" value={formNegocio.hora_apertura}
-                  onChange={(e) => setFormNegocio({ ...formNegocio, hora_apertura: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Hora de cierre diario</label>
-                <input type="time" value={formNegocio.hora_cierre}
-                  onChange={(e) => setFormNegocio({ ...formNegocio, hora_cierre: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha de inicio (opcional)</label>

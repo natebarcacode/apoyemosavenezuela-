@@ -1,6 +1,6 @@
 'use client'
 
-import { CentroAcopio } from '@/lib/supabase'
+import { CentroAcopio, HorarioDia } from '@/lib/supabase'
 import { Clock, MapPin, Package, Navigation, Calendar } from 'lucide-react'
 import CountdownTimer from './CountdownTimer'
 
@@ -15,6 +15,20 @@ function formatHora(t: string) {
   const ampm = h >= 12 ? 'pm' : 'am'
   const h12 = h % 12 || 12
   return m === 0 ? `${h12}${ampm}` : `${h12}:${String(m).padStart(2, '0')}${ampm}`
+}
+
+function agruparHorarios(horarios: HorarioDia[]) {
+  const map = new Map<string, string[]>()
+  for (const h of horarios) {
+    const key = `${h.apertura}|${h.cierre}`
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(h.dia)
+  }
+  return Array.from(map.entries()).map(([key, dias]) => {
+    const [ap, ci] = key.split('|')
+    const horas = ap && ci ? `${formatHora(ap)} – ${formatHora(ci)}` : ''
+    return { dias, horas }
+  })
 }
 
 function urgencia(fechaFin?: string) {
@@ -50,15 +64,14 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
         <span>{centro.direccion}</span>
       </div>
 
-      {(centro.dias_abierto && centro.dias_abierto.length > 0) && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
-          <Clock size={13} className="shrink-0 text-red-400" />
-          <span>
-            {centro.dias_abierto.join(' · ')}
-            {(centro.hora_apertura || centro.hora_cierre) && (
-              <> &nbsp;{centro.hora_apertura && formatHora(centro.hora_apertura)}{centro.hora_cierre && ` – ${formatHora(centro.hora_cierre)}`}</>
-            )}
-          </span>
+      {centro.horarios && centro.horarios.length > 0 && (
+        <div className="mt-1.5 flex flex-col gap-0.5">
+          {agruparHorarios(centro.horarios).map((g, i) => (
+            <div key={i} className="flex items-center gap-1.5 text-xs text-gray-500">
+              <Clock size={13} className="shrink-0 text-red-400" />
+              <span>{g.dias.join(' · ')}{g.horas ? `  ${g.horas}` : ''}</span>
+            </div>
+          ))}
         </div>
       )}
       {centro.fecha_inicio && (
