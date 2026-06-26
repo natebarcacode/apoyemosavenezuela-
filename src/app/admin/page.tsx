@@ -62,6 +62,7 @@ export default function AdminPage() {
   const [waMensaje, setWaMensaje] = useState('')
   const [waMostrar, setWaMostrar] = useState(false)
   const [waCopied, setWaCopied] = useState(false)
+  const [notificarWA, setNotificarWA] = useState(true)
 
   // Check existing session on mount
   useEffect(() => {
@@ -153,6 +154,7 @@ export default function AdminPage() {
     if (tab === 'centros') setFormCentro(FORM_CENTRO_VACIO())
     else setFormNegocio(FORM_NEGOCIO_VACIO())
     setEditandoId(null)
+    setNotificarWA(true)
     setMostrarForm(true)
   }
 
@@ -168,6 +170,7 @@ export default function AdminPage() {
       fecha_fin: c.fecha_fin ? c.fecha_fin.slice(0, 16) : '',
     })
     setEditandoId(c.id)
+    setNotificarWA(false)
     setMostrarForm(true)
   }
 
@@ -186,6 +189,7 @@ export default function AdminPage() {
       fecha_fin: n.fecha_fin ? n.fecha_fin.slice(0, 16) : '',
     })
     setEditandoId(n.id)
+    setNotificarWA(false)
     setMostrarForm(true)
   }
 
@@ -217,12 +221,12 @@ export default function AdminPage() {
       const { data: ins } = await db({ table: 'centros_acopio', op: 'insert', data: { ...payload, activo: true }, single: true }) as { data: { id: number } | null; error: unknown }
       refId = ins?.id ?? null
     }
-    const texto = mensajeCentro(formCentro, esNuevo ? 'nuevo' : 'actualizado')
-    if (refId) {
+    if (notificarWA && refId) {
+      const texto = mensajeCentro(formCentro, esNuevo ? 'nuevo' : 'actualizado')
       await db({ table: 'mensajes_wa', op: 'insert', data: { tipo: 'centro', referencia_id: refId, texto } })
       setMensajesAbiertos(p => ({ ...p, [`centro-${refId}`]: true }))
+      mostrarWA(texto)
     }
-    mostrarWA(texto)
     finalizar(esNuevo ? 'Centro agregado.' : 'Centro actualizado.')
   }
 
@@ -251,12 +255,12 @@ export default function AdminPage() {
       const { data: ins } = await db({ table: 'negocios_solidarios', op: 'insert', data: { ...payload, activo: true }, single: true }) as { data: { id: number } | null; error: unknown }
       refId = ins?.id ?? null
     }
-    const texto = mensajeNegocio(formNegocio, esNuevo ? 'nuevo' : 'actualizado')
-    if (refId) {
+    if (notificarWA && refId) {
+      const texto = mensajeNegocio(formNegocio, esNuevo ? 'nuevo' : 'actualizado')
       await db({ table: 'mensajes_wa', op: 'insert', data: { tipo: 'negocio', referencia_id: refId, texto } })
       setMensajesAbiertos(p => ({ ...p, [`negocio-${refId}`]: true }))
+      mostrarWA(texto)
     }
-    mostrarWA(texto)
     finalizar(esNuevo ? 'Negocio agregado.' : 'Negocio actualizado.')
   }
 
@@ -745,15 +749,26 @@ export default function AdminPage() {
                   placeholder="Ej: Solo medicamentos sellados" />
               </div>
             </div>
-            <div className="mt-4 flex gap-3">
-              <button onClick={guardarCentro} disabled={guardando}
-                className="rounded-xl bg-red-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-50">
-                {guardando ? 'Guardando...' : editandoId ? 'Actualizar' : 'Agregar'}
-              </button>
-              <button onClick={() => setMostrarForm(false)}
-                className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancelar
-              </button>
+            <div className="mt-4 flex flex-col gap-3">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={notificarWA}
+                  onChange={e => setNotificarWA(e.target.checked)}
+                  className="w-4 h-4 accent-red-500"
+                />
+                <span className="text-sm text-gray-600">Generar mensaje de WhatsApp</span>
+              </label>
+              <div className="flex gap-3">
+                <button onClick={guardarCentro} disabled={guardando}
+                  className="rounded-xl bg-red-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-50">
+                  {guardando ? 'Guardando...' : editandoId ? 'Actualizar' : 'Agregar'}
+                </button>
+                <button onClick={() => setMostrarForm(false)}
+                  className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -862,15 +877,26 @@ export default function AdminPage() {
                   placeholder="Ej: Permanente / Solo este mes" />
               </div>
             </div>
-            <div className="mt-4 flex gap-3">
-              <button onClick={guardarNegocio} disabled={guardando}
-                className="rounded-xl bg-yellow-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-yellow-600 transition-colors disabled:opacity-50">
-                {guardando ? 'Guardando...' : editandoId ? 'Actualizar' : 'Agregar'}
-              </button>
-              <button onClick={() => setMostrarForm(false)}
-                className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancelar
-              </button>
+            <div className="mt-4 flex flex-col gap-3">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={notificarWA}
+                  onChange={e => setNotificarWA(e.target.checked)}
+                  className="w-4 h-4 accent-yellow-500"
+                />
+                <span className="text-sm text-gray-600">Generar mensaje de WhatsApp</span>
+              </label>
+              <div className="flex gap-3">
+                <button onClick={guardarNegocio} disabled={guardando}
+                  className="rounded-xl bg-yellow-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-yellow-600 transition-colors disabled:opacity-50">
+                  {guardando ? 'Guardando...' : editandoId ? 'Actualizar' : 'Agregar'}
+                </button>
+                <button onClick={() => setMostrarForm(false)}
+                  className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         )}
