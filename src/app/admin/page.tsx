@@ -216,44 +216,42 @@ export default function AdminPage() {
   }
 
   function mensajeCentro(c: CentroAcopio | ReturnType<typeof FORM_CENTRO_VACIO>, tipo: 'nuevo' | 'actualizado' | 'cierre') {
-    const horarios = (c.horarios ?? []) as {dia:string,apertura:string,cierre:string}[]
-    const horario = horarios.map(h => `${h.dia}${h.apertura && h.cierre ? ` ${fmtHora(h.apertura)}-${fmtHora(h.cierre)}` : ''}`).join(' · ')
-    const insumos = Array.isArray(c.que_acepta) && c.que_acepta.length ? c.que_acepta.join(', ') : ''
+    const dias = (c.horarios ?? []).map((h: {dia:string}) => h.dia).join(' · ')
     const cierre = c.fecha_fin ? new Date(c.fecha_fin).toLocaleString('es-PA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''
+    const dir = c.direccion && c.direccion.trim() !== c.nombre.trim() ? c.direccion : ''
 
     if (tipo === 'cierre') {
-      return `⚠️ *¡ÚLTIMO MOMENTO!*\n\n📍 *${c.nombre}*\n🗺️ ${c.direccion}${c.zona ? `, ${c.zona}` : ''}\n\n⏳ *Cierra el ${cierre}*\n\n¡Todavía estás a tiempo de donar!\n\n👉 *apoyemosavenezuela.vercel.app*\n\n🇻🇪 _Todos con Venezuela_`
+      let m = `⚠️ *¡ÚLTIMO MOMENTO!*\n\n📍 *${c.nombre}*`
+      if (dir) m += `\n🗺️ ${dir}`
+      m += `\n\n⏳ *Cierra el ${cierre}*\n\n👉 apoyemosavenezuela.vercel.app\n\n🇻🇪 _Todos con Venezuela_`
+      return m
     }
 
-    let m = tipo === 'nuevo' ? '🏠 *¡Nuevo centro de acopio!*' : '🔄 *Centro de acopio actualizado*'
+    let m = tipo === 'nuevo' ? '🏠 *Nuevo centro de acopio*' : '🔄 *Centro de acopio actualizado*'
     m += `\n\n📍 *${c.nombre}*`
-    m += `\n🗺️ ${c.direccion}${c.zona ? `, ${c.zona}` : ''}`
-    if (horario) m += `\n🕐 ${horario}`
-    if (insumos) m += `\n📦 _Acepta:_ ${insumos}`
-    if (c.notas) m += `\n📝 ${c.notas}`
-    if (cierre) m += `\n⏳ Disponible hasta el ${cierre}`
-    m += `\n\n👉 *apoyemosavenezuela.vercel.app*\n\n🇻🇪 _Todos con Venezuela_`
+    if (dir) m += `\n🗺️ ${dir}`
+    if (dias) m += `\n🕐 ${dias}`
+    m += `\n\n👉 apoyemosavenezuela.vercel.app\n\n🇻🇪 _Todos con Venezuela_`
     return m
   }
 
   function mensajeNegocio(n: NegocioSolidario | ReturnType<typeof FORM_NEGOCIO_VACIO>, tipo: 'nuevo' | 'actualizado' | 'cierre') {
-    const horarios = (n.horarios ?? []) as {dia:string,apertura:string,cierre:string}[]
-    const horario = horarios.map(h => `${h.dia}${h.apertura && h.cierre ? ` ${fmtHora(h.apertura)}-${fmtHora(h.cierre)}` : ''}`).join(' · ')
+    const dias = (n.horarios ?? []).map((h: {dia:string}) => h.dia).join(' · ')
     const cierre = n.fecha_fin ? new Date(n.fecha_fin).toLocaleString('es-PA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''
+    const dir = n.direccion && n.direccion.trim() !== n.nombre.trim() ? n.direccion : ''
 
     if (tipo === 'cierre') {
-      return `⚠️ *¡ÚLTIMO MOMENTO!*\n\n🏪 *${n.nombre}*\n📌 ${n.zona}${n.direccion ? ` — ${n.direccion}` : ''}\n\n⏳ *Su iniciativa termina el ${cierre}*\n\n¡Aprovecha antes que sea tarde!\n\n👉 *apoyemosavenezuela.vercel.app*\n\n🇻🇪 _Todos con Venezuela_`
+      let m = `⚠️ *¡ÚLTIMO MOMENTO!*\n\n🏪 *${n.nombre}*`
+      if (dir) m += `\n🗺️ ${dir}`
+      m += `\n\n⏳ *Su iniciativa termina el ${cierre}*\n\n👉 apoyemosavenezuela.vercel.app\n\n🇻🇪 _Todos con Venezuela_`
+      return m
     }
 
-    let m = tipo === 'nuevo' ? '🤝 *¡Nuevo negocio solidario!*' : '🔄 *Negocio solidario actualizado*'
+    let m = tipo === 'nuevo' ? '🤝 *Nuevo negocio solidario*' : '🔄 *Negocio solidario actualizado*'
     m += `\n\n🏪 *${n.nombre}*`
-    m += `\n📌 ${n.zona}${n.direccion ? ` — ${n.direccion}` : ''}`
-    m += `\n💛 ${n.iniciativa}`
-    if (horario) m += `\n🕐 ${horario}`
-    if (n.instagram) m += `\n📸 @${String(n.instagram).replace('@', '')}`
-    if (n.sitio_web) m += `\n🌐 ${n.sitio_web}`
-    if (cierre) m += `\n⏳ Disponible hasta el ${cierre}`
-    m += `\n\n👉 *apoyemosavenezuela.vercel.app*\n\n🇻🇪 _Todos con Venezuela_`
+    if (dir) m += `\n🗺️ ${dir}`
+    if (dias) m += `\n🕐 ${dias}`
+    m += `\n\n👉 apoyemosavenezuela.vercel.app\n\n🇻🇪 _Todos con Venezuela_`
     return m
   }
 
