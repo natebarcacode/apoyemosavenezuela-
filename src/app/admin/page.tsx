@@ -294,8 +294,8 @@ export default function AdminPage() {
               </div>
               <div className="sm:col-span-2">
                 <BuscadorUbicacion
-                  onSeleccionar={({ lat, lng, direccion, zona }) =>
-                    setFormCentro((f) => ({ ...f, lat, lng, direccion, zona: zona || f.zona }))
+                  onSeleccionar={({ lat, lng, direccion, zona, nombre }) =>
+                    setFormCentro((f) => ({ ...f, lat, lng, direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
                   }
                 />
               </div>
@@ -378,8 +378,8 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <BuscadorUbicacion
-                  onSeleccionar={({ direccion, zona }) =>
-                    setFormNegocio((f) => ({ ...f, direccion: direccion || f.direccion, zona: zona || f.zona }))
+                  onSeleccionar={({ direccion, zona, nombre }) =>
+                    setFormNegocio((f) => ({ ...f, direccion: direccion || f.direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
                   }
                 />
               </div>

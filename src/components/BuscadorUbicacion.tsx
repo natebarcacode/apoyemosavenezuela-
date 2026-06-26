@@ -5,6 +5,7 @@ import { MapPin, Loader2 } from 'lucide-react'
 
 type Resultado = {
   display_name: string
+  name: string
   lat: string
   lon: string
   address: {
@@ -22,7 +23,7 @@ type Resultado = {
 }
 
 type Props = {
-  onSeleccionar: (datos: { lat: string; lng: string; direccion: string; zona: string }) => void
+  onSeleccionar: (datos: { lat: string; lng: string; direccion: string; zona: string; nombre: string }) => void
 }
 
 export default function BuscadorUbicacion({ onSeleccionar }: Props) {
@@ -75,7 +76,8 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
       : r.display_name
     const zona = a.suburb || a.neighbourhood || a.city_district || ciudad || a.state || ''
 
-    onSeleccionar({ lat: r.lat, lng: r.lon, direccion, zona })
+    const nombre = r.name || r.display_name.split(',')[0].trim()
+    onSeleccionar({ lat: r.lat, lng: r.lon, direccion, zona, nombre })
     setQuery(r.display_name)
     setAbierto(false)
     setResultados([])
