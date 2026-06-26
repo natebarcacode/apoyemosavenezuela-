@@ -447,43 +447,44 @@ export default function AdminPage() {
         </div>
       )}
 
-      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">
-            Panel Admin — <span className="text-red-500">Apoyemos a Venezuela</span>
-          </h1>
-          <div className="flex items-center gap-3">
+      <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-base font-extrabold text-gray-900 leading-tight">Panel Admin</h1>
+            <p className="text-[11px] text-gray-400">Apoyemos a Venezuela</p>
+          </div>
+          <div className="flex items-center gap-2">
             {tab !== 'categorias' && (
               <button onClick={abrirNuevo}
-                className="flex items-center gap-1.5 rounded-xl bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors">
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white transition-colors ${tab === 'centros' ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'}`}>
                 <Plus size={15} />
                 Agregar {tab === 'centros' ? 'centro' : 'negocio'}
               </button>
             )}
-            <button onClick={logout} className="text-gray-400 hover:text-gray-600">
-              <LogOut size={18} />
+            <button onClick={logout} title="Cerrar sesión" className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              <LogOut size={16} />
             </button>
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 flex gap-1 pb-0">
+        <div className="max-w-4xl mx-auto px-4 pb-3 flex gap-1">
           <button onClick={() => { setTab('centros'); setMostrarForm(false) }}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              tab === 'centros' ? 'border-red-500 text-red-500' : 'border-transparent text-gray-500 hover:text-gray-700'
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
+              tab === 'centros' ? 'bg-red-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
             }`}>
-            <Package size={14} /> Centros ({centros.length})
+            <Package size={13} /> Centros <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${tab === 'centros' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>{centros.length}</span>
           </button>
           <button onClick={() => { setTab('negocios'); setMostrarForm(false) }}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              tab === 'negocios' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
+              tab === 'negocios' ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
             }`}>
-            <Store size={14} /> Negocios ({negocios.length})
+            <Store size={13} /> Negocios <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${tab === 'negocios' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>{negocios.length}</span>
           </button>
           <button onClick={() => { setTab('categorias'); setMostrarForm(false) }}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              tab === 'categorias' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
+              tab === 'categorias' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
             }`}>
-            <Tag size={14} /> Insumos ({categorias.length})
+            <Tag size={13} /> Insumos <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${tab === 'categorias' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>{categorias.length}</span>
           </button>
         </div>
       </header>
@@ -613,14 +614,22 @@ export default function AdminPage() {
         {mostrarForm && tab === 'centros' && (
           <div className="mb-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <h2 className="text-base font-bold text-gray-900 mb-4">
-              {editandoId ? 'Editar centro' : 'Nuevo centro'}
+              {editandoId ? 'Editar centro de acopio' : 'Agregar centro de acopio'}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* ── Sección: Info básica ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3 -mt-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Información básica</p>
+              </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Nombre *</label>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Nombre del centro *</label>
                 <input value={formCentro.nombre} onChange={(e) => setFormCentro({ ...formCentro, nombre: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                   placeholder="Ej: Supermercado El Rey - Paitilla" />
+              </div>
+              {/* ── Sección: Ubicación ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Ubicación</p>
               </div>
               <div className="sm:col-span-2">
                 <BuscadorUbicacion
@@ -650,8 +659,11 @@ export default function AdminPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                   placeholder="Ej: Ciudad de Panamá" />
               </div>
+              {/* ── Sección: Horario ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Horario de atención</p>
+              </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-2 block">Horario</label>
                 <div className="rounded-xl border border-gray-200 overflow-hidden">
                   {formCentro.horarios.map((h, i) => (
                     <div key={h.dia} className={`flex items-center gap-3 px-3 py-2 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
@@ -708,13 +720,15 @@ export default function AdminPage() {
                   <p className="text-xs text-gray-400 mt-1">Si el pin está mal: right-click en el lugar correcto → copia las coordenadas → pégalas arriba.</p>
                 </div>
               )}
+              {/* ── Sección: Insumos ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Qué insumos acepta</p>
+                {categorias.length === 0 && (
+                  <p className="text-xs text-amber-500 mb-3">Primero agrega insumos en el tab "Insumos"</p>
+                )}
+              </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-2 block">
-                  Qué acepta
-                  {categorias.length === 0 && (
-                    <span className="ml-2 text-gray-400 font-normal">— agrega categorías primero en el tab Categorías</span>
-                  )}
-                </label>
+                <label className="sr-only">Qué acepta</label>
                 <div className="flex flex-col gap-3">
                   {grupos.map((grupo) => {
                     const insumos = categorias.filter(c => c.grupo === grupo.nombre)
@@ -773,15 +787,19 @@ export default function AdminPage() {
                   )}
                 </div>
               </div>
+              {/* ── Sección: Opcionales ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Fechas y detalles opcionales</p>
+              </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre (opcional)</label>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre</label>
                 <input type="datetime-local" value={formCentro.fecha_fin}
                   onChange={(e) => setFormCentro({ ...formCentro, fecha_fin: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                 <p className="text-xs text-gray-400 mt-1">El timer y el color de la tarjeta cambian según esta fecha.</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Notas (opcional)</label>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Notas</label>
                 <textarea value={formCentro.notas} onChange={(e) => setFormCentro({ ...formCentro, notas: e.target.value })}
                   rows={2} className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
                   placeholder="Ej: Solo medicamentos sellados" />
@@ -827,9 +845,13 @@ export default function AdminPage() {
         {mostrarForm && tab === 'negocios' && (
           <div className="mb-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <h2 className="text-base font-bold text-gray-900 mb-4">
-              {editandoId ? 'Editar negocio' : 'Nuevo negocio'}
+              {editandoId ? 'Editar negocio solidario' : 'Agregar negocio solidario'}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* ── Sección: Ubicación ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3 -mt-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Ubicación</p>
+              </div>
               <div className="sm:col-span-2">
                 <BuscadorUbicacion
                   onSeleccionar={({ lat, lng, direccion, zona, nombre }) =>
@@ -846,6 +868,10 @@ export default function AdminPage() {
                   />
                 </div>
               )}
+              {/* ── Sección: Info ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Información del negocio</p>
+              </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Nombre *</label>
                 <input value={formNegocio.nombre} onChange={(e) => setFormNegocio({ ...formNegocio, nombre: e.target.value })}
@@ -889,8 +915,11 @@ export default function AdminPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
                   placeholder="https://..." />
               </div>
+              {/* ── Sección: Horario negocio ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Horario de atención</p>
+              </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-2 block">Horario</label>
                 <div className="rounded-xl border border-gray-200 overflow-hidden">
                   {formNegocio.horarios.map((h, i) => (
                     <div key={h.dia} className={`flex items-center gap-3 px-3 py-2 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
@@ -916,8 +945,12 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
+              {/* ── Sección: Fechas negocio ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Fechas opcionales</p>
+              </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha de inicio (opcional)</label>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha de inicio</label>
                 <input type="date" value={formNegocio.fecha_inicio}
                   onChange={(e) => setFormNegocio({ ...formNegocio, fecha_inicio: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
@@ -969,17 +1002,24 @@ export default function AdminPage() {
               const abierto = mensajesAbiertos[key]
               return (
                 <div key={c.id} className={`bg-white rounded-xl border ${c.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'}`}>
-                  <div className="flex items-center gap-4 px-4 py-3">
+                  <div className="flex items-start gap-3 px-4 py-3">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${c.activo ? 'bg-green-400' : 'bg-gray-300'}`} title={c.activo ? 'Visible al público' : 'Oculto'} />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm truncate">{c.nombre}</p>
-                      <p className="text-xs text-gray-500 truncate">{c.zona}{c.direccion ? ` — ${c.direccion}` : ''}</p>
+                      <p className="text-xs text-gray-400 truncate mt-0.5">{c.zona}{c.direccion ? ` · ${c.direccion}` : ''}</p>
+                      {c.que_acepta?.length > 0 && (
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          <span className="font-medium text-gray-500">{c.que_acepta.length} insumos:</span>{' '}
+                          {c.que_acepta.slice(0, 4).join(', ')}{c.que_acepta.length > 4 ? '...' : ''}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button onClick={() => guardarYMostrarMensaje('centro', c.id, mensajeCentro(c, c.fecha_fin && new Date(c.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
                         title="Generar mensaje WhatsApp"
                         className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
-                      <button onClick={() => abrirEditarCentro(c)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
-                      <button onClick={() => toggleActivo('centros_acopio', c.id, c.activo)}
+                      <button onClick={() => abrirEditarCentro(c)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
+                      <button onClick={() => toggleActivo('centros_acopio', c.id, c.activo)} title={c.activo ? 'Ocultar' : 'Publicar'}
                         className={`p-2 rounded-lg transition-colors ${c.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
                         {c.activo ? <Eye size={15} /> : <EyeOff size={15} />}
                       </button>
@@ -1030,17 +1070,26 @@ export default function AdminPage() {
               const abierto = mensajesAbiertos[key]
               return (
                 <div key={n.id} className={`bg-white rounded-xl border ${n.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'}`}>
-                  <div className="flex items-center gap-4 px-4 py-3">
+                  <div className="flex items-start gap-3 px-4 py-3">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.activo ? 'bg-green-400' : 'bg-gray-300'}`} title={n.activo ? 'Visible al público' : 'Oculto'} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{n.nombre}</p>
-                      <p className="text-xs text-gray-500 truncate">{n.zona} — {n.tipo}</p>
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-semibold text-gray-900 text-sm truncate">{n.nombre}</p>
+                        <span className="text-[10px] text-amber-500 font-medium shrink-0">{n.tipo}</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">{n.zona}</p>
+                      {n.iniciativa && (
+                        <p className="text-[10px] text-amber-600 bg-amber-50 rounded-md px-1.5 py-0.5 mt-1 line-clamp-1">
+                          {n.iniciativa}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button onClick={() => guardarYMostrarMensaje('negocio', n.id, mensajeNegocio(n, n.fecha_fin && new Date(n.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
                         title="Generar mensaje WhatsApp"
                         className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
-                      <button onClick={() => abrirEditarNegocio(n)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
-                      <button onClick={() => toggleActivo('negocios_solidarios', n.id, n.activo)}
+                      <button onClick={() => abrirEditarNegocio(n)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
+                      <button onClick={() => toggleActivo('negocios_solidarios', n.id, n.activo)} title={n.activo ? 'Ocultar' : 'Publicar'}
                         className={`p-2 rounded-lg transition-colors ${n.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
                         {n.activo ? <Eye size={15} /> : <EyeOff size={15} />}
                       </button>

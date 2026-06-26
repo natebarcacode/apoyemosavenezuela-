@@ -89,25 +89,25 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50">
 
       {/* ── HEADER ── */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-[0_1px_6px_rgba(0,0,0,0.07)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-2.5">
-              <img src="/logo.svg" className="h-8 w-auto" alt="Logo" />
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <img src="/logo.svg" className="h-9 w-auto" alt="Logo" />
               <div>
-                <h1 className="text-base font-extrabold text-gray-900 leading-tight tracking-tight">
+                <h1 className="text-[15px] font-extrabold text-gray-900 leading-tight tracking-tight">
                   Apoyemos a <span className="text-red-500">Venezuela</span>
                 </h1>
-                <p className="text-[10px] text-gray-400 leading-none mt-0.5">Panamá con sus hermanos</p>
+                <p className="text-[11px] text-gray-400 leading-none mt-0.5">Encuentra dónde donar · Panamá</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-red-50 rounded-lg px-2.5 py-1.5">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-lg px-2.5 py-1.5">
                 <Package size={11} className="text-red-500" />
                 <span className="text-sm font-bold text-red-600">{centros.length}</span>
                 <span className="text-[10px] text-red-400 hidden sm:inline">centros</span>
               </div>
-              <div className="flex items-center gap-1.5 bg-amber-50 rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
                 <Store size={11} className="text-amber-500" />
                 <span className="text-sm font-bold text-amber-600">{negocios.length}</span>
                 <span className="text-[10px] text-amber-400 hidden sm:inline">negocios</span>
@@ -116,26 +116,28 @@ export default function Home() {
           </div>
 
           {/* Tabs */}
-          <div className="flex -mb-px">
+          <div className="flex gap-1 pb-3">
             <button
               onClick={() => cambiarTab('centros')}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                 tab === 'centros'
-                  ? 'border-red-500 text-red-600'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
+                  ? 'bg-red-500 text-white shadow-sm'
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
               }`}
             >
               <Package size={14} /> Centros de acopio
+              {tab === 'centros' && <span className="bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">{centros.length}</span>}
             </button>
             <button
               onClick={() => cambiarTab('negocios')}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                 tab === 'negocios'
-                  ? 'border-amber-500 text-amber-600'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
               }`}
             >
               <Store size={14} /> Negocios solidarios
+              {tab === 'negocios' && <span className="bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">{negocios.length}</span>}
             </button>
           </div>
         </div>
@@ -169,17 +171,17 @@ export default function Home() {
       {/* ── MAIN ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
 
-        {/* Filters card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-4 mb-5">
-          <div className="flex flex-col sm:flex-row gap-2.5">
+        {/* Filters */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3.5 mb-4">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder={tab === 'centros' ? 'Buscar centro por nombre o dirección...' : 'Buscar negocio por nombre o iniciativa...'}
+                placeholder={tab === 'centros' ? 'Buscar por nombre o dirección...' : 'Buscar por nombre o iniciativa...'}
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent focus:bg-white transition-all placeholder-gray-400"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 focus:bg-white transition-all placeholder-gray-400"
               />
             </div>
             <div className="relative">
@@ -187,14 +189,13 @@ export default function Home() {
               <select
                 value={zona}
                 onChange={e => setZona(e.target.value)}
-                className="w-full sm:w-auto pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-red-300 focus:bg-white appearance-none cursor-pointer transition-all"
+                className="w-full sm:w-auto pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:bg-white appearance-none cursor-pointer transition-all"
               >
                 <option value="">Todas las zonas</option>
                 {zonas.map(z => <option key={z} value={z}>{z}</option>)}
               </select>
             </div>
           </div>
-
         </div>
 
         {/* Cards + Map */}
