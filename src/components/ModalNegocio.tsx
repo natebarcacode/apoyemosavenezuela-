@@ -79,7 +79,10 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
         <div className="overflow-y-auto flex-1 p-5 flex flex-col gap-4" style={{ scrollbarWidth: 'thin' }}>
 
           {/* Iniciativa */}
-          <p className="text-sm text-gray-700 leading-relaxed">{negocio.iniciativa}</p>
+          <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500 mb-1">Iniciativa solidaria</p>
+            <p className="text-sm font-semibold text-gray-800 leading-relaxed">{negocio.iniciativa}</p>
+          </div>
 
           {/* Dirección */}
           {(negocio.direccion || negocio.zona) && (
@@ -114,16 +117,31 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
             </div>
           )}
 
-          {/* Vigencia */}
-          {negocio.vigencia && (
+          {/* Vigencia — solo si no hay fecha_fin exacta */}
+          {negocio.vigencia && !negocio.fecha_fin && (
             <div className="flex items-center gap-2.5 text-sm text-gray-500">
               <Clock size={15} className="text-amber-400 shrink-0" />
-              <span>Vigencia: {negocio.vigencia}</span>
+              <span>{negocio.vigencia}</span>
             </div>
           )}
 
-          {/* Countdown */}
-          {negocio.fecha_fin && <CountdownTimer fechaFin={negocio.fecha_fin} />}
+          {/* Fecha exacta de cierre + countdown */}
+          {negocio.fecha_fin && (
+            <>
+              <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                <Clock size={15} className="text-amber-400 shrink-0" />
+                <span>
+                  Termina el{' '}
+                  <span className="font-semibold">
+                    {new Date(negocio.fecha_fin).toLocaleDateString('es-PA', {
+                      weekday: 'long', day: 'numeric', month: 'long',
+                    })}
+                  </span>
+                </span>
+              </div>
+              <CountdownTimer fechaFin={negocio.fecha_fin} />
+            </>
+          )}
         </div>
 
         {/* Footer — links */}
