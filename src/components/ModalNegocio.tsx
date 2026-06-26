@@ -2,6 +2,7 @@
 
 import { NegocioSolidario, HorarioDia } from '@/lib/supabase'
 import { X, MapPin, Clock, Calendar, Globe, Store } from 'lucide-react'
+import { InstagramIcon } from './BrandIcons'
 import CountdownTimer from './CountdownTimer'
 
 function formatHora(t: string) {
@@ -142,8 +143,10 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
                 href={`https://instagram.com/${negocio.instagram.replace('@', '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+                style={{ background: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)' }}
               >
+                <InstagramIcon className="w-4 h-4" />
                 {negocio.instagram.startsWith('@') ? negocio.instagram : `@${negocio.instagram}`}
               </a>
             )}

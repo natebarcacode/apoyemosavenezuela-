@@ -1,7 +1,8 @@
 'use client'
 
 import { CentroAcopio, HorarioDia, Categoria } from '@/lib/supabase'
-import { X, MapPin, Clock, Calendar, Navigation, Package, Globe } from 'lucide-react'
+import { X, MapPin, Clock, Calendar, Package, Globe } from 'lucide-react'
+import { WazeIcon, GoogleMapsIcon, InstagramIcon } from './BrandIcons'
 import CountdownTimer from './CountdownTimer'
 
 function formatHora(t: string) {
@@ -159,12 +160,14 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
         <div className="p-4 pt-3 border-t border-gray-100 flex flex-col gap-2">
           <div className="flex gap-2">
             <a href={wazeUrl} target="_blank" rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#33CCFF] py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity">
-              <Navigation size={13} /> Waze
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+              style={{ background: '#00D4E4' }}>
+              <WazeIcon className="w-4 h-4" /> Waze
             </a>
             <a href={gmapsUrl} target="_blank" rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#4285F4] py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity">
-              <Navigation size={13} /> Google Maps
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+              style={{ background: '#4285F4' }}>
+              <GoogleMapsIcon className="w-4 h-4" /> Google Maps
             </a>
           </div>
           {(centro.instagram || centro.sitio_web) && (
@@ -172,7 +175,9 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
               {centro.instagram && (
                 <a href={`https://instagram.com/${centro.instagram.replace('@', '')}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity">
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+                  style={{ background: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)' }}>
+                  <InstagramIcon className="w-4 h-4" />
                   {centro.instagram.startsWith('@') ? centro.instagram : `@${centro.instagram}`}
                 </a>
               )}
