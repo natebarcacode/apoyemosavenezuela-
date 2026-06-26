@@ -112,7 +112,7 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
       </div>
 
       {abierto && resultados.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+        <div className="absolute z-[2000] mt-1 w-full bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
           {resultados.map((r, i) => (
             <button
               key={i}
