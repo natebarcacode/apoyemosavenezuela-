@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { supabase, CentroAcopio, NegocioSolidario, Categoria } from '@/lib/supabase'
 import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
-import { Heart, Search, Package, Store } from 'lucide-react'
+import { Heart, Search, Package, Store, ChevronDown } from 'lucide-react'
 
 const MapaCentros = dynamic(() => import('@/components/MapaCentros'), { ssr: false })
 
@@ -23,6 +23,7 @@ export default function Home() {
   const [categoria, setCategoria] = useState('')
   const [zona, setZona] = useState('')
   const [cargando, setCargando] = useState(true)
+  const [gruposAbiertos, setGruposAbiertos] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     async function cargar() {
@@ -145,16 +146,48 @@ export default function Home() {
             ))}
           </select>
           {tab === 'centros' && categorias.length > 0 && (
-            <select
-              value={categoria}
-              onChange={(e) => setCategoria(e.target.value)}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-            >
-              <option value="">Todos los insumos</option>
-              {categorias.map((c) => (
-                <option key={c.id} value={c.nombre}>{c.nombre}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <div className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm min-w-[180px]">
+                <p className="text-gray-500 text-xs font-medium mb-2">Filtrar por insumo</p>
+                <button
+                  onClick={() => setCategoria('')}
+                  className={`mb-2 text-xs px-2 py-0.5 rounded-full border transition-colors ${categoria === '' ? 'bg-red-500 text-white border-red-500' : 'text-gray-500 border-gray-200 hover:border-red-300'}`}
+                >
+                  Todos
+                </button>
+                {Object.entries(
+                  categorias.reduce<Record<string, Categoria[]>>((acc, cat) => {
+                    const g = cat.grupo || 'General'
+                    if (!acc[g]) acc[g] = []
+                    acc[g].push(cat)
+                    return acc
+                  }, {})
+                ).map(([grupo, cats]) => (
+                  <div key={grupo} className="mb-2">
+                    <button
+                      onClick={() => setGruposAbiertos(p => ({ ...p, [grupo]: !p[grupo] }))}
+                      className="flex items-center gap-1 text-xs font-bold text-gray-600 w-full text-left mb-1"
+                    >
+                      <ChevronDown size={12} className={`transition-transform ${gruposAbiertos[grupo] ? 'rotate-180' : ''}`} />
+                      {grupo}
+                    </button>
+                    {gruposAbiertos[grupo] && (
+                      <div className="flex flex-wrap gap-1 pl-3">
+                        {cats.map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => setCategoria(c.nombre === categoria ? '' : c.nombre)}
+                            className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${categoria === c.nombre ? 'bg-red-500 text-white border-red-500' : 'text-gray-500 border-gray-200 hover:border-red-300'}`}
+                          >
+                            {c.nombre}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 

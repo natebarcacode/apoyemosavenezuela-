@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 export type Categoria = {
   id: number
   nombre: string
+  grupo?: string
 }
 
 export type NegocioSolidario = {
@@ -15,6 +16,7 @@ export type NegocioSolidario = {
   instagram?: string
   sitio_web?: string
   vigencia?: string
+  fecha_fin?: string
   activo: boolean
 }
 
@@ -29,6 +31,7 @@ export type CentroAcopio = {
   lng: number
   activo: boolean
   notas?: string
+  fecha_fin?: string
 }
 
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''

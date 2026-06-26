@@ -16,12 +16,12 @@ const TIPOS_NEGOCIO = [
 
 const FORM_CENTRO_VACIO = {
   nombre: '', direccion: '', zona: '', horario: '',
-  que_acepta: [] as string[], lat: '', lng: '', notas: '',
+  que_acepta: [] as string[], lat: '', lng: '', notas: '', fecha_fin: '',
 }
 
 const FORM_NEGOCIO_VACIO = {
   nombre: '', tipo: 'restaurante', iniciativa: '', zona: '',
-  direccion: '', instagram: '', sitio_web: '', vigencia: '',
+  direccion: '', instagram: '', sitio_web: '', vigencia: '', fecha_fin: '',
 }
 
 type Tab = 'centros' | 'negocios' | 'categorias'
@@ -36,6 +36,7 @@ export default function AdminPage() {
   const [negocios, setNegocios] = useState<NegocioSolidario[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [nuevaCategoria, setNuevaCategoria] = useState('')
+  const [nuevaGrupo, setNuevaGrupo] = useState('')
 
   const [formCentro, setFormCentro] = useState(FORM_CENTRO_VACIO)
   const [formNegocio, setFormNegocio] = useState(FORM_NEGOCIO_VACIO)
@@ -69,8 +70,9 @@ export default function AdminPage() {
   async function agregarCategoria() {
     const nombre = nuevaCategoria.trim()
     if (!nombre) return
-    await supabase.from('categorias').insert({ nombre })
+    await supabase.from('categorias').insert({ nombre, grupo: nuevaGrupo.trim() || null })
     setNuevaCategoria('')
+    setNuevaGrupo('')
     cargar()
   }
 
@@ -90,6 +92,7 @@ export default function AdminPage() {
     setFormCentro({
       nombre: c.nombre, direccion: c.direccion, zona: c.zona, horario: c.horario,
       que_acepta: c.que_acepta, lat: String(c.lat), lng: String(c.lng), notas: c.notas ?? '',
+      fecha_fin: c.fecha_fin ? c.fecha_fin.slice(0, 16) : '',
     })
     setEditandoId(c.id)
     setMostrarForm(true)
@@ -100,6 +103,7 @@ export default function AdminPage() {
       nombre: n.nombre, tipo: n.tipo, iniciativa: n.iniciativa, zona: n.zona,
       direccion: n.direccion ?? '', instagram: n.instagram ?? '',
       sitio_web: n.sitio_web ?? '', vigencia: n.vigencia ?? '',
+      fecha_fin: n.fecha_fin ? n.fecha_fin.slice(0, 16) : '',
     })
     setEditandoId(n.id)
     setMostrarForm(true)
@@ -120,7 +124,7 @@ export default function AdminPage() {
     const payload = {
       nombre: f.nombre, direccion: f.direccion, zona: f.zona, horario: f.horario,
       que_acepta: f.que_acepta, lat: parseFloat(f.lat), lng: parseFloat(f.lng),
-      notas: f.notas || null,
+      notas: f.notas || null, fecha_fin: f.fecha_fin || null,
     }
     if (editandoId) {
       await supabase.from('centros_acopio').update(payload).eq('id', editandoId)
@@ -140,7 +144,7 @@ export default function AdminPage() {
     const payload = {
       nombre: f.nombre, tipo: f.tipo, iniciativa: f.iniciativa, zona: f.zona,
       direccion: f.direccion || null, instagram: f.instagram || null,
-      sitio_web: f.sitio_web || null, vigencia: f.vigencia || null,
+      sitio_web: f.sitio_web || null, vigencia: f.vigencia || null, fecha_fin: f.fecha_fin || null,
     }
     if (editandoId) {
       await supabase.from('negocios_solidarios').update(payload).eq('id', editandoId)
@@ -247,12 +251,18 @@ export default function AdminPage() {
             <h2 className="text-base font-bold text-gray-900 mb-1">Categorías de insumos</h2>
             <p className="text-xs text-gray-500 mb-4">Estas categorías aparecen en el formulario de centros de acopio.</p>
 
-            <div className="flex gap-2 mb-6">
+            <div className="flex flex-col sm:flex-row gap-2 mb-6">
+              <input
+                value={nuevaGrupo}
+                onChange={(e) => setNuevaGrupo(e.target.value)}
+                placeholder="Grupo (ej: Alimentos no perecederos)"
+                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
               <input
                 value={nuevaCategoria}
                 onChange={(e) => setNuevaCategoria(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && agregarCategoria()}
-                placeholder="Ej: Sillas de ruedas, Pañales, Juguetes..."
+                placeholder="Insumo (ej: Galletas saladas)"
                 className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <button onClick={agregarCategoria}
@@ -261,21 +271,35 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {categorias.length === 0 ? (
-                <p className="text-sm text-gray-400">No hay categorías todavía. Agrega la primera.</p>
-              ) : (
-                categorias.map((cat) => (
-                  <div key={cat.id} className="flex items-center gap-1.5 rounded-full bg-gray-100 pl-3 pr-2 py-1.5">
-                    <span className="text-sm font-medium text-gray-700">{cat.nombre}</span>
-                    <button onClick={() => eliminarCategoria(cat.id)}
-                      className="text-gray-400 hover:text-red-500 transition-colors">
-                      <Trash2 size={13} />
-                    </button>
+            {categorias.length === 0 ? (
+              <p className="text-sm text-gray-400">No hay categorías todavía. Agrega la primera.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {Object.entries(
+                  categorias.reduce<Record<string, typeof categorias>>((acc, cat) => {
+                    const g = cat.grupo || 'Sin grupo'
+                    if (!acc[g]) acc[g] = []
+                    acc[g].push(cat)
+                    return acc
+                  }, {})
+                ).map(([grupo, cats]) => (
+                  <div key={grupo}>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{grupo}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {cats.map((cat) => (
+                        <div key={cat.id} className="flex items-center gap-1.5 rounded-full bg-gray-100 pl-3 pr-2 py-1.5">
+                          <span className="text-sm font-medium text-gray-700">{cat.nombre}</span>
+                          <button onClick={() => eliminarCategoria(cat.id)}
+                            className="text-gray-400 hover:text-red-500 transition-colors">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -349,7 +373,13 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
-              <div className="sm:col-span-2">
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre (opcional)</label>
+                <input type="datetime-local" value={formCentro.fecha_fin}
+                  onChange={(e) => setFormCentro({ ...formCentro, fecha_fin: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+              </div>
+              <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Notas (opcional)</label>
                 <textarea value={formCentro.notas} onChange={(e) => setFormCentro({ ...formCentro, notas: e.target.value })}
                   rows={2} className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
@@ -426,11 +456,17 @@ export default function AdminPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
                   placeholder="https://..." />
               </div>
-              <div className="sm:col-span-2">
+              <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Vigencia (opcional)</label>
                 <input value={formNegocio.vigencia} onChange={(e) => setFormNegocio({ ...formNegocio, vigencia: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
                   placeholder="Ej: Hasta el 30 de junio / Permanente" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre (opcional)</label>
+                <input type="datetime-local" value={formNegocio.fecha_fin}
+                  onChange={(e) => setFormNegocio({ ...formNegocio, fecha_fin: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
               </div>
             </div>
             <div className="mt-4 flex gap-3">
