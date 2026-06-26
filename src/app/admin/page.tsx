@@ -5,6 +5,8 @@ import { CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria, MensajeWA } 
 import { useRef } from 'react'
 import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X } from 'lucide-react'
 import BuscadorUbicacion from '@/components/BuscadorUbicacion'
+import dynamic from 'next/dynamic'
+const MapaPicker = dynamic(() => import('@/components/MapaPicker'), { ssr: false })
 
 const TIPOS_NEGOCIO = [
   { value: 'restaurante', label: 'Restaurante' },
@@ -627,21 +629,15 @@ export default function AdminPage() {
                   }
                 />
               </div>
-              <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Pegar link de Google Maps (opcional)</label>
-                <input
-                  className="w-full rounded-xl border border-dashed border-blue-300 bg-blue-50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-blue-300"
-                  placeholder="Pega aquí el link de Google Maps y las coordenadas se llenan solas"
-                  onPaste={async (e) => {
-                    const url = e.clipboardData.getData('text')
-                    const result = await resolverCoordsDeGoogleMaps(url)
-                    if (typeof result === 'string') { alert(result); return }
-                    setFormCentro(f => ({ ...f, lat: result.lat, lng: result.lng }))
-                    ;(e.target as HTMLInputElement).value = ''
-                  }}
-                  onChange={() => {}}
-                />
-              </div>
+              {formCentro.lat && formCentro.lng && (
+                <div className="sm:col-span-2">
+                  <MapaPicker
+                    lat={formCentro.lat}
+                    lng={formCentro.lng}
+                    onChange={(lat, lng) => setFormCentro(f => ({ ...f, lat, lng }))}
+                  />
+                </div>
+              )}
               <div className="sm:col-span-2">
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Dirección *</label>
                 <input value={formCentro.direccion} onChange={(e) => setFormCentro({ ...formCentro, direccion: e.target.value })}
@@ -841,36 +837,15 @@ export default function AdminPage() {
                   }
                 />
               </div>
-              <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Pegar link de Google Maps (opcional)</label>
-                <input
-                  className="w-full rounded-xl border border-dashed border-blue-300 bg-blue-50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-blue-300"
-                  placeholder="Pega aquí el link de Google Maps y las coordenadas se llenan solas"
-                  onPaste={async (e) => {
-                    const url = e.clipboardData.getData('text')
-                    const result = await resolverCoordsDeGoogleMaps(url)
-                    if (typeof result === 'string') { alert(result); return }
-                    setFormNegocio(f => ({ ...f, lat: result.lat, lng: result.lng }))
-                    ;(e.target as HTMLInputElement).value = ''
-                  }}
-                  onChange={() => {}}
-                />
-              </div>
-              <div className="sm:col-span-2">
-                {formNegocio.lat && formNegocio.lng && (
-                  <div className="mt-2">
-                    <a
-                      href={`https://www.google.com/maps?q=${formNegocio.lat},${formNegocio.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
-                    >
-                      Verificar ubicación en Google Maps →
-                    </a>
-                    <p className="text-xs text-gray-400 mt-1">Si el pin está mal: right-click en el lugar correcto → copia las coordenadas → pégalas en los campos de latitud/longitud del centro.</p>
-                  </div>
-                )}
-              </div>
+              {formNegocio.lat && formNegocio.lng && (
+                <div className="sm:col-span-2">
+                  <MapaPicker
+                    lat={formNegocio.lat}
+                    lng={formNegocio.lng}
+                    onChange={(lat, lng) => setFormNegocio(f => ({ ...f, lat, lng }))}
+                  />
+                </div>
+              )}
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Nombre *</label>
                 <input value={formNegocio.nombre} onChange={(e) => setFormNegocio({ ...formNegocio, nombre: e.target.value })}
