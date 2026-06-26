@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { supabase, CentroAcopio, NegocioSolidario, Categoria } from '@/lib/supabase'
 import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
-import { Heart, Search, Package, Store, ChevronDown } from 'lucide-react'
+import { Search, Package, Store, ChevronDown } from 'lucide-react'
 
 const MapaCentros = dynamic(() => import('@/components/MapaCentros'), { ssr: false })
 
@@ -77,7 +77,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <Heart size={20} className="text-red-500 fill-red-500" />
+              <img src="/logo.svg" className="h-8 w-auto" alt="Logo" />
               <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">
                 Apoyemos a <span className="text-red-500">Venezuela</span>
               </h1>
@@ -271,8 +271,8 @@ export default function Home() {
         </div>
       </div>
 
-      <footer className="text-center py-6 text-xs text-gray-400">
-        Todos con Venezuela 🇻🇪
+      <footer className="flex items-center justify-center gap-2 py-6 text-xs text-gray-400">
+        Todos con Venezuela <img src="/logo.svg" className="h-4 w-auto" alt="" />
       </footer>
     </div>
   )
