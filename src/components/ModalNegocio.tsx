@@ -81,7 +81,7 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
 
           {/* Iniciativa */}
           <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500 mb-1">Iniciativa solidaria</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500 mb-1">Iniciativa</p>
             <p className="text-sm font-semibold text-gray-800 leading-relaxed">{negocio.iniciativa}</p>
           </div>
 

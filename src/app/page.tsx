@@ -162,7 +162,7 @@ export default function Home() {
   }
 
   const negociosConMapa = negociosFiltrados.filter(n => n.lat != null && n.lng != null)
-  const [filtrosAbiertos, setFiltrosAbiertos] = useState(true)
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -215,18 +215,17 @@ export default function Home() {
                   : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
               }`}
             >
-              <Store size={14} /> Negocios solidarios
+              <Store size={14} /> Iniciativas
               {tab === 'negocios' && <span className="bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">{negocios.length}</span>}
             </button>
           </div>
         </div>
       </header>
 
-      {/* ── BANNER: WhatsApp + CTA juntos ── */}
+      {/* ── BANNER WhatsApp ── */}
       <div style={{ background: 'linear-gradient(135deg,#064e3b 0%,#065f46 60%,#047857 100%)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            {/* WhatsApp */}
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
                 <WhatsAppIcon className="w-4 h-4 text-white" />
@@ -236,24 +235,33 @@ export default function Home() {
                 <p className="text-xs text-emerald-200">Únete a nuestro grupo de WhatsApp</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
-              <a href="https://chat.whatsapp.com/I0L8IHvYpnJC6QVEdVF0o3?mode=gi_t"
-                target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-full bg-white text-emerald-800 font-bold text-sm px-4 py-1.5 hover:bg-emerald-50 transition-colors shadow-sm">
-                <Users size={13} /> Unirme
-              </a>
-              {/* Separador */}
-              <span className="hidden sm:block w-px h-5 bg-white/20" />
-              {/* CTA */}
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-emerald-200 hidden sm:block">¿Conoces un lugar?</p>
-                <a href="https://wa.me/50767810189"
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 text-white font-semibold text-sm px-4 py-1.5 hover:bg-white/25 transition-colors">
-                  Contáctanos →
-                </a>
+            <a href="https://chat.whatsapp.com/I0L8IHvYpnJC6QVEdVF0o3?mode=gi_t"
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-full bg-white text-emerald-800 font-bold text-sm px-5 py-2 hover:bg-emerald-50 transition-colors shadow-sm">
+              <Users size={13} /> Unirme al grupo
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── BANNER CTA ── */}
+      <div className="bg-amber-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <MapPin size={15} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">¿Conoces un centro de acopio o negocio?</p>
+                <p className="text-xs text-amber-100">Escríbenos y lo publicamos aquí gratis.</p>
               </div>
             </div>
+            <a href="https://wa.me/50767810189"
+              target="_blank" rel="noopener noreferrer"
+              className="shrink-0 flex items-center gap-2 rounded-full bg-white text-amber-700 font-bold text-sm px-5 py-2 hover:bg-amber-50 transition-colors shadow-sm whitespace-nowrap">
+              <WhatsAppIcon className="w-4 h-4 text-amber-600" /> Contáctanos
+            </a>
           </div>
         </div>
       </div>
@@ -262,27 +270,30 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-10">
 
         {/* Filters — colapsables */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] mb-4 overflow-hidden">
-          {/* Header del filtro — siempre visible */}
+        <div className="mb-4">
+          {/* Botón toggle */}
           <button
             onClick={() => setFiltrosAbiertos(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all shadow-sm ${
+              filtrosAbiertos
+                ? 'bg-white border-gray-200 text-gray-700'
+                : 'bg-white border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
           >
-            <div className="flex items-center gap-2">
-              <Search size={14} className="text-gray-400" />
-              <span className="text-sm font-semibold text-gray-700">Filtros</span>
-              {filtrosActivos && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === 'centros' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
-                  {tab === 'centros' ? `${centrosFiltrados.length}/${centros.length}` : `${negociosFiltrados.length}/${negocios.length}`}
-                </span>
-              )}
-            </div>
-            <span className={`text-gray-400 text-xs transition-transform duration-200 ${filtrosAbiertos ? 'rotate-180' : ''}`}>▾</span>
+            <Search size={14} />
+            Filtros
+            {filtrosActivos && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === 'centros' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
+                {tab === 'centros' ? `${centrosFiltrados.length}/${centros.length}` : `${negociosFiltrados.length}/${negocios.length}`}
+              </span>
+            )}
+            <span className={`text-gray-400 transition-transform duration-200 ${filtrosAbiertos ? 'rotate-180' : ''}`}>▾</span>
           </button>
 
-          {/* Contenido colapsable */}
+          {/* Panel expandido */}
           {filtrosAbiertos && (
-            <div className="px-4 pb-4 flex flex-col gap-3 border-t border-gray-100 pt-3">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] mt-2 overflow-hidden">
+            <div className="px-4 pb-4 flex flex-col gap-3 pt-3">
               {/* Buscador */}
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -348,6 +359,7 @@ export default function Home() {
                 </div>
               )}
             </div>
+          </div>
           )}
         </div>
 
