@@ -56,6 +56,8 @@ export type CentroAcopio = {
   horarios?: HorarioDia[]
   fecha_inicio?: string
   fecha_fin?: string
+  instagram?: string
+  sitio_web?: string
 }
 
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''

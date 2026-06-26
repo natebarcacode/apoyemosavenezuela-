@@ -1,7 +1,7 @@
 'use client'
 
 import { CentroAcopio, HorarioDia, Categoria } from '@/lib/supabase'
-import { X, MapPin, Clock, Calendar, Navigation, Package } from 'lucide-react'
+import { X, MapPin, Clock, Calendar, Navigation, Package, Globe } from 'lucide-react'
 import CountdownTimer from './CountdownTimer'
 
 function formatHora(t: string) {
@@ -115,8 +115,13 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
             </div>
           )}
 
-          {/* Countdown */}
-          {centro.fecha_fin && <CountdownTimer fechaFin={centro.fecha_fin} label="Iniciativa termina" />}
+          {/* Countdown con fecha exacta */}
+          {centro.fecha_fin && (
+            <CountdownTimer
+              fechaFin={centro.fecha_fin}
+              label={`Termina el ${new Date(centro.fecha_fin).toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' })} ·`}
+            />
+          )}
 
           {/* Notas */}
           {centro.notas && (
@@ -150,24 +155,35 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
           )}
         </div>
 
-        {/* Footer — navigation buttons */}
-        <div className="p-4 pt-3 border-t border-gray-100 flex gap-2">
-          <a
-            href={wazeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#33CCFF] py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
-          >
-            <Navigation size={13} /> Waze
-          </a>
-          <a
-            href={gmapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#4285F4] py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
-          >
-            <Navigation size={13} /> Google Maps
-          </a>
+        {/* Footer — navegación + redes sociales */}
+        <div className="p-4 pt-3 border-t border-gray-100 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <a href={wazeUrl} target="_blank" rel="noopener noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#33CCFF] py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity">
+              <Navigation size={13} /> Waze
+            </a>
+            <a href={gmapsUrl} target="_blank" rel="noopener noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#4285F4] py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity">
+              <Navigation size={13} /> Google Maps
+            </a>
+          </div>
+          {(centro.instagram || centro.sitio_web) && (
+            <div className="flex gap-2">
+              {centro.instagram && (
+                <a href={`https://instagram.com/${centro.instagram.replace('@', '')}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity">
+                  {centro.instagram.startsWith('@') ? centro.instagram : `@${centro.instagram}`}
+                </a>
+              )}
+              {centro.sitio_web && (
+                <a href={centro.sitio_web} target="_blank" rel="noopener noreferrer"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gray-800 py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity">
+                  <Globe size={13} /> Sitio web
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

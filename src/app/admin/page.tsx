@@ -22,6 +22,7 @@ const horarioVacio = () => DIAS_SEMANA.map(dia => ({ dia, activo: false, apertur
 const FORM_CENTRO_VACIO = () => ({
   nombre: '', direccion: '', zona: '',
   que_acepta: [] as string[], lat: '', lng: '', notas: '',
+  instagram: '', sitio_web: '',
   horarios: horarioVacio(),
   fecha_inicio: '', fecha_fin: '',
 })
@@ -162,6 +163,7 @@ export default function AdminPage() {
     setFormCentro({
       nombre: c.nombre, direccion: c.direccion, zona: c.zona,
       que_acepta: c.que_acepta, lat: String(c.lat), lng: String(c.lng), notas: c.notas ?? '',
+      instagram: c.instagram ?? '', sitio_web: c.sitio_web ?? '',
       horarios: DIAS_SEMANA.map(dia => {
         const found = (c.horarios ?? []).find((h: {dia:string}) => h.dia === dia)
         return found ? { dia, activo: true, apertura: (found as {apertura:string}).apertura || '', cierre: (found as {cierre:string}).cierre || '' } : { dia, activo: false, apertura: '', cierre: '' }
@@ -209,6 +211,7 @@ export default function AdminPage() {
       nombre: f.nombre, direccion: f.direccion, zona: f.zona,
       que_acepta: f.que_acepta, lat: parseFloat(f.lat), lng: parseFloat(f.lng),
       notas: f.notas || null,
+      instagram: f.instagram || null, sitio_web: f.sitio_web || null,
       horarios: f.horarios.filter((h: {activo:boolean}) => h.activo).map(({dia, apertura, cierre}: {dia:string,apertura:string,cierre:string}) => ({ dia, apertura, cierre })),
       fecha_inicio: f.fecha_inicio || null,
       fecha_fin: f.fecha_fin || null,
@@ -747,6 +750,18 @@ export default function AdminPage() {
                 <textarea value={formCentro.notas} onChange={(e) => setFormCentro({ ...formCentro, notas: e.target.value })}
                   rows={2} className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
                   placeholder="Ej: Solo medicamentos sellados" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Instagram (opcional)</label>
+                <input value={formCentro.instagram} onChange={(e) => setFormCentro({ ...formCentro, instagram: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  placeholder="@usuario" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Sitio web (opcional)</label>
+                <input value={formCentro.sitio_web} onChange={(e) => setFormCentro({ ...formCentro, sitio_web: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  placeholder="https://..." />
               </div>
             </div>
             <div className="mt-4 flex flex-col gap-3">
