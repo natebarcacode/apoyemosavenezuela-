@@ -30,12 +30,12 @@ export type CentroAcopio = {
   nombre: string
   direccion: string
   zona: string
-  horario: string
   que_acepta: string[]
   lat: number
   lng: number
   activo: boolean
   notas?: string
+  fecha_inicio?: string
   fecha_fin?: string
 }
 

@@ -52,8 +52,17 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
     timeoutRef.current = setTimeout(async () => {
       setBuscando(true)
       try {
+        const params = new URLSearchParams({
+          format: 'json',
+          q: valor,
+          addressdetails: '1',
+          limit: '8',
+          countrycodes: 'pa',
+          viewbox: '-83.05,9.7,-77.2,7.2',
+          bounded: '1',
+        })
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(valor)}&addressdetails=1&limit=5`,
+          `https://nominatim.openstreetmap.org/search?${params}`,
           { headers: { 'Accept-Language': 'es' } }
         )
         const data: Resultado[] = await res.json()

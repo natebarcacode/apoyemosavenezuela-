@@ -1,7 +1,7 @@
 'use client'
 
 import { CentroAcopio } from '@/lib/supabase'
-import { Clock, MapPin, Package, Navigation } from 'lucide-react'
+import { Clock, MapPin, Package, Navigation, Calendar } from 'lucide-react'
 import CountdownTimer from './CountdownTimer'
 
 type Props = {
@@ -43,10 +43,20 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
         <span>{centro.direccion}</span>
       </div>
 
-      <div className="mt-1.5 flex items-center gap-1.5 text-sm text-gray-600">
-        <Clock size={14} className="shrink-0 text-red-500" />
-        <span>{centro.horario}</span>
-      </div>
+      {(centro.fecha_inicio || centro.fecha_fin) && (
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
+          <Calendar size={13} className="shrink-0 text-red-400" />
+          <span>
+            {centro.fecha_inicio
+              ? `Desde ${new Date(centro.fecha_inicio).toLocaleString('es-PA', { dateStyle: 'short', timeStyle: 'short' })}`
+              : ''}
+            {centro.fecha_inicio && centro.fecha_fin ? ' · ' : ''}
+            {centro.fecha_fin
+              ? `Hasta ${new Date(centro.fecha_fin).toLocaleString('es-PA', { dateStyle: 'short', timeStyle: 'short' })}`
+              : ''}
+          </span>
+        </div>
+      )}
 
       {centro.que_acepta.length > 0 && (
         <div className="mt-2 flex items-start gap-1.5">

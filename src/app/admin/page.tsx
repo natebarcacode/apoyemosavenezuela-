@@ -16,8 +16,8 @@ const TIPOS_NEGOCIO = [
 ]
 
 const FORM_CENTRO_VACIO = {
-  nombre: '', direccion: '', zona: '', horario: '',
-  que_acepta: [] as string[], lat: '', lng: '', notas: '', fecha_fin: '',
+  nombre: '', direccion: '', zona: '',
+  que_acepta: [] as string[], lat: '', lng: '', notas: '', fecha_inicio: '', fecha_fin: '',
 }
 
 const FORM_NEGOCIO_VACIO = {
@@ -113,8 +113,9 @@ export default function AdminPage() {
 
   function abrirEditarCentro(c: CentroAcopio) {
     setFormCentro({
-      nombre: c.nombre, direccion: c.direccion, zona: c.zona, horario: c.horario,
+      nombre: c.nombre, direccion: c.direccion, zona: c.zona,
       que_acepta: c.que_acepta, lat: String(c.lat), lng: String(c.lng), notas: c.notas ?? '',
+      fecha_inicio: c.fecha_inicio ? c.fecha_inicio.slice(0, 16) : '',
       fecha_fin: c.fecha_fin ? c.fecha_fin.slice(0, 16) : '',
     })
     setEditandoId(c.id)
@@ -139,15 +140,15 @@ export default function AdminPage() {
 
   async function guardarCentro() {
     const f = formCentro
-    if (!f.nombre || !f.direccion || !f.zona || !f.horario || !f.lat || !f.lng) {
+    if (!f.nombre || !f.direccion || !f.zona || !f.lat || !f.lng) {
       setMensaje('Completa todos los campos obligatorios.')
       return
     }
     setGuardando(true)
     const payload = {
-      nombre: f.nombre, direccion: f.direccion, zona: f.zona, horario: f.horario,
+      nombre: f.nombre, direccion: f.direccion, zona: f.zona,
       que_acepta: f.que_acepta, lat: parseFloat(f.lat), lng: parseFloat(f.lng),
-      notas: f.notas || null, fecha_fin: f.fecha_fin || null,
+      notas: f.notas || null, fecha_inicio: f.fecha_inicio || null, fecha_fin: f.fecha_fin || null,
     }
     if (editandoId) {
       await supabase.from('centros_acopio').update(payload).eq('id', editandoId)
@@ -415,10 +416,10 @@ export default function AdminPage() {
                   placeholder="Ej: Ciudad de Panamá" />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Horario *</label>
-                <input value={formCentro.horario} onChange={(e) => setFormCentro({ ...formCentro, horario: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                  placeholder="Ej: Lun-Sáb 8am-6pm" />
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de inicio (opcional)</label>
+                <input type="datetime-local" value={formCentro.fecha_inicio}
+                  onChange={(e) => setFormCentro({ ...formCentro, fecha_inicio: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud *</label>
@@ -457,6 +458,7 @@ export default function AdminPage() {
                 <input type="datetime-local" value={formCentro.fecha_fin}
                   onChange={(e) => setFormCentro({ ...formCentro, fecha_fin: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                <p className="text-xs text-gray-400 mt-1">El timer y el color de la tarjeta cambian según esta fecha.</p>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Notas (opcional)</label>
@@ -568,7 +570,7 @@ export default function AdminPage() {
               <div key={c.id} className={`flex items-center gap-4 bg-white rounded-xl border px-4 py-3 ${c.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'}`}>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 text-sm truncate">{c.nombre}</p>
-                  <p className="text-xs text-gray-500 truncate">{c.zona} — {c.horario}</p>
+                  <p className="text-xs text-gray-500 truncate">{c.zona}{c.direccion ? ` — ${c.direccion}` : ''}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button onClick={() => abrirEditarCentro(c)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
