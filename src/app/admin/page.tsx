@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria } from '@/lib/supabase'
+import { supabase, CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria, MensajeWA } from '@/lib/supabase'
 import { useRef } from 'react'
 import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X } from 'lucide-react'
 import BuscadorUbicacion from '@/components/BuscadorUbicacion'
@@ -55,6 +55,9 @@ export default function AdminPage() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
+  const [mensajesWA, setMensajesWA] = useState<MensajeWA[]>([])
+  const [mensajesAbiertos, setMensajesAbiertos] = useState<Record<string, boolean>>({})
+  const [copiandoMsgId, setCopiandoMsgId] = useState<number | null>(null)
   const [waMensaje, setWaMensaje] = useState('')
   const [waMostrar, setWaMostrar] = useState(false)
   const [waCopied, setWaCopied] = useState(false)
@@ -69,16 +72,18 @@ export default function AdminPage() {
   }
 
   async function cargar() {
-    const [{ data: dc }, { data: dn }, { data: dcat }, { data: dgr }] = await Promise.all([
+    const [{ data: dc }, { data: dn }, { data: dcat }, { data: dgr }, { data: dmsg }] = await Promise.all([
       supabase.from('centros_acopio').select('*').order('created_at', { ascending: false }),
       supabase.from('negocios_solidarios').select('*').order('created_at', { ascending: false }),
       supabase.from('categorias').select('*').order('nombre'),
       supabase.from('grupos_categorias').select('*').order('nombre'),
+      supabase.from('mensajes_wa').select('*').order('created_at', { ascending: false }),
     ])
     setCentros(dc ?? [])
     setNegocios(dn ?? [])
     setCategorias(dcat ?? [])
     setGrupos(dgr ?? [])
+    setMensajesWA(dmsg ?? [])
   }
 
   useEffect(() => { if (autenticado) cargar() }, [autenticado])
@@ -174,12 +179,19 @@ export default function AdminPage() {
       fecha_fin: f.fecha_fin || null,
     }
     const esNuevo = !editandoId
+    let refId = editandoId
     if (editandoId) {
       await supabase.from('centros_acopio').update(payload).eq('id', editandoId)
     } else {
-      await supabase.from('centros_acopio').insert({ ...payload, activo: true })
+      const { data: ins } = await supabase.from('centros_acopio').insert({ ...payload, activo: true }).select('id').single()
+      refId = ins?.id ?? null
     }
-    mostrarWA(mensajeCentro(formCentro, esNuevo ? 'nuevo' : 'actualizado'))
+    const texto = mensajeCentro(formCentro, esNuevo ? 'nuevo' : 'actualizado')
+    if (refId) {
+      await supabase.from('mensajes_wa').insert({ tipo: 'centro', referencia_id: refId, texto })
+      setMensajesAbiertos(p => ({ ...p, [`centro-${refId}`]: true }))
+    }
+    mostrarWA(texto)
     finalizar(esNuevo ? 'Centro agregado.' : 'Centro actualizado.')
   }
 
@@ -199,12 +211,19 @@ export default function AdminPage() {
       fecha_fin: f.fecha_fin || null,
     }
     const esNuevo = !editandoId
+    let refId = editandoId
     if (editandoId) {
       await supabase.from('negocios_solidarios').update(payload).eq('id', editandoId)
     } else {
-      await supabase.from('negocios_solidarios').insert({ ...payload, activo: true })
+      const { data: ins } = await supabase.from('negocios_solidarios').insert({ ...payload, activo: true }).select('id').single()
+      refId = ins?.id ?? null
     }
-    mostrarWA(mensajeNegocio(formNegocio, esNuevo ? 'nuevo' : 'actualizado'))
+    const texto = mensajeNegocio(formNegocio, esNuevo ? 'nuevo' : 'actualizado')
+    if (refId) {
+      await supabase.from('mensajes_wa').insert({ tipo: 'negocio', referencia_id: refId, texto })
+      setMensajesAbiertos(p => ({ ...p, [`negocio-${refId}`]: true }))
+    }
+    mostrarWA(texto)
     finalizar(esNuevo ? 'Negocio agregado.' : 'Negocio actualizado.')
   }
 
@@ -253,6 +272,24 @@ export default function AdminPage() {
     if (dias) m += `\n🕐 ${dias}`
     m += `\n\n👉 apoyemosavenezuela.vercel.app\n\n🇻🇪 _Todos con Venezuela_`
     return m
+  }
+
+  async function guardarYMostrarMensaje(tipo: 'centro' | 'negocio', refId: number, texto: string) {
+    await supabase.from('mensajes_wa').insert({ tipo, referencia_id: refId, texto })
+    setMensajesAbiertos(p => ({ ...p, [`${tipo}-${refId}`]: true }))
+    mostrarWA(texto)
+    cargar()
+  }
+
+  async function eliminarMensajeWA(id: number) {
+    await supabase.from('mensajes_wa').delete().eq('id', id)
+    setMensajesWA(prev => prev.filter(m => m.id !== id))
+  }
+
+  async function copiarMensaje(id: number, texto: string) {
+    await navigator.clipboard.writeText(texto)
+    setCopiandoMsgId(id)
+    setTimeout(() => setCopiandoMsgId(null), 2000)
   }
 
   function mostrarWA(texto: string) {
@@ -808,48 +845,122 @@ export default function AdminPage() {
         {/* Lista centros */}
         {tab === 'centros' && (
           <div className="flex flex-col gap-3">
-            {centros.map((c) => (
-              <div key={c.id} className={`flex items-center gap-4 bg-white rounded-xl border px-4 py-3 ${c.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'}`}>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{c.nombre}</p>
-                  <p className="text-xs text-gray-500 truncate">{c.zona}{c.direccion ? ` — ${c.direccion}` : ''}</p>
+            {centros.map((c) => {
+              const key = `centro-${c.id}`
+              const msgs = mensajesWA.filter(m => m.tipo === 'centro' && m.referencia_id === c.id)
+              const abierto = mensajesAbiertos[key]
+              return (
+                <div key={c.id} className={`bg-white rounded-xl border ${c.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'}`}>
+                  <div className="flex items-center gap-4 px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{c.nombre}</p>
+                      <p className="text-xs text-gray-500 truncate">{c.zona}{c.direccion ? ` — ${c.direccion}` : ''}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={() => guardarYMostrarMensaje('centro', c.id, mensajeCentro(c, c.fecha_fin && new Date(c.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
+                        title="Generar mensaje WhatsApp"
+                        className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
+                      <button onClick={() => abrirEditarCentro(c)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
+                      <button onClick={() => toggleActivo('centros_acopio', c.id, c.activo)}
+                        className={`p-2 rounded-lg transition-colors ${c.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
+                        {c.activo ? <Eye size={15} /> : <EyeOff size={15} />}
+                      </button>
+                    </div>
+                  </div>
+                  {msgs.length > 0 && (
+                    <div className="border-t border-gray-100">
+                      <button
+                        onClick={() => setMensajesAbiertos(p => ({ ...p, [key]: !p[key] }))}
+                        className="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+                      >
+                        <span className="flex items-center gap-1.5"><MessageSquare size={12} className="text-green-500" /> Mensajes ({msgs.length})</span>
+                        <span>{abierto ? '▲' : '▼'}</span>
+                      </button>
+                      {abierto && (
+                        <div className="flex flex-col divide-y divide-gray-100">
+                          {msgs.map(m => (
+                            <div key={m.id} className="px-4 py-3 bg-gray-50">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs text-gray-400">{new Date(m.created_at).toLocaleString('es-PA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                                <div className="flex gap-1">
+                                  <button onClick={() => copiarMensaje(m.id, m.texto)}
+                                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg font-medium transition-colors ${copiandoMsgId === m.id ? 'bg-green-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
+                                    {copiandoMsgId === m.id ? <><Check size={11} /> Copiado</> : <><Copy size={11} /> Copiar</>}
+                                  </button>
+                                  <button onClick={() => eliminarMensajeWA(m.id)} className="p-1 rounded-lg text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
+                                </div>
+                              </div>
+                              <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed">{m.texto}</pre>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => mostrarWA(mensajeCentro(c, c.fecha_fin && new Date(c.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
-                    title="Generar mensaje WhatsApp"
-                    className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
-                  <button onClick={() => abrirEditarCentro(c)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
-                  <button onClick={() => toggleActivo('centros_acopio', c.id, c.activo)}
-                    className={`p-2 rounded-lg transition-colors ${c.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
-                    {c.activo ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
         {/* Lista negocios */}
         {tab === 'negocios' && (
           <div className="flex flex-col gap-3">
-            {negocios.map((n) => (
-              <div key={n.id} className={`flex items-center gap-4 bg-white rounded-xl border px-4 py-3 ${n.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'}`}>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{n.nombre}</p>
-                  <p className="text-xs text-gray-500 truncate">{n.zona} — {n.tipo}</p>
+            {negocios.map((n) => {
+              const key = `negocio-${n.id}`
+              const msgs = mensajesWA.filter(m => m.tipo === 'negocio' && m.referencia_id === n.id)
+              const abierto = mensajesAbiertos[key]
+              return (
+                <div key={n.id} className={`bg-white rounded-xl border ${n.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'}`}>
+                  <div className="flex items-center gap-4 px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{n.nombre}</p>
+                      <p className="text-xs text-gray-500 truncate">{n.zona} — {n.tipo}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={() => guardarYMostrarMensaje('negocio', n.id, mensajeNegocio(n, n.fecha_fin && new Date(n.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
+                        title="Generar mensaje WhatsApp"
+                        className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
+                      <button onClick={() => abrirEditarNegocio(n)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
+                      <button onClick={() => toggleActivo('negocios_solidarios', n.id, n.activo)}
+                        className={`p-2 rounded-lg transition-colors ${n.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
+                        {n.activo ? <Eye size={15} /> : <EyeOff size={15} />}
+                      </button>
+                    </div>
+                  </div>
+                  {msgs.length > 0 && (
+                    <div className="border-t border-gray-100">
+                      <button
+                        onClick={() => setMensajesAbiertos(p => ({ ...p, [key]: !p[key] }))}
+                        className="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+                      >
+                        <span className="flex items-center gap-1.5"><MessageSquare size={12} className="text-green-500" /> Mensajes ({msgs.length})</span>
+                        <span>{abierto ? '▲' : '▼'}</span>
+                      </button>
+                      {abierto && (
+                        <div className="flex flex-col divide-y divide-gray-100">
+                          {msgs.map(m => (
+                            <div key={m.id} className="px-4 py-3 bg-gray-50">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs text-gray-400">{new Date(m.created_at).toLocaleString('es-PA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                                <div className="flex gap-1">
+                                  <button onClick={() => copiarMensaje(m.id, m.texto)}
+                                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg font-medium transition-colors ${copiandoMsgId === m.id ? 'bg-green-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
+                                    {copiandoMsgId === m.id ? <><Check size={11} /> Copiado</> : <><Copy size={11} /> Copiar</>}
+                                  </button>
+                                  <button onClick={() => eliminarMensajeWA(m.id)} className="p-1 rounded-lg text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
+                                </div>
+                              </div>
+                              <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed">{m.texto}</pre>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => mostrarWA(mensajeNegocio(n, n.fecha_fin && new Date(n.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
-                    title="Generar mensaje WhatsApp"
-                    className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
-                  <button onClick={() => abrirEditarNegocio(n)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
-                  <button onClick={() => toggleActivo('negocios_solidarios', n.id, n.activo)}
-                    className={`p-2 rounded-lg transition-colors ${n.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
-                    {n.activo ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

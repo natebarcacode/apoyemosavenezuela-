@@ -11,6 +11,14 @@ export type HorarioDia = {
   cierre: string
 }
 
+export type MensajeWA = {
+  id: number
+  tipo: string
+  referencia_id: number
+  texto: string
+  created_at: string
+}
+
 export type Categoria = {
   id: number
   nombre: string
