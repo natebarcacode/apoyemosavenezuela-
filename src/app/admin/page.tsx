@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria, MensajeWA } from '@/lib/supabase'
 import { useRef } from 'react'
-import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X } from 'lucide-react'
+import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X, CopyPlus } from 'lucide-react'
 import BuscadorUbicacion from '@/components/BuscadorUbicacion'
 import dynamic from 'next/dynamic'
 const MapaPicker = dynamic(() => import('@/components/MapaPicker'), { ssr: false })
@@ -205,6 +205,53 @@ export default function AdminPage() {
     })
     setEditandoId(n.id)
     setNotificarWA(false)
+    setMostrarForm(true)
+  }
+
+  function duplicarCentro(c: CentroAcopio) {
+    setFormCentro({
+      nombre: c.nombre + ' — Sucursal',
+      direccion: c.direccion,
+      zona: c.zona,
+      que_acepta: [...c.que_acepta],
+      lat: String(c.lat),
+      lng: String(c.lng),
+      notas: c.notas ?? '',
+      instagram: c.instagram ?? '',
+      sitio_web: c.sitio_web ?? '',
+      horarios: DIAS_SEMANA.map(dia => {
+        const found = (c.horarios ?? []).find((h: {dia:string}) => h.dia === dia)
+        return found ? { dia, activo: true, apertura: (found as {apertura:string}).apertura || '', cierre: (found as {cierre:string}).cierre || '' } : { dia, activo: false, apertura: '', cierre: '' }
+      }),
+      fecha_inicio: c.fecha_inicio ? c.fecha_inicio.slice(0, 10) : '',
+      fecha_fin: c.fecha_fin ? c.fecha_fin.slice(0, 16) : '',
+    })
+    setEditandoId(null)
+    setNotificarWA(true)
+    setMostrarForm(true)
+  }
+
+  function duplicarNegocio(n: NegocioSolidario) {
+    setFormNegocio({
+      nombre: n.nombre + ' — Sucursal',
+      tipo: n.tipo,
+      iniciativa: n.iniciativa,
+      zona: n.zona,
+      direccion: n.direccion ?? '',
+      instagram: n.instagram ?? '',
+      sitio_web: n.sitio_web ?? '',
+      vigencia: n.vigencia ?? '',
+      lat: n.lat != null ? String(n.lat) : '',
+      lng: n.lng != null ? String(n.lng) : '',
+      horarios: DIAS_SEMANA.map(dia => {
+        const found = (n.horarios ?? []).find((h: {dia:string}) => h.dia === dia)
+        return found ? { dia, activo: true, apertura: (found as {apertura:string}).apertura || '', cierre: (found as {cierre:string}).cierre || '' } : { dia, activo: false, apertura: '', cierre: '' }
+      }),
+      fecha_inicio: n.fecha_inicio ?? '',
+      fecha_fin: n.fecha_fin ? n.fecha_fin.slice(0, 16) : '',
+    })
+    setEditandoId(null)
+    setNotificarWA(true)
     setMostrarForm(true)
   }
 
@@ -1018,6 +1065,7 @@ export default function AdminPage() {
                       <button onClick={() => guardarYMostrarMensaje('centro', c.id, mensajeCentro(c, c.fecha_fin && new Date(c.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
                         title="Generar mensaje WhatsApp"
                         className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
+                      <button onClick={() => duplicarCentro(c)} title="Duplicar como sucursal" className="p-2 rounded-lg text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"><CopyPlus size={15} /></button>
                       <button onClick={() => abrirEditarCentro(c)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
                       <button onClick={() => toggleActivo('centros_acopio', c.id, c.activo)} title={c.activo ? 'Ocultar' : 'Publicar'}
                         className={`p-2 rounded-lg transition-colors ${c.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
@@ -1088,6 +1136,7 @@ export default function AdminPage() {
                       <button onClick={() => guardarYMostrarMensaje('negocio', n.id, mensajeNegocio(n, n.fecha_fin && new Date(n.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
                         title="Generar mensaje WhatsApp"
                         className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
+                      <button onClick={() => duplicarNegocio(n)} title="Duplicar como sucursal" className="p-2 rounded-lg text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"><CopyPlus size={15} /></button>
                       <button onClick={() => abrirEditarNegocio(n)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
                       <button onClick={() => toggleActivo('negocios_solidarios', n.id, n.activo)} title={n.activo ? 'Ocultar' : 'Publicar'}
                         className={`p-2 rounded-lg transition-colors ${n.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
