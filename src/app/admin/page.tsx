@@ -26,7 +26,9 @@ const FORM_CENTRO_VACIO = {
 
 const FORM_NEGOCIO_VACIO = {
   nombre: '', tipo: 'restaurante', iniciativa: '', zona: '',
-  direccion: '', instagram: '', sitio_web: '', vigencia: '', fecha_fin: '',
+  direccion: '', instagram: '', sitio_web: '', vigencia: '',
+  dias_abierto: [] as string[], hora_apertura: '', hora_cierre: '',
+  fecha_inicio: '', fecha_fin: '',
 }
 
 type Tab = 'centros' | 'negocios' | 'categorias'
@@ -134,6 +136,10 @@ export default function AdminPage() {
       nombre: n.nombre, tipo: n.tipo, iniciativa: n.iniciativa, zona: n.zona,
       direccion: n.direccion ?? '', instagram: n.instagram ?? '',
       sitio_web: n.sitio_web ?? '', vigencia: n.vigencia ?? '',
+      dias_abierto: n.dias_abierto ?? [],
+      hora_apertura: n.hora_apertura ?? '',
+      hora_cierre: n.hora_cierre ?? '',
+      fecha_inicio: n.fecha_inicio ?? '',
       fecha_fin: n.fecha_fin ? n.fecha_fin.slice(0, 16) : '',
     })
     setEditandoId(n.id)
@@ -180,7 +186,12 @@ export default function AdminPage() {
     const payload = {
       nombre: f.nombre, tipo: f.tipo, iniciativa: f.iniciativa, zona: f.zona,
       direccion: f.direccion || null, instagram: f.instagram || null,
-      sitio_web: f.sitio_web || null, vigencia: f.vigencia || null, fecha_fin: f.fecha_fin || null,
+      sitio_web: f.sitio_web || null, vigencia: f.vigencia || null,
+      dias_abierto: f.dias_abierto,
+      hora_apertura: f.hora_apertura || null,
+      hora_cierre: f.hora_cierre || null,
+      fecha_inicio: f.fecha_inicio || null,
+      fecha_fin: f.fecha_fin || null,
     }
     if (editandoId) {
       await supabase.from('negocios_solidarios').update(payload).eq('id', editandoId)
@@ -640,17 +651,57 @@ export default function AdminPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
                   placeholder="https://..." />
               </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Días abierto</label>
+                <div className="flex flex-wrap gap-2">
+                  {DIAS_SEMANA.map((dia) => (
+                    <button key={dia} type="button"
+                      onClick={() => setFormNegocio((f) => ({
+                        ...f,
+                        dias_abierto: f.dias_abierto.includes(dia)
+                          ? f.dias_abierto.filter(d => d !== dia)
+                          : [...f.dias_abierto, dia],
+                      }))}
+                      className={`rounded-full px-3 py-1.5 text-xs font-bold border transition-colors ${
+                        formNegocio.dias_abierto.includes(dia)
+                          ? 'bg-yellow-500 text-white border-yellow-500'
+                          : 'bg-white text-gray-500 border-gray-200 hover:border-yellow-300'
+                      }`}>
+                      {dia}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Vigencia (opcional)</label>
-                <input value={formNegocio.vigencia} onChange={(e) => setFormNegocio({ ...formNegocio, vigencia: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="Ej: Hasta el 30 de junio / Permanente" />
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Hora de apertura</label>
+                <input type="time" value={formNegocio.hora_apertura}
+                  onChange={(e) => setFormNegocio({ ...formNegocio, hora_apertura: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Hora de cierre diario</label>
+                <input type="time" value={formNegocio.hora_cierre}
+                  onChange={(e) => setFormNegocio({ ...formNegocio, hora_cierre: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha de inicio (opcional)</label>
+                <input type="date" value={formNegocio.fecha_inicio}
+                  onChange={(e) => setFormNegocio({ ...formNegocio, fecha_inicio: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre (opcional)</label>
                 <input type="datetime-local" value={formNegocio.fecha_fin}
                   onChange={(e) => setFormNegocio({ ...formNegocio, fecha_fin: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                <p className="text-xs text-gray-400 mt-1">El timer de la tarjeta cambia según esta fecha.</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Vigencia (opcional)</label>
+                <input value={formNegocio.vigencia} onChange={(e) => setFormNegocio({ ...formNegocio, vigencia: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  placeholder="Ej: Permanente / Solo este mes" />
               </div>
             </div>
             <div className="mt-4 flex gap-3">

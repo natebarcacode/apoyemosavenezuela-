@@ -21,6 +21,10 @@ export type NegocioSolidario = {
   instagram?: string
   sitio_web?: string
   vigencia?: string
+  dias_abierto?: string[]
+  hora_apertura?: string
+  hora_cierre?: string
+  fecha_inicio?: string
   fecha_fin?: string
   activo: boolean
 }

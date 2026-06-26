@@ -1,7 +1,14 @@
 'use client'
 
 import { NegocioSolidario } from '@/lib/supabase'
-import { MapPin, Clock, AtSign, Globe, Store } from 'lucide-react'
+import { MapPin, Clock, AtSign, Globe, Store, Calendar } from 'lucide-react'
+
+function formatHora(t: string) {
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'pm' : 'am'
+  const h12 = h % 12 || 12
+  return m === 0 ? `${h12}${ampm}` : `${h12}:${String(m).padStart(2, '0')}${ampm}`
+}
 import CountdownTimer from './CountdownTimer'
 
 const TIPOS: Record<string, string> = {
@@ -52,6 +59,23 @@ export default function TarjetaNegocio({ negocio }: Props) {
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <MapPin size={12} className="text-yellow-500 shrink-0" />
             <span>{negocio.zona}{negocio.direccion ? ` — ${negocio.direccion}` : ''}</span>
+          </div>
+        )}
+        {negocio.dias_abierto && negocio.dias_abierto.length > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <Clock size={12} className="text-yellow-500 shrink-0" />
+            <span>
+              {negocio.dias_abierto.join(' · ')}
+              {(negocio.hora_apertura || negocio.hora_cierre) && (
+                <> &nbsp;{negocio.hora_apertura && formatHora(negocio.hora_apertura)}{negocio.hora_cierre && ` – ${formatHora(negocio.hora_cierre)}`}</>
+              )}
+            </span>
+          </div>
+        )}
+        {negocio.fecha_inicio && (
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <Calendar size={12} className="text-yellow-500 shrink-0" />
+            <span>Desde {new Date(negocio.fecha_inicio).toLocaleDateString('es-PA', { day: 'numeric', month: 'short' })}</span>
           </div>
         )}
         {negocio.vigencia && (
