@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria } from '@/lib/supabase'
 import { useRef } from 'react'
-import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X } from 'lucide-react'
 import BuscadorUbicacion from '@/components/BuscadorUbicacion'
 
 const TIPOS_NEGOCIO = [
@@ -53,6 +53,9 @@ export default function AdminPage() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
+  const [waMensaje, setWaMensaje] = useState('')
+  const [waMostrar, setWaMostrar] = useState(false)
+  const [waCopied, setWaCopied] = useState(false)
 
   function login() {
     if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
@@ -168,12 +171,14 @@ export default function AdminPage() {
       fecha_inicio: f.fecha_inicio || null,
       fecha_fin: f.fecha_fin || null,
     }
+    const esNuevo = !editandoId
     if (editandoId) {
       await supabase.from('centros_acopio').update(payload).eq('id', editandoId)
     } else {
       await supabase.from('centros_acopio').insert({ ...payload, activo: true })
     }
-    finalizar(editandoId ? 'Centro actualizado.' : 'Centro agregado.')
+    mostrarWA(mensajeCentro(formCentro, esNuevo ? 'nuevo' : 'actualizado'))
+    finalizar(esNuevo ? 'Centro agregado.' : 'Centro actualizado.')
   }
 
   async function guardarNegocio() {
@@ -193,12 +198,79 @@ export default function AdminPage() {
       fecha_inicio: f.fecha_inicio || null,
       fecha_fin: f.fecha_fin || null,
     }
+    const esNuevo = !editandoId
     if (editandoId) {
       await supabase.from('negocios_solidarios').update(payload).eq('id', editandoId)
     } else {
       await supabase.from('negocios_solidarios').insert({ ...payload, activo: true })
     }
-    finalizar(editandoId ? 'Negocio actualizado.' : 'Negocio agregado.')
+    mostrarWA(mensajeNegocio(formNegocio, esNuevo ? 'nuevo' : 'actualizado'))
+    finalizar(esNuevo ? 'Negocio agregado.' : 'Negocio actualizado.')
+  }
+
+  function fmtHora(t: string) {
+    const [h, m] = t.split(':').map(Number)
+    const ampm = h >= 12 ? 'pm' : 'am'
+    const h12 = h % 12 || 12
+    return m === 0 ? `${h12}${ampm}` : `${h12}:${String(m).padStart(2, '0')}${ampm}`
+  }
+
+  function mensajeCentro(c: CentroAcopio | typeof FORM_CENTRO_VACIO, tipo: 'nuevo' | 'actualizado' | 'cierre') {
+    const dias = (c.dias_abierto ?? []).join(' · ')
+    const horario = dias
+      ? `${dias}${(c.hora_apertura && c.hora_cierre) ? ` · ${fmtHora(c.hora_apertura)} a ${fmtHora(c.hora_cierre)}` : c.hora_apertura ? ` · desde ${fmtHora(c.hora_apertura)}` : ''}`
+      : ''
+    const insumos = Array.isArray(c.que_acepta) && c.que_acepta.length ? c.que_acepta.join(', ') : ''
+    const cierre = c.fecha_fin ? new Date(c.fecha_fin).toLocaleString('es-PA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''
+
+    if (tipo === 'cierre') {
+      return `⚠️ *¡ÚLTIMO MOMENTO!*\n\n📍 *${c.nombre}*\n🗺️ ${c.direccion}${c.zona ? `, ${c.zona}` : ''}\n\n⏳ *Cierra el ${cierre}*\n\n¡Todavía estás a tiempo de donar!\n\n👉 *apoyemosavenezuela.vercel.app*\n\n🇻🇪 _Todos con Venezuela_`
+    }
+
+    let m = tipo === 'nuevo' ? '🏠 *¡Nuevo centro de acopio!*' : '🔄 *Centro de acopio actualizado*'
+    m += `\n\n📍 *${c.nombre}*`
+    m += `\n🗺️ ${c.direccion}${c.zona ? `, ${c.zona}` : ''}`
+    if (horario) m += `\n🕐 ${horario}`
+    if (insumos) m += `\n📦 _Acepta:_ ${insumos}`
+    if (c.notas) m += `\n📝 ${c.notas}`
+    if (cierre) m += `\n⏳ Disponible hasta el ${cierre}`
+    m += `\n\n👉 *apoyemosavenezuela.vercel.app*\n\n🇻🇪 _Todos con Venezuela_`
+    return m
+  }
+
+  function mensajeNegocio(n: NegocioSolidario | typeof FORM_NEGOCIO_VACIO, tipo: 'nuevo' | 'actualizado' | 'cierre') {
+    const dias = (n.dias_abierto ?? []).join(' · ')
+    const horario = dias
+      ? `${dias}${(n.hora_apertura && n.hora_cierre) ? ` · ${fmtHora(n.hora_apertura)} a ${fmtHora(n.hora_cierre)}` : n.hora_apertura ? ` · desde ${fmtHora(n.hora_apertura)}` : ''}`
+      : ''
+    const cierre = n.fecha_fin ? new Date(n.fecha_fin).toLocaleString('es-PA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''
+
+    if (tipo === 'cierre') {
+      return `⚠️ *¡ÚLTIMO MOMENTO!*\n\n🏪 *${n.nombre}*\n📌 ${n.zona}${n.direccion ? ` — ${n.direccion}` : ''}\n\n⏳ *Su iniciativa termina el ${cierre}*\n\n¡Aprovecha antes que sea tarde!\n\n👉 *apoyemosavenezuela.vercel.app*\n\n🇻🇪 _Todos con Venezuela_`
+    }
+
+    let m = tipo === 'nuevo' ? '🤝 *¡Nuevo negocio solidario!*' : '🔄 *Negocio solidario actualizado*'
+    m += `\n\n🏪 *${n.nombre}*`
+    m += `\n📌 ${n.zona}${n.direccion ? ` — ${n.direccion}` : ''}`
+    m += `\n💛 ${n.iniciativa}`
+    if (horario) m += `\n🕐 ${horario}`
+    if (n.instagram) m += `\n📸 @${String(n.instagram).replace('@', '')}`
+    if (n.sitio_web) m += `\n🌐 ${n.sitio_web}`
+    if (cierre) m += `\n⏳ Disponible hasta el ${cierre}`
+    m += `\n\n👉 *apoyemosavenezuela.vercel.app*\n\n🇻🇪 _Todos con Venezuela_`
+    return m
+  }
+
+  function mostrarWA(texto: string) {
+    setWaMensaje(texto)
+    setWaMostrar(true)
+    setWaCopied(false)
+  }
+
+  async function copiarWA() {
+    await navigator.clipboard.writeText(waMensaje)
+    setWaCopied(true)
+    setTimeout(() => setWaCopied(false), 2000)
   }
 
   function finalizar(msg: string) {
@@ -257,6 +329,40 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      {/* Modal WhatsApp */}
+      {waMostrar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <MessageSquare size={16} className="text-green-500" />
+                <p className="font-bold text-gray-900 text-sm">Mensaje para WhatsApp</p>
+              </div>
+              <button onClick={() => setWaMostrar(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5">
+              <textarea
+                readOnly
+                value={waMensaje}
+                rows={12}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-mono text-gray-800 resize-none focus:outline-none"
+              />
+              <button
+                onClick={copiarWA}
+                className={`mt-3 w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-colors ${
+                  waCopied ? 'bg-green-500 text-white' : 'bg-gray-900 text-white hover:bg-gray-700'
+                }`}
+              >
+                {waCopied ? <><Check size={15} /> ¡Copiado!</> : <><Copy size={15} /> Copiar mensaje</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900">
@@ -727,6 +833,9 @@ export default function AdminPage() {
                   <p className="text-xs text-gray-500 truncate">{c.zona}{c.direccion ? ` — ${c.direccion}` : ''}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => mostrarWA(mensajeCentro(c, c.fecha_fin && new Date(c.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
+                    title="Generar mensaje WhatsApp"
+                    className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
                   <button onClick={() => abrirEditarCentro(c)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
                   <button onClick={() => toggleActivo('centros_acopio', c.id, c.activo)}
                     className={`p-2 rounded-lg transition-colors ${c.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
@@ -748,6 +857,9 @@ export default function AdminPage() {
                   <p className="text-xs text-gray-500 truncate">{n.zona} — {n.tipo}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => mostrarWA(mensajeNegocio(n, n.fecha_fin && new Date(n.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
+                    title="Generar mensaje WhatsApp"
+                    className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
                   <button onClick={() => abrirEditarNegocio(n)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
                   <button onClick={() => toggleActivo('negocios_solidarios', n.id, n.activo)}
                     className={`p-2 rounded-lg transition-colors ${n.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
