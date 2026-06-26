@@ -1,19 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, CentroAcopio, NegocioSolidario } from '@/lib/supabase'
-import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store } from 'lucide-react'
-
-const CATEGORIAS = [
-  { value: 'ropa', label: 'Ropa' },
-  { value: 'medicina', label: 'Medicina' },
-  { value: 'alimentos', label: 'Alimentos' },
-  { value: 'agua', label: 'Agua' },
-  { value: 'herramientas', label: 'Herramientas' },
-  { value: 'higiene', label: 'Higiene' },
-  { value: 'colchones', label: 'Colchones' },
-  { value: 'otros', label: 'Otros' },
-]
+import { supabase, CentroAcopio, NegocioSolidario, Categoria } from '@/lib/supabase'
+import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2 } from 'lucide-react'
 
 const TIPOS_NEGOCIO = [
   { value: 'restaurante', label: 'Restaurante' },
@@ -34,7 +23,7 @@ const FORM_NEGOCIO_VACIO = {
   direccion: '', instagram: '', sitio_web: '', vigencia: '',
 }
 
-type Tab = 'centros' | 'negocios'
+type Tab = 'centros' | 'negocios' | 'categorias'
 
 export default function AdminPage() {
   const [autenticado, setAutenticado] = useState(false)
@@ -44,6 +33,8 @@ export default function AdminPage() {
 
   const [centros, setCentros] = useState<CentroAcopio[]>([])
   const [negocios, setNegocios] = useState<NegocioSolidario[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [nuevaCategoria, setNuevaCategoria] = useState('')
 
   const [formCentro, setFormCentro] = useState(FORM_CENTRO_VACIO)
   const [formNegocio, setFormNegocio] = useState(FORM_NEGOCIO_VACIO)
@@ -62,15 +53,30 @@ export default function AdminPage() {
   }
 
   async function cargar() {
-    const [{ data: dc }, { data: dn }] = await Promise.all([
+    const [{ data: dc }, { data: dn }, { data: dcat }] = await Promise.all([
       supabase.from('centros_acopio').select('*').order('created_at', { ascending: false }),
       supabase.from('negocios_solidarios').select('*').order('created_at', { ascending: false }),
+      supabase.from('categorias').select('*').order('nombre'),
     ])
     setCentros(dc ?? [])
     setNegocios(dn ?? [])
+    setCategorias(dcat ?? [])
   }
 
   useEffect(() => { if (autenticado) cargar() }, [autenticado])
+
+  async function agregarCategoria() {
+    const nombre = nuevaCategoria.trim()
+    if (!nombre) return
+    await supabase.from('categorias').insert({ nombre })
+    setNuevaCategoria('')
+    cargar()
+  }
+
+  async function eliminarCategoria(id: number) {
+    await supabase.from('categorias').delete().eq('id', id)
+    cargar()
+  }
 
   function abrirNuevo() {
     if (tab === 'centros') setFormCentro(FORM_CENTRO_VACIO)
@@ -165,7 +171,7 @@ export default function AdminPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm">
           <h1 className="text-xl font-bold text-gray-900 mb-1">Panel Admin</h1>
-          <p className="text-sm text-gray-500 mb-6">Acopio Venezuela</p>
+          <p className="text-sm text-gray-500 mb-6">Apoyemos a Venezuela</p>
           <input
             type="password"
             placeholder="Contraseña"
@@ -175,10 +181,8 @@ export default function AdminPage() {
             className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-red-400"
           />
           {errorAuth && <p className="text-red-500 text-sm mb-3">{errorAuth}</p>}
-          <button
-            onClick={login}
-            className="w-full rounded-xl bg-red-500 py-2.5 text-sm font-bold text-white hover:bg-red-600 transition-colors"
-          >
+          <button onClick={login}
+            className="w-full rounded-xl bg-red-500 py-2.5 text-sm font-bold text-white hover:bg-red-600 transition-colors">
             Entrar
           </button>
         </div>
@@ -191,16 +195,16 @@ export default function AdminPage() {
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900">
-            Panel Admin — <span className="text-red-500">Acopio Venezuela</span>
+            Panel Admin — <span className="text-red-500">Apoyemos a Venezuela</span>
           </h1>
           <div className="flex items-center gap-3">
-            <button
-              onClick={abrirNuevo}
-              className="flex items-center gap-1.5 rounded-xl bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors"
-            >
-              <Plus size={15} />
-              Agregar {tab === 'centros' ? 'centro' : 'negocio'}
-            </button>
+            {tab !== 'categorias' && (
+              <button onClick={abrirNuevo}
+                className="flex items-center gap-1.5 rounded-xl bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors">
+                <Plus size={15} />
+                Agregar {tab === 'centros' ? 'centro' : 'negocio'}
+              </button>
+            )}
             <button onClick={() => setAutenticado(false)} className="text-gray-400 hover:text-gray-600">
               <LogOut size={18} />
             </button>
@@ -208,21 +212,23 @@ export default function AdminPage() {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 flex gap-1 pb-0">
-          <button
-            onClick={() => { setTab('centros'); setMostrarForm(false) }}
+          <button onClick={() => { setTab('centros'); setMostrarForm(false) }}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               tab === 'centros' ? 'border-red-500 text-red-500' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
+            }`}>
             <Package size={14} /> Centros ({centros.length})
           </button>
-          <button
-            onClick={() => { setTab('negocios'); setMostrarForm(false) }}
+          <button onClick={() => { setTab('negocios'); setMostrarForm(false) }}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               tab === 'negocios' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
+            }`}>
             <Store size={14} /> Negocios ({negocios.length})
+          </button>
+          <button onClick={() => { setTab('categorias'); setMostrarForm(false) }}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+              tab === 'categorias' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}>
+            <Tag size={14} /> Categorías ({categorias.length})
           </button>
         </div>
       </header>
@@ -231,6 +237,44 @@ export default function AdminPage() {
         {mensaje && (
           <div className={`mb-4 rounded-xl px-4 py-3 text-sm ${mensaje.includes('obligator') ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-green-50 border border-green-200 text-green-700'}`}>
             {mensaje}
+          </div>
+        )}
+
+        {/* Tab categorías */}
+        {tab === 'categorias' && (
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h2 className="text-base font-bold text-gray-900 mb-1">Categorías de insumos</h2>
+            <p className="text-xs text-gray-500 mb-4">Estas categorías aparecen en el formulario de centros de acopio.</p>
+
+            <div className="flex gap-2 mb-6">
+              <input
+                value={nuevaCategoria}
+                onChange={(e) => setNuevaCategoria(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && agregarCategoria()}
+                placeholder="Ej: Sillas de ruedas, Pañales, Juguetes..."
+                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <button onClick={agregarCategoria}
+                className="flex items-center gap-1.5 rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-600 transition-colors">
+                <Plus size={15} /> Agregar
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {categorias.length === 0 ? (
+                <p className="text-sm text-gray-400">No hay categorías todavía. Agrega la primera.</p>
+              ) : (
+                categorias.map((cat) => (
+                  <div key={cat.id} className="flex items-center gap-1.5 rounded-full bg-gray-100 pl-3 pr-2 py-1.5">
+                    <span className="text-sm font-medium text-gray-700">{cat.nombre}</span>
+                    <button onClick={() => eliminarCategoria(cat.id)}
+                      className="text-gray-400 hover:text-red-500 transition-colors">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 
@@ -278,16 +322,21 @@ export default function AdminPage() {
                   placeholder="Ej: -79.5197" />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-2 block">Qué acepta</label>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">
+                  Qué acepta
+                  {categorias.length === 0 && (
+                    <span className="ml-2 text-gray-400 font-normal">— agrega categorías primero en el tab Categorías</span>
+                  )}
+                </label>
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORIAS.map((cat) => (
-                    <button key={cat.value} type="button" onClick={() => toggleCategoria(cat.value)}
+                  {categorias.map((cat) => (
+                    <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
                       className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-                        formCentro.que_acepta.includes(cat.value)
+                        formCentro.que_acepta.includes(cat.nombre)
                           ? 'bg-red-500 text-white border-red-500'
                           : 'bg-white text-gray-600 border-gray-200 hover:border-red-300'
                       }`}>
-                      {cat.label}
+                      {cat.nombre}
                     </button>
                   ))}
                 </div>

@@ -2,24 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { supabase, CentroAcopio, NegocioSolidario } from '@/lib/supabase'
+import { supabase, CentroAcopio, NegocioSolidario, Categoria } from '@/lib/supabase'
 import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
 import { Heart, Search, Package, Store } from 'lucide-react'
 
 const MapaCentros = dynamic(() => import('@/components/MapaCentros'), { ssr: false })
-
-const CATEGORIAS = [
-  { value: '', label: 'Todos' },
-  { value: 'ropa', label: 'Ropa' },
-  { value: 'medicina', label: 'Medicina' },
-  { value: 'alimentos', label: 'Alimentos' },
-  { value: 'agua', label: 'Agua' },
-  { value: 'herramientas', label: 'Herramientas' },
-  { value: 'higiene', label: 'Higiene' },
-  { value: 'colchones', label: 'Colchones' },
-  { value: 'otros', label: 'Otros' },
-]
 
 type Tab = 'centros' | 'negocios'
 
@@ -28,6 +16,7 @@ export default function Home() {
 
   const [centros, setCentros] = useState<CentroAcopio[]>([])
   const [negocios, setNegocios] = useState<NegocioSolidario[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [seleccionado, setSeleccionado] = useState<CentroAcopio | null>(null)
 
   const [busqueda, setBusqueda] = useState('')
@@ -37,12 +26,14 @@ export default function Home() {
 
   useEffect(() => {
     async function cargar() {
-      const [{ data: datosCentros }, { data: datosNegocios }] = await Promise.all([
+      const [{ data: datosCentros }, { data: datosNegocios }, { data: datosCat }] = await Promise.all([
         supabase.from('centros_acopio').select('*').eq('activo', true).order('zona'),
         supabase.from('negocios_solidarios').select('*').eq('activo', true).order('zona'),
+        supabase.from('categorias').select('*').order('nombre'),
       ])
       setCentros(datosCentros ?? [])
       setNegocios(datosNegocios ?? [])
+      setCategorias(datosCat ?? [])
       setCargando(false)
     }
     cargar()
@@ -153,14 +144,15 @@ export default function Home() {
               <option key={z} value={z}>{z}</option>
             ))}
           </select>
-          {tab === 'centros' && (
+          {tab === 'centros' && categorias.length > 0 && (
             <select
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
               className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
             >
-              {CATEGORIAS.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
+              <option value="">Todos los insumos</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.nombre}>{c.nombre}</option>
               ))}
             </select>
           )}
