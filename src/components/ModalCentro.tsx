@@ -86,14 +86,14 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
 
           {/* Dirección */}
           <div className="flex items-start gap-2.5 text-sm text-gray-600">
-            <MapPin size={15} className="text-red-400 mt-0.5 shrink-0" />
+            <MapPin size={15} className="text-gray-400 mt-0.5 shrink-0" />
             <span>{centro.direccion}</span>
           </div>
 
           {/* Horario */}
           {horarios.length > 0 && (
             <div className="flex items-start gap-2.5">
-              <Clock size={15} className="text-red-400 mt-0.5 shrink-0" />
+              <Clock size={15} className="text-gray-400 mt-0.5 shrink-0" />
               <div className="flex flex-col gap-0.5">
                 {horarios.map((g, i) => (
                   <span key={i} className="text-sm text-gray-600">
@@ -108,7 +108,7 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
           {/* Desde */}
           {centro.fecha_inicio && (
             <div className="flex items-center gap-2.5 text-sm text-gray-500">
-              <Calendar size={15} className="text-red-400 shrink-0" />
+              <Calendar size={15} className="text-gray-400 shrink-0" />
               <span>
                 Desde {new Date(centro.fecha_inicio).toLocaleDateString('es-PA', { day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
@@ -142,7 +142,7 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
                       {items.map(item => (
                         <span
                           key={item}
-                          className="rounded-full bg-red-50 border border-red-100 px-2.5 py-1 text-xs text-red-600 leading-none"
+                          className="rounded-full bg-gray-100 border border-gray-200 px-2.5 py-1 text-xs text-gray-600 leading-none"
                         >
                           {item}
                         </span>
