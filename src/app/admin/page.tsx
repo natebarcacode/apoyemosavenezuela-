@@ -15,9 +15,13 @@ const TIPOS_NEGOCIO = [
   { value: 'otro', label: 'Otro' },
 ]
 
+const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+
 const FORM_CENTRO_VACIO = {
   nombre: '', direccion: '', zona: '',
-  que_acepta: [] as string[], lat: '', lng: '', notas: '', fecha_inicio: '', fecha_fin: '',
+  que_acepta: [] as string[], lat: '', lng: '', notas: '',
+  dias_abierto: [] as string[], hora_apertura: '', hora_cierre: '',
+  fecha_inicio: '', fecha_fin: '',
 }
 
 const FORM_NEGOCIO_VACIO = {
@@ -115,7 +119,10 @@ export default function AdminPage() {
     setFormCentro({
       nombre: c.nombre, direccion: c.direccion, zona: c.zona,
       que_acepta: c.que_acepta, lat: String(c.lat), lng: String(c.lng), notas: c.notas ?? '',
-      fecha_inicio: c.fecha_inicio ? c.fecha_inicio.slice(0, 16) : '',
+      dias_abierto: c.dias_abierto ?? [],
+      hora_apertura: c.hora_apertura ?? '',
+      hora_cierre: c.hora_cierre ?? '',
+      fecha_inicio: c.fecha_inicio ? c.fecha_inicio.slice(0, 10) : '',
       fecha_fin: c.fecha_fin ? c.fecha_fin.slice(0, 16) : '',
     })
     setEditandoId(c.id)
@@ -148,7 +155,12 @@ export default function AdminPage() {
     const payload = {
       nombre: f.nombre, direccion: f.direccion, zona: f.zona,
       que_acepta: f.que_acepta, lat: parseFloat(f.lat), lng: parseFloat(f.lng),
-      notas: f.notas || null, fecha_inicio: f.fecha_inicio || null, fecha_fin: f.fecha_fin || null,
+      notas: f.notas || null,
+      dias_abierto: f.dias_abierto,
+      hora_apertura: f.hora_apertura || null,
+      hora_cierre: f.hora_cierre || null,
+      fecha_inicio: f.fecha_inicio || null,
+      fecha_fin: f.fecha_fin || null,
     }
     if (editandoId) {
       await supabase.from('centros_acopio').update(payload).eq('id', editandoId)
@@ -428,9 +440,42 @@ export default function AdminPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                   placeholder="Ej: Ciudad de Panamá" />
               </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Días abierto</label>
+                <div className="flex flex-wrap gap-2">
+                  {DIAS_SEMANA.map((dia) => (
+                    <button key={dia} type="button"
+                      onClick={() => setFormCentro((f) => ({
+                        ...f,
+                        dias_abierto: f.dias_abierto.includes(dia)
+                          ? f.dias_abierto.filter(d => d !== dia)
+                          : [...f.dias_abierto, dia],
+                      }))}
+                      className={`rounded-full px-3 py-1.5 text-xs font-bold border transition-colors ${
+                        formCentro.dias_abierto.includes(dia)
+                          ? 'bg-red-500 text-white border-red-500'
+                          : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                      }`}>
+                      {dia}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de inicio (opcional)</label>
-                <input type="datetime-local" value={formCentro.fecha_inicio}
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Hora de apertura</label>
+                <input type="time" value={formCentro.hora_apertura}
+                  onChange={(e) => setFormCentro({ ...formCentro, hora_apertura: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Hora de cierre diario</label>
+                <input type="time" value={formCentro.hora_cierre}
+                  onChange={(e) => setFormCentro({ ...formCentro, hora_cierre: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha de inicio (opcional)</label>
+                <input type="date" value={formCentro.fecha_inicio}
                   onChange={(e) => setFormCentro({ ...formCentro, fecha_inicio: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
               </div>

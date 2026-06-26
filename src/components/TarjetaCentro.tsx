@@ -10,6 +10,13 @@ type Props = {
   onClick: () => void
 }
 
+function formatHora(t: string) {
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'pm' : 'am'
+  const h12 = h % 12 || 12
+  return m === 0 ? `${h12}${ampm}` : `${h12}:${String(m).padStart(2, '0')}${ampm}`
+}
+
 function urgencia(fechaFin?: string) {
   if (!fechaFin) return 'normal'
   const h = (new Date(fechaFin).getTime() - Date.now()) / 3600000
@@ -43,18 +50,21 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
         <span>{centro.direccion}</span>
       </div>
 
-      {(centro.fecha_inicio || centro.fecha_fin) && (
+      {(centro.dias_abierto && centro.dias_abierto.length > 0) && (
         <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
-          <Calendar size={13} className="shrink-0 text-red-400" />
+          <Clock size={13} className="shrink-0 text-red-400" />
           <span>
-            {centro.fecha_inicio
-              ? `Desde ${new Date(centro.fecha_inicio).toLocaleString('es-PA', { dateStyle: 'short', timeStyle: 'short' })}`
-              : ''}
-            {centro.fecha_inicio && centro.fecha_fin ? ' · ' : ''}
-            {centro.fecha_fin
-              ? `Hasta ${new Date(centro.fecha_fin).toLocaleString('es-PA', { dateStyle: 'short', timeStyle: 'short' })}`
-              : ''}
+            {centro.dias_abierto.join(' · ')}
+            {(centro.hora_apertura || centro.hora_cierre) && (
+              <> &nbsp;{centro.hora_apertura && formatHora(centro.hora_apertura)}{centro.hora_cierre && ` – ${formatHora(centro.hora_cierre)}`}</>
+            )}
           </span>
+        </div>
+      )}
+      {centro.fecha_inicio && (
+        <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+          <Calendar size={13} className="shrink-0 text-red-400" />
+          <span>Desde {new Date(centro.fecha_inicio).toLocaleDateString('es-PA', { day: 'numeric', month: 'short' })}</span>
         </div>
       )}
 

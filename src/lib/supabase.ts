@@ -35,6 +35,9 @@ export type CentroAcopio = {
   lng: number
   activo: boolean
   notas?: string
+  dias_abierto?: string[]
+  hora_apertura?: string
+  hora_cierre?: string
   fecha_inicio?: string
   fecha_fin?: string
 }
