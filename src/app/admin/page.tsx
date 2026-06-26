@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, CentroAcopio, NegocioSolidario, Categoria } from '@/lib/supabase'
 import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2 } from 'lucide-react'
+import BuscadorUbicacion from '@/components/BuscadorUbicacion'
 
 const TIPOS_NEGOCIO = [
   { value: 'restaurante', label: 'Restaurante' },
@@ -292,10 +293,17 @@ export default function AdminPage() {
                   placeholder="Ej: Supermercado El Rey - Paitilla" />
               </div>
               <div className="sm:col-span-2">
+                <BuscadorUbicacion
+                  onSeleccionar={({ lat, lng, direccion, zona }) =>
+                    setFormCentro((f) => ({ ...f, lat, lng, direccion, zona: zona || f.zona }))
+                  }
+                />
+              </div>
+              <div className="sm:col-span-2">
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Dirección *</label>
                 <input value={formCentro.direccion} onChange={(e) => setFormCentro({ ...formCentro, direccion: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                  placeholder="Ej: Av. Balboa, Paitilla" />
+                  placeholder="Se llena automáticamente o escribe manualmente" />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Zona *</label>
@@ -368,6 +376,13 @@ export default function AdminPage() {
               {editandoId ? 'Editar negocio' : 'Nuevo negocio'}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <BuscadorUbicacion
+                  onSeleccionar={({ direccion, zona }) =>
+                    setFormNegocio((f) => ({ ...f, direccion: direccion || f.direccion, zona: zona || f.zona }))
+                  }
+                />
+              </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Nombre *</label>
                 <input value={formNegocio.nombre} onChange={(e) => setFormNegocio({ ...formNegocio, nombre: e.target.value })}
