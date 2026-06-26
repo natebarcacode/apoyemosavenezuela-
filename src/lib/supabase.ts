@@ -1,5 +1,18 @@
 import { createClient } from '@supabase/supabase-js'
 
+export type NegocioSolidario = {
+  id: number
+  nombre: string
+  tipo: string
+  iniciativa: string
+  zona: string
+  direccion?: string
+  instagram?: string
+  sitio_web?: string
+  vigencia?: string
+  activo: boolean
+}
+
 export type CentroAcopio = {
   id: number
   nombre: string
