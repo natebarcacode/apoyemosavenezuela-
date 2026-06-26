@@ -673,6 +673,19 @@ export default function AdminPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                   placeholder="Ej: -79.5197" />
               </div>
+              {formCentro.lat && formCentro.lng && (
+                <div className="sm:col-span-2">
+                  <a
+                    href={`https://www.google.com/maps?q=${formCentro.lat},${formCentro.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
+                  >
+                    Verificar ubicación en Google Maps →
+                  </a>
+                  <p className="text-xs text-gray-400 mt-1">Si el pin está mal: right-click en el lugar correcto → copia las coordenadas → pégalas arriba.</p>
+                </div>
+              )}
               <div className="sm:col-span-2">
                 <label className="text-xs font-medium text-gray-600 mb-2 block">
                   Qué acepta
@@ -801,6 +814,19 @@ export default function AdminPage() {
                     setFormNegocio((f) => ({ ...f, lat, lng, direccion: direccion || f.direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
                   }
                 />
+                {formNegocio.lat && formNegocio.lng && (
+                  <div className="mt-2">
+                    <a
+                      href={`https://www.google.com/maps?q=${formNegocio.lat},${formNegocio.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
+                    >
+                      Verificar ubicación en Google Maps →
+                    </a>
+                    <p className="text-xs text-gray-400 mt-1">Si el pin está mal: right-click en el lugar correcto → copia las coordenadas → pégalas en los campos de latitud/longitud del centro.</p>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Nombre *</label>
