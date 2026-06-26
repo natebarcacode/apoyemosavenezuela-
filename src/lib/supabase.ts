@@ -1,0 +1,20 @@
+import { createClient } from '@supabase/supabase-js'
+
+export type CentroAcopio = {
+  id: number
+  nombre: string
+  direccion: string
+  zona: string
+  horario: string
+  que_acepta: string[]
+  lat: number
+  lng: number
+  activo: boolean
+  notas?: string
+}
+
+const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+const supabaseUrl = rawUrl.startsWith('https://') ? rawUrl : 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_key'
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
