@@ -4,26 +4,53 @@ import { useState, useRef, useEffect } from 'react'
 import { MapPin, Loader2 } from 'lucide-react'
 
 type Resultado = {
-  display_name: string
-  name: string
+  label: string
   lat: string
-  lon: string
-  address: {
-    road?: string
-    house_number?: string
-    suburb?: string
-    neighbourhood?: string
-    city_district?: string
-    city?: string
-    town?: string
-    village?: string
-    state?: string
-    country?: string
-  }
+  lng: string
+  direccion: string
+  zona: string
+  nombre: string
 }
 
 type Props = {
   onSeleccionar: (datos: { lat: string; lng: string; direccion: string; zona: string; nombre: string }) => void
+}
+
+async function buscarLugares(query: string): Promise<Resultado[]> {
+  // Photon (komoot) — mejor cobertura de POIs que Nominatim
+  const params = new URLSearchParams({
+    q: query,
+    limit: '10',
+    lang: 'es',
+    // bbox de Panamá como bias, no como filtro estricto
+    bbox: '-83.05,7.2,-77.2,9.7',
+  })
+
+  const res = await fetch(`https://photon.komoot.io/api/?${params}`, {
+    headers: { 'Accept-Language': 'es' },
+  })
+  const data = await res.json()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data.features ?? []).map((f: any) => {
+    const p = f.properties ?? {}
+    const [lng, lat] = f.geometry?.coordinates ?? [0, 0]
+
+    const partesDireccion = [p.housenumber, p.street].filter(Boolean).join(' ')
+    const ciudad = p.city || p.town || p.village || p.municipality || ''
+    const direccion = partesDireccion
+      ? `${partesDireccion}${ciudad ? ', ' + ciudad : ''}`.trim()
+      : p.street || p.name || ''
+
+    const zona = p.suburb || p.neighbourhood || p.district || p.city_district || ciudad || p.state || ''
+    const nombre = p.name || p.street || query
+
+    // etiqueta para mostrar en el dropdown
+    const partes = [p.name, p.street, p.city || p.town, p.state].filter(Boolean)
+    const label = partes.join(', ')
+
+    return { label, lat: String(lat), lng: String(lng), direccion, zona, nombre }
+  })
 }
 
 export default function BuscadorUbicacion({ onSeleccionar }: Props) {
@@ -52,20 +79,7 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
     timeoutRef.current = setTimeout(async () => {
       setBuscando(true)
       try {
-        const params = new URLSearchParams({
-          format: 'json',
-          q: valor,
-          addressdetails: '1',
-          limit: '8',
-          countrycodes: 'pa',
-          viewbox: '-83.05,9.7,-77.2,7.2',
-          bounded: '1',
-        })
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?${params}`,
-          { headers: { 'Accept-Language': 'es' } }
-        )
-        const data: Resultado[] = await res.json()
+        const data = await buscarLugares(valor)
         setResultados(data)
         setAbierto(data.length > 0)
       } catch {
@@ -73,21 +87,12 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
       } finally {
         setBuscando(false)
       }
-    }, 500)
+    }, 400)
   }
 
   function seleccionar(r: Resultado) {
-    const a = r.address
-    const partesDireccion = [a.house_number, a.road].filter(Boolean).join(' ')
-    const ciudad = a.city || a.town || a.village || ''
-    const direccion = partesDireccion
-      ? `${partesDireccion}, ${ciudad}`.trim().replace(/,\s*$/, '')
-      : r.display_name
-    const zona = a.suburb || a.neighbourhood || a.city_district || ciudad || a.state || ''
-
-    const nombre = r.name || r.display_name.split(',')[0].trim()
-    onSeleccionar({ lat: r.lat, lng: r.lon, direccion, zona, nombre })
-    setQuery(r.display_name)
+    onSeleccionar({ lat: r.lat, lng: r.lng, direccion: r.direccion, zona: r.zona, nombre: r.nombre })
+    setQuery(r.label)
     setAbierto(false)
     setResultados([])
   }
@@ -103,7 +108,7 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
           value={query}
           onChange={(e) => buscar(e.target.value)}
           onFocus={() => resultados.length > 0 && setAbierto(true)}
-          placeholder="Ej: Super Rey Paitilla, Ciudad de Panamá"
+          placeholder="Ej: Super Rey Paitilla, Riba Smith Via España..."
           className="w-full rounded-xl border border-blue-200 bg-blue-50 pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         {buscando && (
@@ -112,7 +117,7 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
       </div>
 
       {abierto && resultados.length > 0 && (
-        <div className="absolute z-[2000] mt-1 w-full bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+        <div className="absolute z-[2000] mt-1 w-full bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden max-h-72 overflow-y-auto">
           {resultados.map((r, i) => (
             <button
               key={i}
@@ -120,7 +125,7 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
               onClick={() => seleccionar(r)}
               className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
             >
-              {r.display_name}
+              {r.label}
             </button>
           ))}
         </div>
