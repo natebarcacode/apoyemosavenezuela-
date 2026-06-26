@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic'
 import { supabase, CentroAcopio, NegocioSolidario, Categoria } from '@/lib/supabase'
 import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
+import ModalCentro from '@/components/ModalCentro'
+import ModalNegocio from '@/components/ModalNegocio'
 import { Search, Package, Store, MapPin, Users } from 'lucide-react'
 
 const MapaCentros = dynamic(() => import('@/components/MapaCentros'), { ssr: false })
@@ -19,8 +21,9 @@ export default function Home() {
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [seleccionado, setSeleccionado] = useState<CentroAcopio | null>(null)
   const [seleccionadoNegocio, setSeleccionadoNegocio] = useState<NegocioSolidario | null>(null)
+  const [modalCentro, setModalCentro] = useState<CentroAcopio | null>(null)
+  const [modalNegocio, setModalNegocio] = useState<NegocioSolidario | null>(null)
   const [busqueda, setBusqueda] = useState('')
-  const [categoria, setCategoria] = useState('')
   const [zona, setZona] = useState('')
   const [cargando, setCargando] = useState(true)
 
@@ -45,9 +48,8 @@ export default function Home() {
 
   const centrosFiltrados = centros.filter(c => {
     const matchB = busqueda === '' || c.nombre.toLowerCase().includes(busqueda.toLowerCase()) || c.direccion.toLowerCase().includes(busqueda.toLowerCase())
-    const matchC = categoria === '' || c.que_acepta.includes(categoria)
     const matchZ = zona === '' || c.zona === zona
-    return matchB && matchC && matchZ
+    return matchB && matchZ
   })
 
   const negociosFiltrados = negocios.filter(n => {
@@ -56,15 +58,17 @@ export default function Home() {
     return matchB && matchZ
   })
 
-  function seleccionarCentro(c: CentroAcopio) {
+  function abrirCentro(c: CentroAcopio) {
     setSeleccionado(c)
+    setModalCentro(c)
     setTimeout(() => {
       document.getElementById(`centro-${c.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }, 50)
   }
 
-  function seleccionarNegocio(n: NegocioSolidario) {
+  function abrirNegocio(n: NegocioSolidario) {
     setSeleccionadoNegocio(n)
+    setModalNegocio(n)
     setTimeout(() => {
       document.getElementById(`negocio-${n.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }, 50)
@@ -73,7 +77,6 @@ export default function Home() {
   function cambiarTab(t: Tab) {
     setTab(t)
     setBusqueda('')
-    setCategoria('')
     setZona('')
     setSeleccionado(null)
     setSeleccionadoNegocio(null)
@@ -194,40 +197,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Category pills — solo para centros */}
-          {tab === 'centros' && categorias.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Filtrar por insumo</p>
-              <div
-                className="flex gap-1.5 overflow-x-auto pb-0.5"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
-                <button
-                  onClick={() => setCategoria('')}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border ${
-                    categoria === ''
-                      ? 'bg-red-500 text-white border-red-500 shadow-sm'
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-red-300 hover:text-red-500'
-                  }`}
-                >
-                  Todos
-                </button>
-                {categorias.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => setCategoria(c.nombre === categoria ? '' : c.nombre)}
-                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border ${
-                      categoria === c.nombre
-                        ? 'bg-red-500 text-white border-red-500 shadow-sm'
-                        : 'bg-white text-gray-500 border-gray-200 hover:border-red-300 hover:text-red-500'
-                    }`}
-                  >
-                    {c.nombre}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Cards + Map */}
@@ -253,7 +222,7 @@ export default function Home() {
                   <TarjetaCentro
                     centro={centro}
                     seleccionado={seleccionado?.id === centro.id}
-                    onClick={() => seleccionarCentro(centro)}
+                    onClick={() => abrirCentro(centro)}
                   />
                 </div>
               ))}
@@ -263,7 +232,7 @@ export default function Home() {
               className="rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky top-[105px]"
               style={{ height: 'calc(100vh - 230px)' }}
             >
-              <MapaCentros centros={centrosFiltrados} onSelect={seleccionarCentro} />
+              <MapaCentros centros={centrosFiltrados} onSelect={abrirCentro} />
             </div>
           </div>
         ) : (
@@ -283,7 +252,7 @@ export default function Home() {
                   <TarjetaNegocio
                     negocio={n}
                     seleccionado={seleccionadoNegocio?.id === n.id}
-                    onClick={() => seleccionarNegocio(n)}
+                    onClick={() => abrirNegocio(n)}
                   />
                 </div>
               ))}
@@ -294,7 +263,7 @@ export default function Home() {
               style={{ height: 'calc(100vh - 230px)' }}
             >
               {negociosConMapa.length > 0 ? (
-                <MapaNegocios negocios={negociosConMapa} onSelect={seleccionarNegocio} />
+                <MapaNegocios negocios={negociosConMapa} onSelect={abrirNegocio} />
               ) : (
                 <div className="w-full h-full bg-amber-50/40 flex flex-col items-center justify-center gap-3">
                   <Store size={36} className="text-amber-200" />
@@ -331,6 +300,21 @@ export default function Home() {
       <footer className="flex items-center justify-center gap-2 pb-8 text-xs text-gray-400">
         Todos con Venezuela <img src="/logo.svg" className="h-4 w-auto" alt="" />
       </footer>
+
+      {/* Modals */}
+      {modalCentro && (
+        <ModalCentro
+          centro={modalCentro}
+          categorias={categorias}
+          onClose={() => setModalCentro(null)}
+        />
+      )}
+      {modalNegocio && (
+        <ModalNegocio
+          negocio={modalNegocio}
+          onClose={() => setModalNegocio(null)}
+        />
+      )}
     </div>
   )
 }
