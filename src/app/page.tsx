@@ -7,7 +7,7 @@ import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
 import ModalCentro from '@/components/ModalCentro'
 import ModalNegocio from '@/components/ModalNegocio'
-import { Search, Package, Store, MapPin, Users } from 'lucide-react'
+import { Search, Package, Store, MapPin, Users, X } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/BrandIcons'
 
 const MapaCentros = dynamic(() => import('@/components/MapaCentros'), { ssr: false })
@@ -25,7 +25,7 @@ export default function Home() {
   const [modalCentro, setModalCentro] = useState<CentroAcopio | null>(null)
   const [modalNegocio, setModalNegocio] = useState<NegocioSolidario | null>(null)
   const [busqueda, setBusqueda] = useState('')
-  const [zona, setZona] = useState('')
+  const [zonasFiltro, setZonasFiltro] = useState<string[]>([])
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -47,17 +47,40 @@ export default function Home() {
     new Set((tab === 'centros' ? centros : negocios).map(c => c.zona))
   ).sort()
 
+  const q = busqueda.toLowerCase().trim()
+
   const centrosFiltrados = centros.filter(c => {
-    const matchB = busqueda === '' || c.nombre.toLowerCase().includes(busqueda.toLowerCase()) || c.direccion.toLowerCase().includes(busqueda.toLowerCase())
-    const matchZ = zona === '' || c.zona === zona
+    const matchB = q === '' ||
+      c.nombre.toLowerCase().includes(q) ||
+      c.direccion.toLowerCase().includes(q) ||
+      c.zona.toLowerCase().includes(q) ||
+      c.que_acepta.some(i => i.toLowerCase().includes(q))
+    const matchZ = zonasFiltro.length === 0 || zonasFiltro.includes(c.zona)
     return matchB && matchZ
   })
 
   const negociosFiltrados = negocios.filter(n => {
-    const matchB = busqueda === '' || n.nombre.toLowerCase().includes(busqueda.toLowerCase()) || n.iniciativa.toLowerCase().includes(busqueda.toLowerCase())
-    const matchZ = zona === '' || n.zona === zona
+    const matchB = q === '' ||
+      n.nombre.toLowerCase().includes(q) ||
+      n.iniciativa.toLowerCase().includes(q) ||
+      n.zona.toLowerCase().includes(q) ||
+      (n.tipo && n.tipo.toLowerCase().includes(q))
+    const matchZ = zonasFiltro.length === 0 || zonasFiltro.includes(n.zona)
     return matchB && matchZ
   })
+
+  const filtrosActivos = q !== '' || zonasFiltro.length > 0
+
+  function toggleZona(z: string) {
+    setZonasFiltro(prev =>
+      prev.includes(z) ? prev.filter(x => x !== z) : [...prev, z]
+    )
+  }
+
+  function limpiarFiltros() {
+    setBusqueda('')
+    setZonasFiltro([])
+  }
 
   function abrirCentro(c: CentroAcopio) {
     setSeleccionado(c)
@@ -78,7 +101,7 @@ export default function Home() {
   function cambiarTab(t: Tab) {
     setTab(t)
     setBusqueda('')
-    setZona('')
+    setZonasFiltro([])
     setSeleccionado(null)
     setSeleccionadoNegocio(null)
   }
@@ -172,30 +195,66 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3.5 mb-4">
-          <div className="flex flex-col sm:flex-row gap-2">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3.5 mb-4 flex flex-col gap-3">
+          {/* Fila 1: buscador + limpiar */}
+          <div className="flex gap-2">
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder={tab === 'centros' ? 'Buscar por nombre o dirección...' : 'Buscar por nombre o iniciativa...'}
+                placeholder={tab === 'centros' ? 'Buscar por nombre, zona o insumo...' : 'Buscar por nombre, zona o iniciativa...'}
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 focus:bg-white transition-all placeholder-gray-400"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 focus:bg-white transition-all placeholder-gray-400"
               />
+              {busqueda && (
+                <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X size={14} />
+                </button>
+              )}
             </div>
-            <div className="relative">
-              <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              <select
-                value={zona}
-                onChange={e => setZona(e.target.value)}
-                className="w-full sm:w-auto pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:bg-white appearance-none cursor-pointer transition-all"
+            {filtrosActivos && (
+              <button
+                onClick={limpiarFiltros}
+                className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
               >
-                <option value="">Todas las zonas</option>
-                {zonas.map(z => <option key={z} value={z}>{z}</option>)}
-              </select>
-            </div>
+                <X size={13} /> Limpiar
+              </button>
+            )}
           </div>
+
+          {/* Fila 2: chips de zona */}
+          {zonas.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1">
+                <MapPin size={11} /> Zona:
+              </span>
+              {zonas.map(z => (
+                <button
+                  key={z}
+                  onClick={() => toggleZona(z)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                    zonasFiltro.includes(z)
+                      ? tab === 'centros'
+                        ? 'bg-red-500 text-white border-red-500'
+                        : 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  {z}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Contador de resultados */}
+          {filtrosActivos && (
+            <p className="text-xs text-gray-400">
+              {tab === 'centros'
+                ? `${centrosFiltrados.length} de ${centros.length} centros`
+                : `${negociosFiltrados.length} de ${negocios.length} negocios`}
+            </p>
+          )}
         </div>
 
         {/* Cards + Map */}
