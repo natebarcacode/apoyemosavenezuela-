@@ -1,7 +1,7 @@
 'use client'
 
 import { NegocioSolidario, HorarioDia } from '@/lib/supabase'
-import { X, MapPin, Clock, Calendar, AtSign, Globe, Store } from 'lucide-react'
+import { X, MapPin, Clock, Calendar, Globe, Store } from 'lucide-react'
 import CountdownTimer from './CountdownTimer'
 
 function formatHora(t: string) {
@@ -127,20 +127,10 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
 
           {/* Fecha exacta de cierre + countdown */}
           {negocio.fecha_fin && (
-            <>
-              <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                <Clock size={15} className="text-amber-400 shrink-0" />
-                <span>
-                  Termina el{' '}
-                  <span className="font-semibold">
-                    {new Date(negocio.fecha_fin).toLocaleDateString('es-PA', {
-                      weekday: 'long', day: 'numeric', month: 'long',
-                    })}
-                  </span>
-                </span>
-              </div>
-              <CountdownTimer fechaFin={negocio.fecha_fin} label="Iniciativa termina" />
-            </>
+            <CountdownTimer
+              fechaFin={negocio.fecha_fin}
+              label={`Termina el ${new Date(negocio.fecha_fin).toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' })} ·`}
+            />
           )}
         </div>
 
@@ -154,7 +144,6 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
                 rel="noopener noreferrer"
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
               >
-                <AtSign size={13} />
                 {negocio.instagram.startsWith('@') ? negocio.instagram : `@${negocio.instagram}`}
               </a>
             )}
