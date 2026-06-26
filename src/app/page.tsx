@@ -87,12 +87,9 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <Heart size={20} className="text-red-500 fill-red-500" />
               <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">
-                Acopio <span className="text-red-500">Venezuela</span>
+                Apoyemos a <span className="text-red-500">Venezuela</span>
               </h1>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Iniciativas solidarias en Panamá
-            </p>
           </div>
           <div className="flex gap-4 text-right">
             <div>
@@ -227,7 +224,7 @@ export default function Home() {
       </div>
 
       <footer className="text-center py-6 text-xs text-gray-400">
-        Hecho con amor para Venezuela 🇻🇪
+        Todos con Venezuela 🇻🇪
       </footer>
     </div>
   )

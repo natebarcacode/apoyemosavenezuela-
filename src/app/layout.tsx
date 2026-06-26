@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Acopio Venezuela — Centros de acopio en Panamá",
+  title: "Apoyemos a Venezuela",
   description: "Encuentra el centro de acopio más cercano para donar insumos a Venezuela.",
 };
 
