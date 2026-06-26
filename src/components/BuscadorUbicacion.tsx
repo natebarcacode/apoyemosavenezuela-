@@ -16,43 +16,6 @@ type Props = {
   onSeleccionar: (datos: { lat: string; lng: string; direccion: string; zona: string; nombre: string }) => void
 }
 
-async function buscarLugares(query: string): Promise<Resultado[]> {
-  // Photon (komoot) — mejor cobertura de POIs que Nominatim
-  const params = new URLSearchParams({
-    q: query,
-    limit: '10',
-    lang: 'es',
-    // bbox de Panamá como bias, no como filtro estricto
-    bbox: '-83.05,7.2,-77.2,9.7',
-  })
-
-  const res = await fetch(`https://photon.komoot.io/api/?${params}`, {
-    headers: { 'Accept-Language': 'es' },
-  })
-  const data = await res.json()
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data.features ?? []).map((f: any) => {
-    const p = f.properties ?? {}
-    const [lng, lat] = f.geometry?.coordinates ?? [0, 0]
-
-    const partesDireccion = [p.housenumber, p.street].filter(Boolean).join(' ')
-    const ciudad = p.city || p.town || p.village || p.municipality || ''
-    const direccion = partesDireccion
-      ? `${partesDireccion}${ciudad ? ', ' + ciudad : ''}`.trim()
-      : p.street || p.name || ''
-
-    const zona = p.suburb || p.neighbourhood || p.district || p.city_district || ciudad || p.state || ''
-    const nombre = p.name || p.street || query
-
-    // etiqueta para mostrar en el dropdown
-    const partes = [p.name, p.street, p.city || p.town, p.state].filter(Boolean)
-    const label = partes.join(', ')
-
-    return { label, lat: String(lat), lng: String(lng), direccion, zona, nombre }
-  })
-}
-
 export default function BuscadorUbicacion({ onSeleccionar }: Props) {
   const [query, setQuery] = useState('')
   const [resultados, setResultados] = useState<Resultado[]>([])
@@ -79,7 +42,8 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
     timeoutRef.current = setTimeout(async () => {
       setBuscando(true)
       try {
-        const data = await buscarLugares(valor)
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(valor)}`)
+        const data: Resultado[] = await res.json()
         setResultados(data)
         setAbierto(data.length > 0)
       } catch {
@@ -108,7 +72,7 @@ export default function BuscadorUbicacion({ onSeleccionar }: Props) {
           value={query}
           onChange={(e) => buscar(e.target.value)}
           onFocus={() => resultados.length > 0 && setAbierto(true)}
-          placeholder="Ej: Super Rey Paitilla, Riba Smith Via España..."
+          placeholder="Ej: Super Rey Paitilla, Riba Smith Vía España..."
           className="w-full rounded-xl border border-blue-200 bg-blue-50 pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         {buscando && (
