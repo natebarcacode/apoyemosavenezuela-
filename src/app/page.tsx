@@ -18,10 +18,13 @@ type UrgenciaFiltro = 'todos' | 'hoy' | 'semana' | 'permanente'
 
 function nivelUrgencia(fechaFin?: string | null): 'hoy' | 'semana' | 'normal' | 'permanente' | 'expirado' {
   if (!fechaFin) return 'permanente'
-  const h = (new Date(fechaFin).getTime() - Date.now()) / 3600000
-  if (h <= 0) return 'expirado'
-  if (h < 24) return 'hoy'
-  if (h < 168) return 'semana'
+  const fin = new Date(fechaFin).getTime()
+  const now = Date.now()
+  if (fin <= now) return 'expirado'
+  const finDeHoy = new Date(); finDeHoy.setHours(23, 59, 59, 999)
+  if (fin <= finDeHoy.getTime()) return 'hoy'
+  const en7dias = now + 7 * 24 * 3600000
+  if (fin <= en7dias) return 'semana'
   return 'normal'
 }
 
@@ -159,6 +162,7 @@ export default function Home() {
   }
 
   const negociosConMapa = negociosFiltrados.filter(n => n.lat != null && n.lng != null)
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(true)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -218,10 +222,11 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── WA BANNER ── */}
+      {/* ── BANNER: WhatsApp + CTA juntos ── */}
       <div style={{ background: 'linear-gradient(135deg,#064e3b 0%,#065f46 60%,#047857 100%)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            {/* WhatsApp */}
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
                 <WhatsAppIcon className="w-4 h-4 text-white" />
@@ -231,125 +236,131 @@ export default function Home() {
                 <p className="text-xs text-emerald-200">Únete a nuestro grupo de WhatsApp</p>
               </div>
             </div>
-            <a
-              href="https://chat.whatsapp.com/I0L8IHvYpnJC6QVEdVF0o3?mode=gi_t"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 flex items-center gap-2 rounded-full bg-white text-emerald-800 font-bold text-sm px-5 py-2 hover:bg-emerald-50 transition-colors shadow-sm"
-            >
-              <Users size={13} /> Unirme al grupo
-            </a>
+            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
+              <a href="https://chat.whatsapp.com/I0L8IHvYpnJC6QVEdVF0o3?mode=gi_t"
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-full bg-white text-emerald-800 font-bold text-sm px-4 py-1.5 hover:bg-emerald-50 transition-colors shadow-sm">
+                <Users size={13} /> Unirme
+              </a>
+              {/* Separador */}
+              <span className="hidden sm:block w-px h-5 bg-white/20" />
+              {/* CTA */}
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-emerald-200 hidden sm:block">¿Conoces un lugar?</p>
+                <a href="https://wa.me/50767810189"
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 text-white font-semibold text-sm px-4 py-1.5 hover:bg-white/25 transition-colors">
+                  Contáctanos →
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── MAIN ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-10">
 
-        {/* Filters */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3.5 mb-4 flex flex-col gap-3">
-          {/* Fila 1: buscador + limpiar */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder={tab === 'centros' ? 'Buscar por nombre, zona o insumo...' : 'Buscar por nombre, zona o iniciativa...'}
-                value={busqueda}
-                onChange={e => setBusqueda(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 focus:bg-white transition-all placeholder-gray-400"
-              />
-              {busqueda && (
-                <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  <X size={14} />
-                </button>
+        {/* Filters — colapsables */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] mb-4 overflow-hidden">
+          {/* Header del filtro — siempre visible */}
+          <button
+            onClick={() => setFiltrosAbiertos(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Search size={14} className="text-gray-400" />
+              <span className="text-sm font-semibold text-gray-700">Filtros</span>
+              {filtrosActivos && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === 'centros' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
+                  {tab === 'centros' ? `${centrosFiltrados.length}/${centros.length}` : `${negociosFiltrados.length}/${negocios.length}`}
+                </span>
               )}
             </div>
-            {filtrosActivos && (
-              <button
-                onClick={limpiarFiltros}
-                className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-              >
-                <X size={13} /> Limpiar
-              </button>
-            )}
-          </div>
+            <span className={`text-gray-400 text-xs transition-transform duration-200 ${filtrosAbiertos ? 'rotate-180' : ''}`}>▾</span>
+          </button>
 
-          {/* Fila 2: chips de urgencia */}
-          <div className="flex flex-wrap gap-1.5">
-            <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1 self-center">
-              <Clock size={11} /> Cierra:
-            </span>
-            {([
-              { id: 'todos', label: 'Todos', icon: null },
-              { id: 'hoy', label: 'Hoy', icon: <Zap size={10} /> },
-              { id: 'semana', label: 'Esta semana', icon: <Clock size={10} /> },
-              { id: 'permanente', label: 'Sin fecha', icon: <Infinity size={10} /> },
-            ] as const).map(op => (
-              <button
-                key={op.id}
-                onClick={() => setUrgenciaFiltro(op.id)}
-                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                  urgenciaFiltro === op.id
-                    ? op.id === 'hoy' ? 'bg-red-500 text-white border-red-500'
-                    : op.id === 'semana' ? 'bg-orange-400 text-white border-orange-400'
-                    : op.id === 'permanente' ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-gray-700 text-white border-gray-700'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                }`}
-              >
-                {op.icon}{op.label}
-              </button>
-            ))}
-          </div>
+          {/* Contenido colapsable */}
+          {filtrosAbiertos && (
+            <div className="px-4 pb-4 flex flex-col gap-3 border-t border-gray-100 pt-3">
+              {/* Buscador */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder={tab === 'centros' ? 'Buscar por nombre, zona o insumo...' : 'Buscar por nombre, zona o iniciativa...'}
+                    value={busqueda}
+                    onChange={e => setBusqueda(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 focus:bg-white transition-all placeholder-gray-400"
+                  />
+                  {busqueda && (
+                    <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                {filtrosActivos && (
+                  <button onClick={limpiarFiltros}
+                    className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
+                    <X size={13} /> Limpiar
+                  </button>
+                )}
+              </div>
 
-          {/* Fila 3: chips de zona */}
-          {zonas.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1 self-center">
-                <MapPin size={11} /> Zona:
-              </span>
-              {zonas.map(z => (
-                <button
-                  key={z}
-                  onClick={() => toggleZona(z)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                    zonasFiltro.includes(z)
-                      ? tab === 'centros'
-                        ? 'bg-red-500 text-white border-red-500'
-                        : 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                  }`}
-                >
-                  {z}
-                </button>
-              ))}
+              {/* Cierra en */}
+              <div className="flex flex-wrap gap-1.5">
+                <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1 self-center"><Clock size={11} /> Cierra:</span>
+                {([
+                  { id: 'todos', label: 'Todos', icon: null },
+                  { id: 'hoy', label: 'Hoy', icon: <Zap size={10} /> },
+                  { id: 'semana', label: 'Esta semana', icon: <Clock size={10} /> },
+                  { id: 'permanente', label: 'Sin fecha', icon: <Infinity size={10} /> },
+                ] as const).map(op => (
+                  <button key={op.id} onClick={() => setUrgenciaFiltro(op.id)}
+                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                      urgenciaFiltro === op.id
+                        ? op.id === 'hoy' ? 'bg-red-500 text-white border-red-500'
+                        : op.id === 'semana' ? 'bg-orange-400 text-white border-orange-400'
+                        : op.id === 'permanente' ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-gray-700 text-white border-gray-700'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}>
+                    {op.icon}{op.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Zona */}
+              {zonas.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1 self-center"><MapPin size={11} /> Zona:</span>
+                  {zonas.map(z => (
+                    <button key={z} onClick={() => toggleZona(z)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                        zonasFiltro.includes(z)
+                          ? tab === 'centros' ? 'bg-red-500 text-white border-red-500' : 'bg-amber-500 text-white border-amber-500'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                      }`}>
+                      {z}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Contador */}
-          {filtrosActivos && (
-            <p className="text-xs text-gray-400">
-              {tab === 'centros'
-                ? `${centrosFiltrados.length} de ${centros.length} centros`
-                : `${negociosFiltrados.length} de ${negocios.length} negocios`}
-            </p>
           )}
         </div>
 
-        {/* Cards + Map */}
+        {/* Cards + Map — scroll natural de página, mapa sticky */}
         {cargando ? (
           <div className="flex flex-col items-center justify-center py-28 gap-3 text-gray-400">
             <div className="w-7 h-7 border-2 border-gray-200 border-t-red-400 rounded-full animate-spin" />
             <p className="text-sm">Cargando...</p>
           </div>
         ) : tab === 'centros' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Lista centros */}
-            <div
-              className="flex flex-col gap-2 overflow-y-auto pr-0.5"
-              style={{ maxHeight: 'calc(100vh - 230px)', scrollbarWidth: 'thin', scrollbarColor: '#E5E7EB transparent' }}
-            >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            {/* Lista — flujo natural, sin scroll interno */}
+            <div className="flex flex-col gap-2 pb-6">
               {centrosFiltrados.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
                   <Package size={32} className="opacity-20" />
@@ -366,43 +377,28 @@ export default function Home() {
                     <div className="flex flex-col gap-1.5">
                       {items.map(centro => (
                         <div key={centro.id} id={`centro-${centro.id}`}>
-                          <TarjetaCentro
-                            centro={centro}
-                            seleccionado={seleccionado?.id === centro.id}
-                            onClick={() => abrirCentro(centro)}
-                          />
+                          <TarjetaCentro centro={centro} seleccionado={seleccionado?.id === centro.id} onClick={() => abrirCentro(centro)} />
                         </div>
                       ))}
                     </div>
                   </div>
                 ))
-              ) : (
-                centrosFiltrados.map(centro => (
-                  <div key={centro.id} id={`centro-${centro.id}`}>
-                    <TarjetaCentro
-                      centro={centro}
-                      seleccionado={seleccionado?.id === centro.id}
-                      onClick={() => abrirCentro(centro)}
-                    />
-                  </div>
-                ))
-              )}
+              ) : centrosFiltrados.map(centro => (
+                <div key={centro.id} id={`centro-${centro.id}`}>
+                  <TarjetaCentro centro={centro} seleccionado={seleccionado?.id === centro.id} onClick={() => abrirCentro(centro)} />
+                </div>
+              ))}
             </div>
-            {/* Mapa centros */}
-            <div
-              className="rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky top-[105px]"
-              style={{ height: 'calc(100vh - 230px)' }}
-            >
+            {/* Mapa — sticky debajo del header */}
+            <div className="hidden lg:block rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky"
+              style={{ top: 112, height: 'calc(100vh - 120px)' }}>
               <MapaCentros centros={centrosFiltrados} onSelect={abrirCentro} />
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Lista negocios */}
-            <div
-              className="flex flex-col gap-2 overflow-y-auto pr-0.5"
-              style={{ maxHeight: 'calc(100vh - 230px)', scrollbarWidth: 'thin', scrollbarColor: '#E5E7EB transparent' }}
-            >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            {/* Lista — flujo natural */}
+            <div className="flex flex-col gap-2 pb-6">
               {negociosFiltrados.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
                   <Store size={32} className="opacity-20" />
@@ -419,33 +415,21 @@ export default function Home() {
                     <div className="flex flex-col gap-1.5">
                       {items.map(n => (
                         <div key={n.id} id={`negocio-${n.id}`}>
-                          <TarjetaNegocio
-                            negocio={n}
-                            seleccionado={seleccionadoNegocio?.id === n.id}
-                            onClick={() => abrirNegocio(n)}
-                          />
+                          <TarjetaNegocio negocio={n} seleccionado={seleccionadoNegocio?.id === n.id} onClick={() => abrirNegocio(n)} />
                         </div>
                       ))}
                     </div>
                   </div>
                 ))
-              ) : (
-                negociosFiltrados.map(n => (
-                  <div key={n.id} id={`negocio-${n.id}`}>
-                    <TarjetaNegocio
-                      negocio={n}
-                      seleccionado={seleccionadoNegocio?.id === n.id}
-                      onClick={() => abrirNegocio(n)}
-                    />
-                  </div>
-                ))
-              )}
+              ) : negociosFiltrados.map(n => (
+                <div key={n.id} id={`negocio-${n.id}`}>
+                  <TarjetaNegocio negocio={n} seleccionado={seleccionadoNegocio?.id === n.id} onClick={() => abrirNegocio(n)} />
+                </div>
+              ))}
             </div>
-            {/* Mapa negocios */}
-            <div
-              className="rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky top-[105px]"
-              style={{ height: 'calc(100vh - 230px)' }}
-            >
+            {/* Mapa — sticky */}
+            <div className="hidden lg:block rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky"
+              style={{ top: 112, height: 'calc(100vh - 120px)' }}>
               {negociosConMapa.length > 0 ? (
                 <MapaNegocios negocios={negociosConMapa} onSelect={abrirNegocio} />
               ) : (
@@ -460,25 +444,6 @@ export default function Home() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* ── CTA ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-10 mt-6">
-        <div
-          className="rounded-2xl px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-          style={{ background: 'linear-gradient(135deg,#1e3a5f 0%,#7f1d1d 100%)' }}
-        >
-          <div>
-            <p className="font-bold text-white text-sm">¿Conoces un centro o negocio solidario?</p>
-            <p className="text-sm text-white/60 mt-1">Escríbenos y lo publicamos aquí.</p>
-          </div>
-          <a
-            href="mailto:apoyemosavenezuela@gmail.com"
-            className="shrink-0 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-gray-900 hover:bg-gray-100 transition-colors whitespace-nowrap shadow-sm"
-          >
-            Contáctanos →
-          </a>
-        </div>
       </div>
 
       <footer className="flex items-center justify-center gap-2 pb-8 text-xs text-gray-400">
