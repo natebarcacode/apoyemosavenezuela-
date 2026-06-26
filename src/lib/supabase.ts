@@ -1,5 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 
+export type GrupoCategoria = {
+  id: number
+  nombre: string
+}
+
 export type Categoria = {
   id: number
   nombre: string

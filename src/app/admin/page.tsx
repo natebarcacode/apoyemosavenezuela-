@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, CentroAcopio, NegocioSolidario, Categoria } from '@/lib/supabase'
+import { supabase, CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria } from '@/lib/supabase'
+import { useRef } from 'react'
 import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2 } from 'lucide-react'
 import BuscadorUbicacion from '@/components/BuscadorUbicacion'
 
@@ -35,8 +36,10 @@ export default function AdminPage() {
   const [centros, setCentros] = useState<CentroAcopio[]>([])
   const [negocios, setNegocios] = useState<NegocioSolidario[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [grupos, setGrupos] = useState<GrupoCategoria[]>([])
   const [nuevaCategoria, setNuevaCategoria] = useState('')
-  const [nuevaGrupo, setNuevaGrupo] = useState('')
+  const [nuevoGrupo, setNuevoGrupo] = useState('')
+  const dragId = useRef<number | null>(null)
 
   const [formCentro, setFormCentro] = useState(FORM_CENTRO_VACIO)
   const [formNegocio, setFormNegocio] = useState(FORM_NEGOCIO_VACIO)
@@ -55,24 +58,44 @@ export default function AdminPage() {
   }
 
   async function cargar() {
-    const [{ data: dc }, { data: dn }, { data: dcat }] = await Promise.all([
+    const [{ data: dc }, { data: dn }, { data: dcat }, { data: dgr }] = await Promise.all([
       supabase.from('centros_acopio').select('*').order('created_at', { ascending: false }),
       supabase.from('negocios_solidarios').select('*').order('created_at', { ascending: false }),
       supabase.from('categorias').select('*').order('nombre'),
+      supabase.from('grupos_categorias').select('*').order('nombre'),
     ])
     setCentros(dc ?? [])
     setNegocios(dn ?? [])
     setCategorias(dcat ?? [])
+    setGrupos(dgr ?? [])
   }
 
   useEffect(() => { if (autenticado) cargar() }, [autenticado])
 
+  async function agregarGrupo() {
+    const nombre = nuevoGrupo.trim()
+    if (!nombre) return
+    await supabase.from('grupos_categorias').insert({ nombre })
+    setNuevoGrupo('')
+    cargar()
+  }
+
+  async function eliminarGrupo(id: number, nombre: string) {
+    await supabase.from('categorias').update({ grupo: null }).eq('grupo', nombre)
+    await supabase.from('grupos_categorias').delete().eq('id', id)
+    cargar()
+  }
+
   async function agregarCategoria() {
     const nombre = nuevaCategoria.trim()
     if (!nombre) return
-    await supabase.from('categorias').insert({ nombre, grupo: nuevaGrupo.trim() || null })
+    await supabase.from('categorias').insert({ nombre, grupo: null })
     setNuevaCategoria('')
-    setNuevaGrupo('')
+    cargar()
+  }
+
+  async function asignarGrupo(categoriaId: number, grupoNombre: string | null) {
+    await supabase.from('categorias').update({ grupo: grupoNombre }).eq('id', categoriaId)
     cargar()
   }
 
@@ -247,59 +270,115 @@ export default function AdminPage() {
 
         {/* Tab categorías */}
         {tab === 'categorias' && (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h2 className="text-base font-bold text-gray-900 mb-1">Categorías de insumos</h2>
-            <p className="text-xs text-gray-500 mb-4">Estas categorías aparecen en el formulario de centros de acopio.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-            <div className="flex flex-col sm:flex-row gap-2 mb-6">
-              <input
-                value={nuevaGrupo}
-                onChange={(e) => setNuevaGrupo(e.target.value)}
-                placeholder="Grupo (ej: Alimentos no perecederos)"
-                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <input
-                value={nuevaCategoria}
-                onChange={(e) => setNuevaCategoria(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && agregarCategoria()}
-                placeholder="Insumo (ej: Galletas saladas)"
-                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <button onClick={agregarCategoria}
-                className="flex items-center gap-1.5 rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-600 transition-colors">
-                <Plus size={15} /> Agregar
-              </button>
+            {/* Columna izquierda: Categorías (grupos) */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <h2 className="text-sm font-bold text-gray-900 mb-1">Categorías</h2>
+              <p className="text-xs text-gray-400 mb-3">Crea categorías y arrastra insumos desde la derecha.</p>
+              <div className="flex gap-2 mb-4">
+                <input
+                  value={nuevoGrupo}
+                  onChange={(e) => setNuevoGrupo(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && agregarGrupo()}
+                  placeholder="Ej: Alimentos no perecederos"
+                  className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <button onClick={agregarGrupo}
+                  className="flex items-center gap-1 rounded-xl bg-blue-500 px-3 py-2 text-sm font-bold text-white hover:bg-blue-600 transition-colors">
+                  <Plus size={14} />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {grupos.length === 0 && (
+                  <p className="text-xs text-gray-400 text-center py-4">Aún no hay categorías. Crea la primera.</p>
+                )}
+                {grupos.map((grupo) => {
+                  const insumos = categorias.filter(c => c.grupo === grupo.nombre)
+                  return (
+                    <div
+                      key={grupo.id}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => { if (dragId.current !== null) asignarGrupo(dragId.current, grupo.nombre) }}
+                      className="rounded-xl border-2 border-dashed border-gray-200 p-3 min-h-[60px] hover:border-blue-300 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">{grupo.nombre}</p>
+                        <button onClick={() => eliminarGrupo(grupo.id, grupo.nombre)}
+                          className="text-gray-300 hover:text-red-400 transition-colors">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {insumos.map(cat => (
+                          <div
+                            key={cat.id}
+                            draggable
+                            onDragStart={() => { dragId.current = cat.id }}
+                            className="flex items-center gap-1 rounded-full bg-blue-100 pl-2.5 pr-1.5 py-1 cursor-grab active:cursor-grabbing"
+                          >
+                            <span className="text-xs font-medium text-blue-700">{cat.nombre}</span>
+                            <button onClick={() => eliminarCategoria(cat.id)}
+                              className="text-blue-300 hover:text-red-400 transition-colors">
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
+                        ))}
+                        {insumos.length === 0 && (
+                          <p className="text-xs text-gray-300 italic">Suelta insumos aquí...</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
 
-            {categorias.length === 0 ? (
-              <p className="text-sm text-gray-400">No hay categorías todavía. Agrega la primera.</p>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {Object.entries(
-                  categorias.reduce<Record<string, typeof categorias>>((acc, cat) => {
-                    const g = cat.grupo || 'Sin grupo'
-                    if (!acc[g]) acc[g] = []
-                    acc[g].push(cat)
-                    return acc
-                  }, {})
-                ).map(([grupo, cats]) => (
-                  <div key={grupo}>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{grupo}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {cats.map((cat) => (
-                        <div key={cat.id} className="flex items-center gap-1.5 rounded-full bg-gray-100 pl-3 pr-2 py-1.5">
-                          <span className="text-sm font-medium text-gray-700">{cat.nombre}</span>
-                          <button onClick={() => eliminarCategoria(cat.id)}
-                            className="text-gray-400 hover:text-red-500 transition-colors">
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+            {/* Columna derecha: Insumos */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <h2 className="text-sm font-bold text-gray-900 mb-1">Insumos</h2>
+              <p className="text-xs text-gray-400 mb-3">Crea insumos y arrástralos a una categoría.</p>
+              <div className="flex gap-2 mb-4">
+                <input
+                  value={nuevaCategoria}
+                  onChange={(e) => setNuevaCategoria(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && agregarCategoria()}
+                  placeholder="Ej: Galletas saladas"
+                  className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <button onClick={agregarCategoria}
+                  className="flex items-center gap-1 rounded-xl bg-blue-500 px-3 py-2 text-sm font-bold text-white hover:bg-blue-600 transition-colors">
+                  <Plus size={14} />
+                </button>
               </div>
-            )}
+
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => { if (dragId.current !== null) asignarGrupo(dragId.current, null) }}
+                className="min-h-[100px] rounded-xl border-2 border-dashed border-gray-100 p-3"
+              >
+                <div className="flex flex-wrap gap-2">
+                  {categorias.filter(c => !c.grupo).map(cat => (
+                    <div
+                      key={cat.id}
+                      draggable
+                      onDragStart={() => { dragId.current = cat.id }}
+                      className="flex items-center gap-1 rounded-full bg-gray-100 pl-2.5 pr-1.5 py-1 cursor-grab active:cursor-grabbing"
+                    >
+                      <span className="text-xs font-medium text-gray-700">{cat.nombre}</span>
+                      <button onClick={() => eliminarCategoria(cat.id)}
+                        className="text-gray-300 hover:text-red-400 transition-colors">
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  ))}
+                  {categorias.filter(c => !c.grupo).length === 0 && (
+                    <p className="text-xs text-gray-300 italic">Todos los insumos están asignados a una categoría.</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
