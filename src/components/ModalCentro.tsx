@@ -116,7 +116,7 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
           )}
 
           {/* Countdown */}
-          {centro.fecha_fin && <CountdownTimer fechaFin={centro.fecha_fin} />}
+          {centro.fecha_fin && <CountdownTimer fechaFin={centro.fecha_fin} label="Iniciativa termina" />}
 
           {/* Notas */}
           {centro.notas && (
