@@ -906,6 +906,18 @@ export default function AdminPage() {
                   }
                 />
               </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud</label>
+                <input value={formNegocio.lat} onChange={(e) => setFormNegocio({ ...formNegocio, lat: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  placeholder="Ej: 8.9936" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Longitud</label>
+                <input value={formNegocio.lng} onChange={(e) => setFormNegocio({ ...formNegocio, lng: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  placeholder="Ej: -79.5197" />
+              </div>
               {formNegocio.lat && formNegocio.lng && (
                 <div className="sm:col-span-2">
                   <MapaPicker
