@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria, MensajeWA } from '@/lib/supabase'
+import { CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria, MensajeWA } from '@/lib/supabase'
 import { useRef } from 'react'
 import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X } from 'lucide-react'
 import BuscadorUbicacion from '@/components/BuscadorUbicacion'
@@ -63,8 +63,30 @@ export default function AdminPage() {
   const [waMostrar, setWaMostrar] = useState(false)
   const [waCopied, setWaCopied] = useState(false)
 
-  function login() {
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+  // Check existing session on mount
+  useEffect(() => {
+    fetch('/api/auth/check')
+      .then(r => r.json())
+      .then(({ ok }) => { if (ok) setAutenticado(true) })
+  }, [])
+
+  async function db(params: Record<string, unknown>): Promise<{ data: unknown; error: unknown }> {
+    const res = await fetch('/api/admin/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+    return res.json()
+  }
+
+  async function login() {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
+    const { ok } = await res.json()
+    if (ok) {
       setAutenticado(true)
       setErrorAuth('')
     } else {
@@ -72,19 +94,25 @@ export default function AdminPage() {
     }
   }
 
+  async function logout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    setAutenticado(false)
+    setPassword('')
+  }
+
   async function cargar() {
     const [{ data: dc }, { data: dn }, { data: dcat }, { data: dgr }, { data: dmsg }] = await Promise.all([
-      supabase.from('centros_acopio').select('*').order('created_at', { ascending: false }),
-      supabase.from('negocios_solidarios').select('*').order('created_at', { ascending: false }),
-      supabase.from('categorias').select('*').order('nombre'),
-      supabase.from('grupos_categorias').select('*').order('nombre'),
-      supabase.from('mensajes_wa').select('*').order('created_at', { ascending: false }),
-    ])
-    setCentros(dc ?? [])
-    setNegocios(dn ?? [])
-    setCategorias(dcat ?? [])
-    setGrupos(dgr ?? [])
-    setMensajesWA(dmsg ?? [])
+      db({ table: 'centros_acopio', op: 'select', order: { column: 'created_at', ascending: false } }),
+      db({ table: 'negocios_solidarios', op: 'select', order: { column: 'created_at', ascending: false } }),
+      db({ table: 'categorias', op: 'select', order: { column: 'nombre', ascending: true } }),
+      db({ table: 'grupos_categorias', op: 'select', order: { column: 'nombre', ascending: true } }),
+      db({ table: 'mensajes_wa', op: 'select', order: { column: 'created_at', ascending: false } }),
+    ]) as Array<{ data: unknown; error: unknown }>
+    setCentros((dc as CentroAcopio[]) ?? [])
+    setNegocios((dn as NegocioSolidario[]) ?? [])
+    setCategorias((dcat as Categoria[]) ?? [])
+    setGrupos((dgr as GrupoCategoria[]) ?? [])
+    setMensajesWA((dmsg as MensajeWA[]) ?? [])
   }
 
   useEffect(() => { if (autenticado) cargar() }, [autenticado])
@@ -92,32 +120,32 @@ export default function AdminPage() {
   async function agregarGrupo() {
     const nombre = nuevoGrupo.trim()
     if (!nombre) return
-    await supabase.from('grupos_categorias').insert({ nombre })
+    await db({ table: 'grupos_categorias', op: 'insert', data: { nombre } })
     setNuevoGrupo('')
     cargar()
   }
 
   async function eliminarGrupo(id: number, nombre: string) {
-    await supabase.from('categorias').update({ grupo: null }).eq('grupo', nombre)
-    await supabase.from('grupos_categorias').delete().eq('id', id)
+    await db({ table: 'categorias', op: 'update', data: { grupo: null }, eq: [['grupo', nombre]] })
+    await db({ table: 'grupos_categorias', op: 'delete', eq: [['id', id]] })
     cargar()
   }
 
   async function agregarCategoria() {
     const nombre = nuevaCategoria.trim()
     if (!nombre) return
-    await supabase.from('categorias').insert({ nombre, grupo: null })
+    await db({ table: 'categorias', op: 'insert', data: { nombre, grupo: null } })
     setNuevaCategoria('')
     cargar()
   }
 
   async function asignarGrupo(categoriaId: number, grupoNombre: string | null) {
-    await supabase.from('categorias').update({ grupo: grupoNombre }).eq('id', categoriaId)
+    await db({ table: 'categorias', op: 'update', data: { grupo: grupoNombre }, eq: [['id', categoriaId]] })
     cargar()
   }
 
   async function eliminarCategoria(id: number) {
-    await supabase.from('categorias').delete().eq('id', id)
+    await db({ table: 'categorias', op: 'delete', eq: [['id', id]] })
     cargar()
   }
 
@@ -162,7 +190,7 @@ export default function AdminPage() {
   }
 
   async function toggleActivo(tabla: string, id: number, actual: boolean) {
-    await supabase.from(tabla).update({ activo: !actual }).eq('id', id)
+    await db({ table: tabla, op: 'update', data: { activo: !actual }, eq: [['id', id]] })
     cargar()
   }
 
@@ -184,14 +212,14 @@ export default function AdminPage() {
     const esNuevo = !editandoId
     let refId = editandoId
     if (editandoId) {
-      await supabase.from('centros_acopio').update(payload).eq('id', editandoId)
+      await db({ table: 'centros_acopio', op: 'update', data: payload, eq: [['id', editandoId]] })
     } else {
-      const { data: ins } = await supabase.from('centros_acopio').insert({ ...payload, activo: true }).select('id').single()
+      const { data: ins } = await db({ table: 'centros_acopio', op: 'insert', data: { ...payload, activo: true }, single: true }) as { data: { id: number } | null; error: unknown }
       refId = ins?.id ?? null
     }
     const texto = mensajeCentro(formCentro, esNuevo ? 'nuevo' : 'actualizado')
     if (refId) {
-      await supabase.from('mensajes_wa').insert({ tipo: 'centro', referencia_id: refId, texto })
+      await db({ table: 'mensajes_wa', op: 'insert', data: { tipo: 'centro', referencia_id: refId, texto } })
       setMensajesAbiertos(p => ({ ...p, [`centro-${refId}`]: true }))
     }
     mostrarWA(texto)
@@ -218,14 +246,14 @@ export default function AdminPage() {
     const esNuevo = !editandoId
     let refId = editandoId
     if (editandoId) {
-      await supabase.from('negocios_solidarios').update(payload).eq('id', editandoId)
+      await db({ table: 'negocios_solidarios', op: 'update', data: payload, eq: [['id', editandoId]] })
     } else {
-      const { data: ins } = await supabase.from('negocios_solidarios').insert({ ...payload, activo: true }).select('id').single()
+      const { data: ins } = await db({ table: 'negocios_solidarios', op: 'insert', data: { ...payload, activo: true }, single: true }) as { data: { id: number } | null; error: unknown }
       refId = ins?.id ?? null
     }
     const texto = mensajeNegocio(formNegocio, esNuevo ? 'nuevo' : 'actualizado')
     if (refId) {
-      await supabase.from('mensajes_wa').insert({ tipo: 'negocio', referencia_id: refId, texto })
+      await db({ table: 'mensajes_wa', op: 'insert', data: { tipo: 'negocio', referencia_id: refId, texto } })
       setMensajesAbiertos(p => ({ ...p, [`negocio-${refId}`]: true }))
     }
     mostrarWA(texto)
@@ -280,14 +308,14 @@ export default function AdminPage() {
   }
 
   async function guardarYMostrarMensaje(tipo: 'centro' | 'negocio', refId: number, texto: string) {
-    await supabase.from('mensajes_wa').insert({ tipo, referencia_id: refId, texto })
+    await db({ table: 'mensajes_wa', op: 'insert', data: { tipo, referencia_id: refId, texto } })
     setMensajesAbiertos(p => ({ ...p, [`${tipo}-${refId}`]: true }))
     mostrarWA(texto)
     cargar()
   }
 
   async function eliminarMensajeWA(id: number) {
-    await supabase.from('mensajes_wa').delete().eq('id', id)
+    await db({ table: 'mensajes_wa', op: 'delete', eq: [['id', id]] })
     setMensajesWA(prev => prev.filter(m => m.id !== id))
   }
 
@@ -412,7 +440,7 @@ export default function AdminPage() {
                 Agregar {tab === 'centros' ? 'centro' : 'negocio'}
               </button>
             )}
-            <button onClick={() => setAutenticado(false)} className="text-gray-400 hover:text-gray-600">
+            <button onClick={logout} className="text-gray-400 hover:text-gray-600">
               <LogOut size={18} />
             </button>
           </div>
