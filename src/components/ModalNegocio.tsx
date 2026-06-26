@@ -2,7 +2,7 @@
 
 import { NegocioSolidario, HorarioDia } from '@/lib/supabase'
 import { X, MapPin, Clock, Calendar, Globe, Store } from 'lucide-react'
-import { InstagramIcon } from './BrandIcons'
+import { InstagramIcon, WazeIcon, GoogleMapsIcon } from './BrandIcons'
 import CountdownTimer from './CountdownTimer'
 
 function formatHora(t: string) {
@@ -135,9 +135,27 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
           )}
         </div>
 
-        {/* Footer — links */}
-        {(negocio.instagram || negocio.sitio_web) && (
-          <div className="p-4 pt-3 border-t border-gray-100 flex gap-2">
+        {/* Footer — navegación + redes */}
+        {(negocio.lat || negocio.instagram || negocio.sitio_web) && (
+          <div className="p-4 pt-3 border-t border-gray-100 flex flex-col gap-2">
+          {negocio.lat && negocio.lng && (
+            <div className="flex gap-2">
+              <a href={`https://waze.com/ul?ll=${negocio.lat},${negocio.lng}&navigate=yes`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+                style={{ background: '#00D4E4' }}>
+                <WazeIcon className="w-4 h-4" /> Waze
+              </a>
+              <a href={`https://www.google.com/maps?q=${negocio.lat},${negocio.lng}`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+                style={{ background: '#4285F4' }}>
+                <GoogleMapsIcon className="w-4 h-4" /> Google Maps
+              </a>
+            </div>
+          )}
+          {(negocio.instagram || negocio.sitio_web) && (
+          <div className="flex gap-2">
             {negocio.instagram && (
               <a
                 href={`https://instagram.com/${negocio.instagram.replace('@', '')}`}
@@ -160,6 +178,8 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
                 <Globe size={13} /> Sitio web
               </a>
             )}
+          </div>
+          )}
           </div>
         )}
       </div>
