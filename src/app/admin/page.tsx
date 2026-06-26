@@ -37,6 +37,17 @@ const FORM_NEGOCIO_VACIO = () => ({
 
 type Tab = 'centros' | 'negocios' | 'categorias'
 
+async function resolverCoordsDeGoogleMaps(url: string): Promise<{ lat: string; lng: string } | string> {
+  const res = await fetch('/api/resolve-maps', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+  const data = await res.json()
+  if (data.error) return data.error as string
+  return data as { lat: string; lng: string }
+}
+
 export default function AdminPage() {
   const [autenticado, setAutenticado] = useState(false)
   const [password, setPassword] = useState('')
@@ -615,6 +626,21 @@ export default function AdminPage() {
                     setFormCentro((f) => ({ ...f, lat, lng, direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
                   }
                 />
+                <div className="mt-2 flex gap-2">
+                  <input
+                    id="maps-link-centro"
+                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                    placeholder="O pega un link de Google Maps para sacar las coordenadas"
+                    onPaste={async (e) => {
+                      const url = e.clipboardData.getData('text')
+                      const result = await resolverCoordsDeGoogleMaps(url)
+                      if (typeof result === 'string') { alert(result); return }
+                      setFormCentro(f => ({ ...f, lat: result.lat, lng: result.lng }))
+                      ;(e.target as HTMLInputElement).value = ''
+                    }}
+                    onChange={() => {}}
+                  />
+                </div>
               </div>
               <div className="sm:col-span-2">
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Dirección *</label>
@@ -814,6 +840,20 @@ export default function AdminPage() {
                     setFormNegocio((f) => ({ ...f, lat, lng, direccion: direccion || f.direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
                   }
                 />
+                <div className="mt-2 flex gap-2">
+                  <input
+                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                    placeholder="O pega un link de Google Maps para sacar las coordenadas"
+                    onPaste={async (e) => {
+                      const url = e.clipboardData.getData('text')
+                      const result = await resolverCoordsDeGoogleMaps(url)
+                      if (typeof result === 'string') { alert(result); return }
+                      setFormNegocio(f => ({ ...f, lat: result.lat, lng: result.lng }))
+                      ;(e.target as HTMLInputElement).value = ''
+                    }}
+                    onChange={() => {}}
+                  />
+                </div>
                 {formNegocio.lat && formNegocio.lng && (
                   <div className="mt-2">
                     <a
