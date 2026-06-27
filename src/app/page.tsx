@@ -178,7 +178,6 @@ export default function Home() {
                 <h1 className="text-[15px] font-extrabold text-gray-900 leading-tight tracking-tight">
                   Apoyemos a <span className="text-red-500">Venezuela</span>
                 </h1>
-                <p className="text-[11px] text-gray-400 leading-none mt-0.5">Encuentra dónde donar · Panamá</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
