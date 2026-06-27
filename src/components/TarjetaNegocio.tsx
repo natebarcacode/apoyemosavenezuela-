@@ -67,16 +67,18 @@ function numDiaMes(dia: string, fechaFin: string): number | null {
   return null
 }
 
+function toMin(h: number, m: number) { return h === 0 && m === 0 ? 1440 : h * 60 + m }
+
 function estaAbiertoAhora(horarios: HorarioDia[]): boolean {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
   const hoy = diasJS[p.getUTCDay()]
   const entrada = horarios.find(h => h.dia === hoy)
-  if (!entrada || !entrada.apertura || !entrada.cierre) return false
+  if (!entrada?.apertura || !entrada?.cierre) return false
   const [ha, ma] = entrada.apertura.split(':').map(Number)
   const [hc, mc] = entrada.cierre.split(':').map(Number)
   const min = p.getUTCHours() * 60 + p.getUTCMinutes()
-  return min >= ha * 60 + ma && min < hc * 60 + mc
+  return min >= ha * 60 + ma && min < toMin(hc, mc)
 }
 
 function proximaApertura(horarios: HorarioDia[]): string | null {
@@ -89,7 +91,11 @@ function proximaApertura(horarios: HorarioDia[]): string | null {
     const entrada = horarios.find(h => h.dia === diaNombre)
     if (!entrada?.apertura) continue
     const [ha, ma] = entrada.apertura.split(':').map(Number)
-    if (i === 0 && ha * 60 + ma <= minActual) continue
+    if (i === 0) {
+      const [hc, mc] = (entrada.cierre || '00:00').split(':').map(Number)
+      if (minActual >= toMin(hc, mc)) continue  // ya cerró hoy
+      if (minActual >= ha * 60 + ma) continue   // está abierto ahora
+    }
     const hora = formatHora(entrada.apertura)
     if (i === 0) return `Abre hoy a las ${hora}`
     if (i === 1) return `Abre mañana a las ${hora}`

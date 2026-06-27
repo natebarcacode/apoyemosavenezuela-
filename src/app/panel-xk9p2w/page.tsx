@@ -67,8 +67,9 @@ function estaAbiertoAhoraAdmin(horarios: { dia: string; apertura: string; cierre
   if (!e?.apertura || !e?.cierre) return false
   const [ha, ma] = e.apertura.split(':').map(Number)
   const [hc, mc] = e.cierre.split(':').map(Number)
+  const hcMin = hc === 0 && mc === 0 ? 1440 : hc * 60 + mc
   const min = p.getUTCHours() * 60 + p.getUTCMinutes()
-  return min >= ha * 60 + ma && min < hc * 60 + mc
+  return min >= ha * 60 + ma && min < hcMin
 }
 
 type Solicitud = {

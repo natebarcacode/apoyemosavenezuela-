@@ -39,7 +39,8 @@ function estaAbiertoAhoraHorario(horarios: HorarioDia[]): boolean {
   const [ha, ma] = entrada.apertura.split(':').map(Number)
   const [hc, mc] = entrada.cierre.split(':').map(Number)
   const min = p.getUTCHours() * 60 + p.getUTCMinutes()
-  return min >= ha * 60 + ma && min < hc * 60 + mc
+  const hcMin = hc === 0 && mc === 0 ? 1440 : hc * 60 + mc
+  return min >= ha * 60 + ma && min < hcMin
 }
 
 function estaAbierto(cerrado: boolean, fechaFin?: string | null): boolean {
