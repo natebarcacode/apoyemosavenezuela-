@@ -446,6 +446,10 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
               {/* Nuevo centro */}
               {tipo === 'nuevo_centro' && (
                 <div className="flex flex-col gap-3">
+                  <div className="flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3.5 py-2.5">
+                    <span className="text-blue-400 text-sm shrink-0 mt-px">ℹ️</span>
+                    <p className="text-xs text-blue-700 leading-snug">Si el centro tiene varias sucursales, por favor envía <span className="font-semibold">un formulario por cada sucursal</span>.</p>
+                  </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre del centro *</label>
                     <input value={ncNombre} onChange={e => setNcNombre(e.target.value)} placeholder="Ej: Supermercado El Rey - Paitilla"
@@ -579,6 +583,10 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
               {/* Nuevo negocio */}
               {tipo === 'nuevo_negocio' && (
                 <div className="flex flex-col gap-3">
+                  <div className="flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3.5 py-2.5">
+                    <span className="text-blue-400 text-sm shrink-0 mt-px">ℹ️</span>
+                    <p className="text-xs text-blue-700 leading-snug">Si el negocio tiene varias sucursales, por favor envía <span className="font-semibold">un formulario por cada sucursal</span>.</p>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre *</label>
