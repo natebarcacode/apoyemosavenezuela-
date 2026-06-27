@@ -1,7 +1,7 @@
 'use client'
 
 import { CentroAcopio, HorarioDia } from '@/lib/supabase'
-import { ChevronRight, Clock, MapPin } from 'lucide-react'
+import { ChevronRight, Clock } from 'lucide-react'
 
 function toPanamaUTC(fechaFin: string): number {
   const s = fechaFin.slice(0, 16)
@@ -27,9 +27,9 @@ function urgencia(fechaFin?: string) {
 function countdownCorto(fechaFin: string) {
   const ms = toPanamaUTC(fechaFin) - Date.now()
   const h = ms / 3600000
-  if (h < 1) return `Cierra en ${Math.max(1, Math.round(ms / 60000))}m`
-  if (h < 24) return `Cierra en ${Math.round(h)}h`
-  return `Cierra en ${Math.ceil(h / 24)}d`
+  if (h < 1) return `Termina en ${Math.max(1, Math.round(ms / 60000))}m`
+  if (h < 24) return `Termina en ${Math.round(h)}h`
+  return `Termina en ${Math.ceil(h / 24)}d`
 }
 
 function formatHora(t: string) {
@@ -46,11 +46,7 @@ function hoyPanamaIdx() {
   const m: Record<number, number> = {1:0,2:1,3:2,4:3,5:4,6:5,0:6}
   return m[p.getUTCDay()]
 }
-function diaPasado(dia: string) {
-  return DIAS_ORDEN.indexOf(dia) < hoyPanamaIdx()
-}
-// Devuelve el número de día del mes que corresponde a ese nombre de día
-// dentro de la semana que incluye fechaFin
+function diaPasado(dia: string) { return DIAS_ORDEN.indexOf(dia) < hoyPanamaIdx() }
 function numDiaMes(dia: string, fechaFin: string): number | null {
   const fin = new Date(fechaFin.slice(0, 10) + 'T12:00:00Z')
   for (let i = 6; i >= 0; i--) {
@@ -60,7 +56,6 @@ function numDiaMes(dia: string, fechaFin: string): number | null {
   return null
 }
 
-// Panama = UTC-5, sin cambio de horario
 function estaAbiertoAhora(horarios: HorarioDia[]): boolean {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -98,123 +93,107 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
     : nivel === 'urgente'
     ? 'bg-red-400 animate-pulse'
     : nivel === 'proximo'
-    ? 'bg-yellow-400'
+    ? 'bg-amber-400'
     : 'bg-emerald-400'
 
   return (
     <div
       onClick={onClick}
-      className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden active:scale-[0.985] active:shadow-none
-        ${seleccionado ? 'border-red-300 shadow-md ring-2 ring-red-100' : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'}
-        ${cerrado ? 'opacity-60' : ''}
+      className={`group cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden active:scale-[0.985]
+        ${seleccionado
+          ? 'border-red-300 shadow-[0_2px_12px_rgba(239,68,68,0.12)] ring-1 ring-red-200'
+          : 'border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:border-gray-200'}
+        ${cerrado ? 'opacity-50' : ''}
       `}
     >
-      <div className="px-4 py-3">
-        {/* Fila principal */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className={`shrink-0 w-2 h-2 rounded-full ${dotColor}`} />
-            <p className={`font-bold text-sm truncate ${cerrado ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+      <div className="px-4 py-3.5">
+
+        {/* Fila nombre + badges */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className={`shrink-0 w-2 h-2 rounded-full mt-[3px] ${dotColor}`} />
+            <p className={`font-semibold text-[15px] leading-snug truncate ${cerrado ? 'line-through text-gray-300' : 'text-gray-900'}`}>
               {centro.nombre}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Cerrado definitivo */}
+          <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
             {cerrado && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
+              <span className="text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100">
                 Cerrado
               </span>
             )}
-            {/* Abierto/Cerrado según horarios diarios */}
             {!cerrado && abiertoAhora === true && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
-                Abierto ahora
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                Abierto
               </span>
             )}
             {!cerrado && abiertoAhora === false && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-400 border border-gray-100">
                 Cerrado ahora
               </span>
             )}
-            {/* Countdown para fecha_fin próxima — llama "Termina" no "Cierra" */}
             {!cerrado && tieneFechaFin && (nivel === 'urgente' || nivel === 'proximo') && (
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
-                nivel === 'urgente' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-700'
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 border ${
+                nivel === 'urgente'
+                  ? 'bg-red-50 text-red-500 border-red-100'
+                  : 'bg-amber-50 text-amber-600 border-amber-100'
               }`}>
                 <Clock size={8} />
-                {countdownCorto(centro.fecha_fin!).replace('Cierra', 'Termina')}
+                {countdownCorto(centro.fecha_fin!)}
               </span>
             )}
-            {/* Horarios: consultar por otro medio */}
-            {!cerrado && !!centro.consultar_horarios && (
-              <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                <Clock size={9} />
-                Consultar horarios
-              </span>
-            )}
-            {/* Sin fecha ni horarios → invitar a entrar */}
-            {!cerrado && !tieneFechaFin && !tieneHorarios && !centro.consultar_horarios && (
-              <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                <Clock size={9} />
-                Ver horarios
-              </span>
-            )}
-            <ChevronRight size={16} className="text-gray-400" />
+            <ChevronRight size={15} className="text-gray-300 group-hover:text-gray-400 transition-colors" />
           </div>
         </div>
 
-        {/* Zona + sucursales */}
-        <div className="flex items-center gap-2 mt-0.5 ml-4 flex-wrap">
-          <div className="flex items-center gap-1">
-            <MapPin size={10} className="text-gray-300 shrink-0" />
-            <p className="text-xs text-gray-400">{centro.zona}</p>
-          </div>
+        {/* Meta: zona · sucursales */}
+        <div className="flex items-center gap-2 mt-1 ml-[18px] flex-wrap">
+          {centro.zona && <p className="text-xs text-gray-400">{centro.zona}</p>}
           {centro.todas_sucursales && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-500">Todas las sucursales</span>
+            <span className="text-[10px] font-medium px-1.5 py-px rounded-md bg-blue-50 text-blue-400">Todas las sucursales</span>
           )}
           {!centro.todas_sucursales && centro.sucursales && centro.sucursales.length > 0 && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-500">{centro.sucursales.length} sucursal{centro.sucursales.length > 1 ? 'es' : ''}</span>
+            <span className="text-[10px] font-medium px-1.5 py-px rounded-md bg-blue-50 text-blue-400">
+              {centro.sucursales.length} sucursal{centro.sucursales.length > 1 ? 'es' : ''}
+            </span>
           )}
         </div>
 
-        {/* Items aceptados */}
+        {/* Insumos aceptados */}
         {preview.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2.5 ml-4">
+          <div className="flex flex-wrap gap-1 mt-2.5 ml-[18px]">
             {preview.map(item => (
-              <span key={item} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${cerrado ? 'bg-gray-100 text-gray-400 line-through' : 'bg-slate-100 text-slate-500'}`}>
+              <span key={item} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                cerrado ? 'bg-gray-50 text-gray-300' : 'bg-slate-50 text-slate-500 border border-slate-100'
+              }`}>
                 {item}
               </span>
             ))}
             {extra > 0 && (
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-50 text-slate-400 border border-slate-100">
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full text-gray-400">
                 +{extra} más
               </span>
             )}
           </div>
         )}
 
-        {/* Horarios en la tarjeta */}
+        {/* Horarios */}
         {!cerrado && tieneHorarios && (
-          <div className="flex items-start gap-1.5 mt-2.5 ml-4">
-            <Clock size={10} className="text-gray-300 shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-0.5">
-              {centro.horarios!.map(h => {
-                const pasado = tieneFechaFin && diaPasado(h.dia)
-                const ndm = tieneFechaFin ? numDiaMes(h.dia, centro.fecha_fin!) : null
-                return (
-                  <span key={h.dia} className={`text-[10px] flex gap-2 ${pasado ? 'line-through text-gray-300' : 'text-gray-500'}`}>
-                    <span className="font-semibold w-14 shrink-0">
-                      {h.dia}{ndm != null ? ` ${ndm}` : ''}
+          <div className="mt-2.5 ml-[18px] flex flex-col gap-0.5">
+            {centro.horarios!.map(h => {
+              const pasado = tieneFechaFin && diaPasado(h.dia)
+              const ndm = tieneFechaFin ? numDiaMes(h.dia, centro.fecha_fin!) : null
+              return (
+                <div key={h.dia} className={`flex gap-3 text-[11px] ${pasado ? 'line-through text-gray-300' : 'text-gray-500'}`}>
+                  <span className="font-medium w-14 shrink-0">{h.dia}{ndm != null ? ` ${ndm}` : ''}</span>
+                  {h.apertura && h.cierre && (
+                    <span className={pasado ? 'text-gray-300' : 'text-gray-400'}>
+                      {formatHora(h.apertura)} – {formatHora(h.cierre)}
                     </span>
-                    {h.apertura && h.cierre && (
-                      <span className={pasado ? 'text-gray-300' : 'text-gray-400'}>
-                        {formatHora(h.apertura)} – {formatHora(h.cierre)}
-                      </span>
-                    )}
-                  </span>
-                )
-              })}
-            </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
