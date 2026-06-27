@@ -1133,7 +1133,11 @@ export default function AdminPage() {
                       }`}
                     >
                       <Check size={13} />
-                      {s.tipo === 'nuevo_centro' || s.tipo === 'nuevo_negocio' ? 'Abrir formulario' : 'Aplicar cambio'}
+                      {s.tipo === 'nuevo_centro' || s.tipo === 'nuevo_negocio'
+                        ? 'Abrir formulario'
+                        : s.tipo === 'correccion'
+                        ? '✓ Marcar como revisado'
+                        : 'Aplicar cambio'}
                     </button>
                     <button
                       onClick={() => marcarSolicitud(s.id, 'rechazado')}
