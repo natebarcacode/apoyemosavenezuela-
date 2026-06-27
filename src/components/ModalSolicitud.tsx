@@ -207,7 +207,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
       <div
         className="relative bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-        style={{ maxHeight: '92vh' }}
+        style={{ maxHeight: '82dvh' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
