@@ -39,20 +39,7 @@ export default function ZonaSelect({ value, onChange, zonas = ZONAS_PANAMA, ring
 
   const portal = open && dropRect && filtered.length > 0 && typeof document !== 'undefined'
     ? createPortal(
-        <div
-          style={{ position: 'fixed', top: dropRect.bottom + 4, left: dropRect.left, width: dropRect.width, zIndex: 9999, maxHeight: 220, overflowY: 'auto' }}
-          className="bg-white rounded-xl border border-gray-200 shadow-2xl"
-        >
-          {filtered.map(z => (
-            <button key={z} type="button"
-              onPointerDown={() => { onChange(z); setOpen(false) }}
-              className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-0 ${
-                value === z ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-700 hover:bg-gray-50'
-              }`}>
-              {z}
-            </button>
-          ))}
-        </div>,
+        <DropdownPanel dropRect={dropRect} filtered={filtered} value={value} onChange={onChange} onClose={() => setOpen(false)} />,
         document.body
       )
     : null
@@ -69,6 +56,49 @@ export default function ZonaSelect({ value, onChange, zonas = ZONAS_PANAMA, ring
         className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${ringClass}`}
       />
       {portal}
+    </div>
+  )
+}
+
+function DropdownPanel({ dropRect, filtered, value, onChange, onClose }: {
+  dropRect: DOMRect
+  filtered: string[]
+  value: string
+  onChange: (v: string) => void
+  onClose: () => void
+}) {
+  const vw = window.innerWidth
+  // Use visual viewport height to account for open keyboard on mobile
+  const vh = window.visualViewport?.height ?? window.innerHeight
+
+  const minWidth = Math.min(260, vw - 16)
+  const dropWidth = Math.max(dropRect.width, minWidth)
+  const dropLeft = Math.min(dropRect.left, vw - dropWidth - 8)
+  const availableBelow = vh - dropRect.bottom - 8
+  const dropMaxHeight = Math.min(240, Math.max(100, availableBelow))
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: dropRect.bottom + 4,
+        left: Math.max(8, dropLeft),
+        width: dropWidth,
+        zIndex: 9999,
+        maxHeight: dropMaxHeight,
+        overflowY: 'auto',
+      }}
+      className="bg-white rounded-xl border border-gray-200 shadow-2xl"
+    >
+      {filtered.map(z => (
+        <button key={z} type="button"
+          onPointerDown={() => { onChange(z); onClose() }}
+          className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-0 ${
+            value === z ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+          }`}>
+          {z}
+        </button>
+      ))}
     </div>
   )
 }
