@@ -451,7 +451,7 @@ export default function AdminPage() {
 
   async function guardarCentro() {
     const f = formCentro
-    if (!f.nombre || !f.direccion || !f.zona || !f.lat || !f.lng) {
+    if (!f.nombre || !f.direccion || (!f.zona && !f.todas_sucursales) || !f.lat || !f.lng) {
       setMensaje('Completa todos los campos obligatorios.')
       return
     }
@@ -492,7 +492,7 @@ export default function AdminPage() {
 
   async function guardarNegocio() {
     const f = formNegocio
-    if (!f.nombre || !f.tipo || !f.iniciativa || (f.tipo !== 'ecommerce' && !f.zona)) {
+    if (!f.nombre || !f.tipo || !f.iniciativa || (f.tipo !== 'ecommerce' && !f.todas_sucursales && !f.zona)) {
       setMensaje('Completa todos los campos obligatorios.')
       return
     }
@@ -700,7 +700,9 @@ export default function AdminPage() {
               placeholder="Se llena automáticamente o escribe manualmente" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Zona *</label>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">
+              Zona {formCentro.todas_sucursales ? <span className="text-gray-400 font-normal">(opcional — todas las sucursales)</span> : '*'}
+            </label>
             <ZonaSelect value={formCentro.zona} onChange={zona => setFormCentro(f => ({ ...f, zona }))}
               zonas={ZONAS_PANAMA} ringClass="focus:ring-red-400" />
           </div>
@@ -998,7 +1000,9 @@ export default function AdminPage() {
           </div>
           {formNegocio.tipo !== 'ecommerce' && (
             <div>
-              <label className="text-xs font-medium text-gray-600 mb-1 block">Zona *</label>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">
+                Zona {formNegocio.todas_sucursales ? <span className="text-gray-400 font-normal">(opcional — todas las sucursales)</span> : '*'}
+              </label>
               <ZonaSelect value={formNegocio.zona} onChange={zona => setFormNegocio(f => ({ ...f, zona }))}
                 zonas={ZONAS_PANAMA} ringClass="focus:ring-yellow-400" />
             </div>
