@@ -91,12 +91,13 @@ export default function Home() {
   const [zonasFiltro, setZonasFiltro] = useState<string[]>([])
   const [urgenciaFiltro, setUrgenciaFiltro] = useState<UrgenciaFiltro>('todos')
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>('todos')
+  const [cerradosVisible, setCerradosVisible] = useState(false)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
     async function cargar() {
       const [{ data: dc }, { data: dn }, { data: dcat }] = await Promise.all([
-        supabase.from('centros_acopio').select('*').eq('activo', true).neq('cerrado', true).order('zona'),
+        supabase.from('centros_acopio').select('*').eq('activo', true).order('zona'),
         supabase.from('negocios_solidarios').select('*').eq('activo', true).order('zona'),
         supabase.from('categorias').select('*').order('nombre'),
       ])
@@ -114,7 +115,10 @@ export default function Home() {
 
   const q = busqueda.toLowerCase().trim()
 
+  const centrosCerrados = centros.filter(c => !!c.cerrado)
+
   const centrosFiltrados = sortPorCierre(centros.filter(c => {
+    if (c.cerrado) return false  // los cerrados van a su propia sección
     const matchB = q === '' ||
       c.nombre.toLowerCase().includes(q) ||
       c.direccion.toLowerCase().includes(q) ||
@@ -367,6 +371,31 @@ export default function Home() {
                   <TarjetaCentro centro={centro} seleccionado={seleccionado?.id === centro.id} onClick={() => abrirCentro(centro)} />
                 </div>
               ))}
+
+              {/* Sección cerrados temporalmente */}
+              {centrosCerrados.length > 0 && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => setCerradosVisible(v => !v)}
+                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-gray-300 shrink-0" />
+                    <span className="text-xs font-semibold text-gray-500 flex-1">
+                      Cerrados momentáneamente ({centrosCerrados.length})
+                    </span>
+                    <span className={`text-gray-400 text-xs transition-transform duration-200 ${cerradosVisible ? 'rotate-180' : ''}`}>▾</span>
+                  </button>
+                  {cerradosVisible && (
+                    <div className="flex flex-col gap-1.5 mt-1.5">
+                      {centrosCerrados.map(centro => (
+                        <div key={centro.id} id={`centro-${centro.id}`}>
+                          <TarjetaCentro centro={centro} seleccionado={seleccionado?.id === centro.id} onClick={() => abrirCentro(centro)} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             {/* Mapa — sticky debajo del header */}
             <div className="hidden lg:block rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky relative"
