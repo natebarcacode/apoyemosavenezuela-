@@ -14,7 +14,19 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Apoyemos a Venezuela",
-  description: "Encuentra el centro de acopio más cercano para donar insumos a Venezuela.",
+  description: "Encuentra los centros de acopio y las iniciativas realizadas por comercios locales.",
+  openGraph: {
+    title: "Apoyemos a Venezuela",
+    description: "Encuentra los centros de acopio y las iniciativas realizadas por comercios locales.",
+    siteName: "Apoyemos a Venezuela",
+    locale: "es_PA",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Apoyemos a Venezuela",
+    description: "Encuentra los centros de acopio y las iniciativas realizadas por comercios locales.",
+  },
 };
 
 export default function RootLayout({
