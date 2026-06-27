@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Package, Store, Clock, DoorClosed, DoorOpen, PenLine, ChevronLeft, Check, Search, AlertTriangle } from 'lucide-react'
 import { supabase, CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria } from '@/lib/supabase'
 
@@ -56,33 +57,50 @@ function ZonaSelect({ value, onChange, zonas, ringClass }: {
   value: string; onChange: (v: string) => void; zonas: string[]; ringClass: string
 }) {
   const [open, setOpen] = useState(false)
+  const [dropRect, setDropRect] = useState<DOMRect | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const filtered = zonas.filter(z =>
     !value || z.toLowerCase().includes(value.toLowerCase())
   )
-  return (
-    <div className="relative">
-      <input
-        value={value}
-        onChange={e => { onChange(e.target.value); setOpen(true) }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        placeholder="Selecciona o escribe..."
-        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${ringClass}`}
-      />
-      {open && filtered.length > 0 && (
-        <div className="absolute z-[300] left-0 right-0 mt-1 bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden"
-          style={{ maxHeight: 220, overflowY: 'auto' }}>
-          {filtered.slice(0, 40).map(z => (
+
+  function openWith() {
+    if (inputRef.current) setDropRect(inputRef.current.getBoundingClientRect())
+    setOpen(true)
+  }
+
+  const portal = open && dropRect && filtered.length > 0 && typeof document !== 'undefined'
+    ? createPortal(
+        <div
+          style={{ position: 'fixed', top: dropRect.bottom + 4, left: dropRect.left, width: dropRect.width, zIndex: 9999, maxHeight: 220, overflowY: 'auto' }}
+          className="bg-white rounded-xl border border-gray-200 shadow-2xl"
+        >
+          {filtered.map(z => (
             <button key={z} type="button"
-              onMouseDown={() => { onChange(z); setOpen(false) }}
+              onPointerDown={() => { onChange(z); setOpen(false) }}
               className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-0 ${
                 value === z ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-700 hover:bg-gray-50'
               }`}>
               {z}
             </button>
           ))}
-        </div>
-      )}
+        </div>,
+        document.body
+      )
+    : null
+
+  return (
+    <div className="relative">
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={e => { onChange(e.target.value); openWith() }}
+        onFocus={openWith}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        placeholder="Selecciona o escribe..."
+        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${ringClass}`}
+      />
+      {portal}
     </div>
   )
 }
@@ -533,7 +551,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">¿Hasta cuándo? (opcional)</label>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">¿Hasta cuándo serán centro de acopio? (opcional)</label>
                     <input type="datetime-local" value={ncFechaFin} onChange={e => setNcFechaFin(e.target.value)}
                       className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
                     <p className="text-[10px] text-gray-400 mt-1">Déjalo vacío si no tiene fecha límite.</p>
@@ -582,7 +600,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">¿Hasta cuándo? (opcional)</label>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">¿Hasta cuándo durará la iniciativa? (opcional)</label>
                     <input type="datetime-local" value={nnFechaFin} onChange={e => setNnFechaFin(e.target.value)}
                       className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
                     <p className="text-[10px] text-gray-400 mt-1">Déjalo vacío si no tiene fecha límite.</p>
