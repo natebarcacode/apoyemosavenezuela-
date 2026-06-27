@@ -156,9 +156,9 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
     let body: Record<string, unknown> = { tipo }
 
     if (tipo === 'nuevo_centro') {
-      body.datos = { nombre: ncNombre, zona: ncZona, direccion: ncDireccion, que_acepta: ncQueAcepta, instagram: ncInstagram }
+      body.datos = { nombre: ncNombre, zona: ncZona, direccion: ncDireccion, que_acepta: ncQueAcepta, instagram: ncInstagram ? `@${ncInstagram}` : '' }
     } else if (tipo === 'nuevo_negocio') {
-      body.datos = { nombre: nnNombre, tipo: nnTipo, zona: nnZona, direccion: nnDireccion, iniciativa: nnIniciativa, instagram: nnInstagram }
+      body.datos = { nombre: nnNombre, tipo: nnTipo, zona: nnZona, direccion: nnDireccion, iniciativa: nnIniciativa, instagram: nnInstagram ? `@${nnInstagram}` : '' }
     } else if (lugarSeleccionado) {
       body.referencia_tipo = lugarSeleccionado.tipo_ref
       body.referencia_id = lugarSeleccionado.id
@@ -485,8 +485,11 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">Instagram (opcional)</label>
-                    <input value={ncInstagram} onChange={e => setNcInstagram(e.target.value)} placeholder="@usuario"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
+                    <div className="flex items-center rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-red-300 overflow-hidden">
+                      <span className="pl-4 text-sm text-gray-400 select-none">@</span>
+                      <input value={ncInstagram} onChange={e => setNcInstagram(e.target.value.replace('@', ''))} placeholder="usuario"
+                        className="flex-1 px-2 py-2.5 text-sm focus:outline-none bg-transparent" />
+                    </div>
                   </div>
                 </div>
               )}
@@ -529,8 +532,11 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">Instagram (opcional)</label>
-                    <input value={nnInstagram} onChange={e => setNnInstagram(e.target.value)} placeholder="@usuario"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+                    <div className="flex items-center rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-amber-300 overflow-hidden">
+                      <span className="pl-4 text-sm text-gray-400 select-none">@</span>
+                      <input value={nnInstagram} onChange={e => setNnInstagram(e.target.value.replace('@', ''))} placeholder="usuario"
+                        className="flex-1 px-2 py-2.5 text-sm focus:outline-none bg-transparent" />
+                    </div>
                   </div>
                 </div>
               )}
