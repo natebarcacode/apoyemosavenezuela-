@@ -396,7 +396,7 @@ export default function AdminPage() {
 
   async function guardarNegocio() {
     const f = formNegocio
-    if (!f.nombre || !f.tipo || !f.iniciativa || !f.zona) {
+    if (!f.nombre || !f.tipo || !f.iniciativa || (f.tipo !== 'ecommerce' && !f.zona)) {
       setMensaje('Completa todos los campos obligatorios.')
       return
     }
@@ -839,7 +839,9 @@ export default function AdminPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Zona *</label>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">
+              Zona {formNegocio.tipo === 'ecommerce' ? <span className="text-gray-400 font-normal">(opcional)</span> : '*'}
+            </label>
             <ZonaSelect value={formNegocio.zona} onChange={zona => setFormNegocio(f => ({ ...f, zona }))}
               zonas={ZONAS_PANAMA} ringClass="focus:ring-yellow-400" />
           </div>

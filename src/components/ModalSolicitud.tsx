@@ -177,7 +177,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
 
   const puedeEnviar = () => {
     if (tipo === 'nuevo_centro') return !!(ncNombre.trim() && ncZona.trim())
-    if (tipo === 'nuevo_negocio') return nnNombre.trim() && nnZona.trim() && nnIniciativa.trim()
+    if (tipo === 'nuevo_negocio') return !!(nnNombre.trim() && nnIniciativa.trim() && (nnTipo === 'ecommerce' || nnZona.trim()))
     if (tipo === 'horarios') return lugarSeleccionado && horarios.some(h => h.activo)
     if (tipo === 'correccion') return lugarSeleccionado && notaCorreccion.trim()
     if (tipo === 'cerrar' || tipo === 'reabrir') return !!lugarSeleccionado
@@ -536,7 +536,9 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Zona *</label>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">
+                        Zona {nnTipo === 'ecommerce' ? <span className="text-gray-400 font-normal">(opcional)</span> : '*'}
+                      </label>
                       <ZonaSelect value={nnZona} onChange={setNnZona} zonas={zonas} ringClass="focus:ring-amber-300" />
                     </div>
                     <div>
