@@ -185,16 +185,6 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2">
               <ViendoAhora />
-              <div className="flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-lg px-2.5 py-1.5">
-                <Package size={11} className="text-red-500" />
-                <span className="text-sm font-bold text-red-600">{centros.length}</span>
-                <span className="text-[10px] text-red-400 hidden sm:inline">centros</span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
-                <Store size={11} className="text-amber-500" />
-                <span className="text-sm font-bold text-amber-600">{negocios.length}</span>
-                <span className="text-[10px] text-amber-400 hidden sm:inline">iniciativas</span>
-              </div>
             </div>
           </div>
 
