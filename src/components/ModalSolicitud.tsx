@@ -237,7 +237,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
     { tipo: 'horarios', icon: <Clock size={22} />, label: 'Horarios cambiaron', desc: 'Actualizar el horario de un lugar', color: 'blue' },
     { tipo: 'cerrar', icon: <DoorClosed size={22} />, label: 'Un lugar cerró', desc: 'Ya no está recibiendo donaciones', color: 'gray' },
     { tipo: 'reabrir', icon: <DoorOpen size={22} />, label: 'Un lugar reabrió', desc: 'Volvió a estar activo', color: 'green' },
-    { tipo: 'correccion', icon: <PenLine size={22} />, label: 'Corrección de info', desc: 'Nombre, dirección u otro dato incorrecto', color: 'purple' },
+    { tipo: 'correccion', icon: <PenLine size={22} />, label: 'Otro / Corrección', desc: '¿Hay algo más que corregir o reportar?', color: 'purple' },
   ]
 
   const colorMap: Record<string, string> = {
@@ -385,13 +385,13 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
               {/* Corrección */}
               {tipo === 'correccion' && lugarSeleccionado && (
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-2 block">¿Qué hay que corregir?</label>
+                  <label className="text-xs font-semibold text-gray-600 mb-2 block">¿Qué hay que corregir o reportar?</label>
                   <textarea
                     value={notaCorreccion}
                     onChange={e => setNotaCorreccion(e.target.value)}
                     rows={3}
-                    placeholder="Ej: El horario del sábado es de 9am a 1pm, no de 8am a 5pm"
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+                    placeholder="Ej: El nombre está mal escrito, la dirección cambió, el lugar ya no existe..."
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 resize-none"
                   />
                 </div>
               )}
