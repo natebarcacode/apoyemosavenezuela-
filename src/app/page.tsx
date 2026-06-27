@@ -438,10 +438,11 @@ export default function Home() {
       {/* Botón flotante */}
       <button
         onClick={() => setModalSolicitud(true)}
-        className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-full bg-white border border-gray-200 shadow-xl px-5 py-3 text-sm font-semibold text-gray-700 hover:shadow-2xl hover:border-gray-300 hover:scale-[1.02] transition-all"
+        className="fixed bottom-6 right-5 z-[100] flex items-center gap-2.5 rounded-full text-white text-sm font-extrabold px-5 py-3.5 shadow-2xl hover:scale-[1.04] active:scale-[0.97] transition-all"
+        style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)' }}
       >
-        <PenLine size={14} className="text-gray-500" />
-        ¿Conoces un lugar?
+        <span className="text-base leading-none">🤝</span>
+        Danos una mano
       </button>
 
       {modalSolicitud && (
