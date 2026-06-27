@@ -8,27 +8,21 @@ export const contentType = 'image/png'
 export default function Image() {
   return new ImageResponse(
     (
-      <div
-        style={{
-          background: '#ffffff',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: 'sans-serif',
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
-          <div style={{ fontSize: 120, lineHeight: 1 }}>🫀</div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <div style={{ display: 'flex', fontSize: 64, fontWeight: 900, color: '#111827', margin: 0, letterSpacing: -1 }}>
-              <span>Apoyemos a&nbsp;</span><span style={{ color: '#dc2626' }}>Venezuela</span>
-            </div>
-            <p style={{ fontSize: 28, color: '#6b7280', margin: 0, textAlign: 'center' }}>
-              Centros de acopio e iniciativas en Panamá
-            </p>
-          </div>
+      <div style={{ background: '#ffffff', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', gap: 24 }}>
+        {/* Bandera venezolana — 3 franjas */}
+        <div style={{ display: 'flex', flexDirection: 'column', width: 120, height: 80, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ flex: 1, background: '#CF142B', display: 'flex' }} />
+          <div style={{ flex: 1, background: '#00247D', display: 'flex' }} />
+          <div style={{ flex: 1, background: '#CF142B', display: 'flex' }} />
+        </div>
+        {/* Título */}
+        <div style={{ display: 'flex', fontSize: 72, fontWeight: 900, color: '#111827', letterSpacing: -2 }}>
+          Apoyemos a{' '}
+          <span style={{ color: '#dc2626', marginLeft: 16 }}>Venezuela</span>
+        </div>
+        {/* Subtítulo */}
+        <div style={{ fontSize: 30, color: '#6b7280', display: 'flex' }}>
+          Centros de acopio e iniciativas en Panamá
         </div>
       </div>
     ),
