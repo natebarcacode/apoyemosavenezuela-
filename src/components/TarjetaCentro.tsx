@@ -138,7 +138,7 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
   const nivel = urgencia(centro.fecha_fin)
   const preview = centro.que_acepta.slice(0, 3)
   const extra = centro.que_acepta.length - preview.length
-  const cerrado = !!centro.cerrado
+  const cerrado = !!centro.cerrado || (!!centro.fecha_fin && toPanamaUTC(centro.fecha_fin) <= Date.now())
 
   const tieneHorarios = !!centro.horarios && centro.horarios.length > 0
   const tieneFechaFin = !!centro.fecha_fin

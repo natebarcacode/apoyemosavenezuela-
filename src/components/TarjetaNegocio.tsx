@@ -142,7 +142,7 @@ type Props = {
 
 export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props) {
   const nivel = urgencia(negocio.fecha_fin)
-  const cerrado = !negocio.activo
+  const cerrado = !negocio.activo || (!!negocio.fecha_fin && toPanamaUTC(negocio.fecha_fin) <= Date.now())
 
   const tieneHorarios = !!negocio.horarios && negocio.horarios.length > 0
   const tieneFechaFin = !!negocio.fecha_fin
