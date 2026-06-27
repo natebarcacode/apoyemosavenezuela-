@@ -7,8 +7,7 @@ import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
 import ModalCentro from '@/components/ModalCentro'
 import ModalNegocio from '@/components/ModalNegocio'
-import { Search, Package, Store, MapPin, Users, X, PenLine, Lock, Unlock } from 'lucide-react'
-import { WhatsAppIcon } from '@/components/BrandIcons'
+import { Search, Package, Store, MapPin, X, Lock, Unlock } from 'lucide-react'
 import ViendoAhora from '@/components/ViendoAhora'
 import ModalSolicitud from '@/components/ModalSolicitud'
 
@@ -203,7 +202,7 @@ export default function Home() {
           <div className="flex gap-1 pb-3">
             <button
               onClick={() => cambiarTab('centros')}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all ${
                 tab === 'centros'
                   ? 'bg-red-500 text-white shadow-sm'
                   : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
@@ -214,7 +213,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => cambiarTab('negocios')}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all ${
                 tab === 'negocios'
                   ? 'bg-amber-500 text-white shadow-sm'
                   : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
@@ -227,30 +226,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── BANNER WhatsApp ── */}
-      <div style={{ background: 'linear-gradient(135deg,#064e3b 0%,#065f46 60%,#047857 100%)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                <WhatsAppIcon className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">Actualizaciones en tiempo real</p>
-                <p className="text-xs text-emerald-200">Únete a nuestro grupo de WhatsApp</p>
-              </div>
-            </div>
-            <a href="https://chat.whatsapp.com/I0L8IHvYpnJC6QVEdVF0o3?mode=gi_t"
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-full bg-white text-emerald-800 font-bold text-sm px-5 py-2 hover:bg-emerald-50 transition-colors shadow-sm">
-              <Users size={13} /> Unirme al grupo
-            </a>
-          </div>
-        </div>
-      </div>
-
       {/* ── MAIN ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-28 lg:pb-10">
 
         {/* Filters — colapsables */}
         <div className="mb-4">

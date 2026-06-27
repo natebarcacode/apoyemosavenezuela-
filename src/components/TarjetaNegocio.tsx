@@ -40,7 +40,7 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
   return (
     <div
       onClick={onClick}
-      className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden
+      className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden active:scale-[0.985] active:shadow-none
         ${seleccionado ? 'border-amber-300 shadow-md ring-2 ring-amber-100' : 'border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200'}
         ${nivel === 'expirado' ? 'opacity-40' : ''}
       `}
