@@ -119,6 +119,8 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
     ...negocios.map(n => ({ id: n.id, nombre: n.nombre, zona: n.zona, tipo_ref: 'negocio' as const })),
   ]
 
+  const zonas = Array.from(new Set([...centros, ...negocios].map(x => x.zona))).sort()
+
   const lugaresFiltrados = busqueda.length > 1
     ? lugares.filter(l => l.nombre.toLowerCase().includes(busqueda.toLowerCase()) || l.zona.toLowerCase().includes(busqueda.toLowerCase()))
     : lugares.slice(0, 8)
@@ -346,8 +348,11 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-gray-600 mb-1 block">Zona *</label>
-                      <input value={ncZona} onChange={e => setNcZona(e.target.value)} placeholder="Ej: Bella Vista"
+                      <input list="zonas-centro" value={ncZona} onChange={e => setNcZona(e.target.value)} placeholder="Selecciona o escribe..."
                         className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
+                      <datalist id="zonas-centro">
+                        {zonas.map(z => <option key={z} value={z} />)}
+                      </datalist>
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 mb-1 block">Dirección</label>
@@ -387,8 +392,11 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 mb-1 block">Zona *</label>
-                      <input value={nnZona} onChange={e => setNnZona(e.target.value)} placeholder="Ej: Miraflores"
+                      <input list="zonas-negocio" value={nnZona} onChange={e => setNnZona(e.target.value)} placeholder="Selecciona o escribe..."
                         className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+                      <datalist id="zonas-negocio">
+                        {zonas.map(z => <option key={z} value={z} />)}
+                      </datalist>
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 mb-1 block">Dirección</label>
