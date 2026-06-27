@@ -19,6 +19,19 @@ const TIPOS_NEGOCIO = [
 
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
+function fmtHora(t: string) {
+  const [h, m] = t.split(':').map(Number)
+  const h12 = h % 12 || 12
+  const ap = h >= 12 ? 'pm' : 'am'
+  return m === 0 ? `${h12}${ap}` : `${h12}:${String(m).padStart(2,'0')}${ap}`
+}
+function hoyIdx() {
+  const p = new Date(Date.now() - 5*60*60*1000)
+  const m: Record<number,number> = {1:0,2:1,3:2,4:3,5:4,6:5,0:6}
+  return m[p.getUTCDay()]
+}
+function diaPasado(dia: string) { return DIAS_SEMANA.indexOf(dia) < hoyIdx() }
+
 const horarioVacio = () => DIAS_SEMANA.map(dia => ({ dia, activo: false, apertura: '', cierre: '' }))
 
 const FORM_CENTRO_VACIO = () => ({
@@ -1301,6 +1314,20 @@ export default function AdminPage() {
                           {c.que_acepta.slice(0, 4).join(', ')}{c.que_acepta.length > 4 ? '...' : ''}
                         </p>
                       )}
+                      {c.horarios && c.horarios.length > 0 && (
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                          {c.horarios.map((h: {dia:string;apertura:string;cierre:string}) => {
+                            const pasado = !!c.fecha_fin && diaPasado(h.dia)
+                            return (
+                              <span key={h.dia} className={`text-[10px] ${pasado ? 'line-through text-gray-300' : 'text-gray-500'}`}>
+                                <span className="font-semibold">{h.dia}</span>
+                                {h.apertura && h.cierre && <span className="text-gray-400 ml-1">{fmtHora(h.apertura)}–{fmtHora(h.cierre)}</span>}
+                              </span>
+                            )
+                          })}
+                          {c.fecha_fin && <span className="text-[10px] text-red-400 font-medium">· cierra {new Date(c.fecha_fin).toLocaleDateString('es-PA',{day:'numeric',month:'short'})}</span>}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 justify-end px-4 pb-2">
@@ -1378,6 +1405,20 @@ export default function AdminPage() {
                         <p className="text-[10px] text-amber-600 bg-amber-50 rounded-md px-1.5 py-0.5 mt-1 line-clamp-1">
                           {n.iniciativa}
                         </p>
+                      )}
+                      {n.horarios && n.horarios.length > 0 && (
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                          {n.horarios.map((h: {dia:string;apertura:string;cierre:string}) => {
+                            const pasado = !!n.fecha_fin && diaPasado(h.dia)
+                            return (
+                              <span key={h.dia} className={`text-[10px] ${pasado ? 'line-through text-gray-300' : 'text-gray-500'}`}>
+                                <span className="font-semibold">{h.dia}</span>
+                                {h.apertura && h.cierre && <span className="text-gray-400 ml-1">{fmtHora(h.apertura)}–{fmtHora(h.cierre)}</span>}
+                              </span>
+                            )
+                          })}
+                          {n.fecha_fin && <span className="text-[10px] text-red-400 font-medium">· cierra {new Date(n.fecha_fin).toLocaleDateString('es-PA',{day:'numeric',month:'short'})}</span>}
+                        </div>
                       )}
                     </div>
                   </div>
