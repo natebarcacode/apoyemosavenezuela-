@@ -2,7 +2,22 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { X, Package, Store, Clock, DoorClosed, DoorOpen, PenLine, ChevronLeft, Check, Search, AlertTriangle } from 'lucide-react'
-import { CentroAcopio, NegocioSolidario } from '@/lib/supabase'
+import { supabase, CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria } from '@/lib/supabase'
+
+const ZONAS_PANAMA = [
+  'Albrook','Amador','Ancón','Arraiján','Balboa','Bella Vista','Betania','Boca la Caja',
+  'Bocas del Toro','Bugaba','Buenaventura','Calidonia','Cangrejo','Casco Viejo','Cativá',
+  'Chanis','Chame','Chilibre','Chitré','Chorrillo','Ciudad del Futuro','Ciudad Radial',
+  'Clayton','Colón','Condado del Rey','Coronado','Costa del Este','Cristóbal','Curundú',
+  'David','Don Bosco','El Carmen','El Dorado','El Ingenio','El Valle','Exposición',
+  'Juan Díaz','La Alameda','La Chorrera','La Cresta','La Locería','La Villa de Los Santos',
+  'Las Cumbres','Las Mañanitas','Las Tablas','Llano Bonito','Los Ángeles','Mañanitas',
+  'Miraflores','Nuevo Arraiján','Nuevo Reparto','Obarrio','Paitilla','Parque Lefevre',
+  'Pedregal','Penonomé','Perejil','Pueblo Nuevo','Puerto Armuelles','Punta Pacífica',
+  'Río Abajo','Sabanitas','San Felipe','San Francisco','San Miguelito','Santa Ana',
+  'Santiago','Tocumen','Transistmica','Vacamonte','Versalles','Via Argentina',
+  'Via España','Vista Alegre','Vista Hermosa',
+].sort()
 
 type SolicitudPendiente = {
   id: number
@@ -28,9 +43,8 @@ const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const TIPOS_NEGOCIO = [
   { value: 'restaurante', label: 'Restaurante' },
   { value: 'tienda', label: 'Tienda' },
-  { value: 'empresa', label: 'Empresa' },
-  { value: 'cafe', label: 'Café' },
-  { value: 'bar', label: 'Bar' },
+  { value: 'cafeteria', label: 'Cafetería' },
+  { value: 'ecommerce', label: 'Ecommerce' },
   { value: 'otro', label: 'Otro' },
 ]
 
@@ -57,11 +71,15 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
   const [ignorarDuplicado, setIgnorarDuplicado] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [grupos, setGrupos] = useState<GrupoCategoria[]>([])
+  const [gruposInsumosAbiertos, setGruposInsumosAbiertos] = useState<Set<string>>(new Set())
+
   // Nuevo centro
   const [ncNombre, setNcNombre] = useState('')
   const [ncZona, setNcZona] = useState('')
   const [ncDireccion, setNcDireccion] = useState('')
-  const [ncAcepta, setNcAcepta] = useState('')
+  const [ncQueAcepta, setNcQueAcepta] = useState<string[]>([])
   const [ncInstagram, setNcInstagram] = useState('')
 
   // Nuevo negocio
@@ -72,12 +90,19 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
   const [nnIniciativa, setNnIniciativa] = useState('')
   const [nnInstagram, setNnInstagram] = useState('')
 
-  // Cargar solicitudes pendientes al abrir
+  // Cargar solicitudes pendientes + categorías al abrir
   useEffect(() => {
     fetch('/api/solicitudes')
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setSolicitudesPendientes(data) })
       .catch(() => {})
+    Promise.all([
+      supabase.from('categorias').select('*').order('nombre'),
+      supabase.from('grupos_categorias').select('*').order('nombre'),
+    ]).then(([{ data: cats }, { data: grps }]) => {
+      setCategorias((cats as Categoria[]) ?? [])
+      setGrupos((grps as GrupoCategoria[]) ?? [])
+    }).catch(() => {})
   }, [])
 
   // Detectar duplicados cuando cambia el lugar seleccionado o el nombre
@@ -119,7 +144,8 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
     ...negocios.map(n => ({ id: n.id, nombre: n.nombre, zona: n.zona, tipo_ref: 'negocio' as const })),
   ]
 
-  const zonas = Array.from(new Set([...centros, ...negocios].map(x => x.zona))).sort()
+  const zonasDB = Array.from(new Set([...centros, ...negocios].map(x => x.zona)))
+  const zonas = Array.from(new Set([...ZONAS_PANAMA, ...zonasDB])).sort()
 
   const lugaresFiltrados = busqueda.length > 1
     ? lugares.filter(l => l.nombre.toLowerCase().includes(busqueda.toLowerCase()) || l.zona.toLowerCase().includes(busqueda.toLowerCase()))
@@ -130,7 +156,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
     let body: Record<string, unknown> = { tipo }
 
     if (tipo === 'nuevo_centro') {
-      body.datos = { nombre: ncNombre, zona: ncZona, direccion: ncDireccion, que_acepta_texto: ncAcepta, instagram: ncInstagram }
+      body.datos = { nombre: ncNombre, zona: ncZona, direccion: ncDireccion, que_acepta: ncQueAcepta, instagram: ncInstagram }
     } else if (tipo === 'nuevo_negocio') {
       body.datos = { nombre: nnNombre, tipo: nnTipo, zona: nnZona, direccion: nnDireccion, iniciativa: nnIniciativa, instagram: nnInstagram }
     } else if (lugarSeleccionado) {
@@ -160,7 +186,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
   }
 
   const puedeEnviar = () => {
-    if (tipo === 'nuevo_centro') return ncNombre.trim() && ncZona.trim()
+    if (tipo === 'nuevo_centro') return !!(ncNombre.trim() && ncZona.trim())
     if (tipo === 'nuevo_negocio') return nnNombre.trim() && nnZona.trim() && nnIniciativa.trim()
     if (tipo === 'horarios') return lugarSeleccionado && horarios.some(h => h.activo)
     if (tipo === 'correccion') return lugarSeleccionado && notaCorreccion.trim()
@@ -361,10 +387,101 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">¿Qué insumos acepta?</label>
-                    <textarea value={ncAcepta} onChange={e => setNcAcepta(e.target.value)} rows={2}
-                      placeholder="Ej: Agua, medicamentos sellados, ropa limpia, alimentos no perecederos..."
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 resize-none" />
+                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                      ¿Qué insumos acepta?
+                      {ncQueAcepta.length > 0 && (
+                        <span className="ml-2 text-[10px] font-bold bg-red-100 text-red-600 rounded-full px-1.5 py-0.5">{ncQueAcepta.length} seleccionados</span>
+                      )}
+                    </label>
+                    {categorias.length === 0 ? (
+                      <p className="text-xs text-gray-400 italic">Cargando categorías...</p>
+                    ) : (
+                      <div className="flex flex-col gap-1.5">
+                        {grupos.map(grupo => {
+                          const insumos = categorias.filter(c => c.grupo === grupo.nombre)
+                          if (insumos.length === 0) return null
+                          const abierto = gruposInsumosAbiertos.has(grupo.nombre)
+                          const selCount = insumos.filter(i => ncQueAcepta.includes(i.nombre)).length
+                          return (
+                            <div key={grupo.id} className="rounded-xl border border-gray-200 overflow-hidden">
+                              <button type="button"
+                                onClick={() => setGruposInsumosAbiertos(prev => {
+                                  const next = new Set(prev)
+                                  next.has(grupo.nombre) ? next.delete(grupo.nombre) : next.add(grupo.nombre)
+                                  return next
+                                })}
+                                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors text-left">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full shrink-0 ${selCount > 0 ? 'bg-red-400' : 'bg-gray-200'}`} />
+                                  <span className="text-xs font-semibold text-gray-700">{grupo.nombre}</span>
+                                  {selCount > 0 && (
+                                    <span className="text-[10px] font-bold bg-red-100 text-red-600 rounded-full px-1.5 py-0.5">{selCount}</span>
+                                  )}
+                                </div>
+                                <span className={`text-gray-400 text-xs transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`}>▾</span>
+                              </button>
+                              {abierto && (
+                                <div className="px-3 pb-3 pt-2 border-t border-gray-100 bg-gray-50">
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {insumos.map(cat => (
+                                      <button key={cat.id} type="button"
+                                        onClick={() => setNcQueAcepta(prev =>
+                                          prev.includes(cat.nombre) ? prev.filter(x => x !== cat.nombre) : [...prev, cat.nombre]
+                                        )}
+                                        className={`rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${
+                                          ncQueAcepta.includes(cat.nombre) ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                                        }`}>
+                                        {cat.nombre}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                        {categorias.filter(c => !c.grupo).length > 0 && (() => {
+                          const sinGrupo = categorias.filter(c => !c.grupo)
+                          const abierto = gruposInsumosAbiertos.has('__sin_grupo__')
+                          const selCount = sinGrupo.filter(i => ncQueAcepta.includes(i.nombre)).length
+                          return (
+                            <div className="rounded-xl border border-gray-200 overflow-hidden">
+                              <button type="button"
+                                onClick={() => setGruposInsumosAbiertos(prev => {
+                                  const next = new Set(prev)
+                                  next.has('__sin_grupo__') ? next.delete('__sin_grupo__') : next.add('__sin_grupo__')
+                                  return next
+                                })}
+                                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors text-left">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full shrink-0 ${selCount > 0 ? 'bg-red-400' : 'bg-gray-200'}`} />
+                                  <span className="text-xs font-semibold text-gray-500">Otros</span>
+                                  {selCount > 0 && <span className="text-[10px] font-bold bg-red-100 text-red-600 rounded-full px-1.5 py-0.5">{selCount}</span>}
+                                </div>
+                                <span className={`text-gray-400 text-xs transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`}>▾</span>
+                              </button>
+                              {abierto && (
+                                <div className="px-3 pb-3 pt-2 border-t border-gray-100 bg-gray-50">
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {sinGrupo.map(cat => (
+                                      <button key={cat.id} type="button"
+                                        onClick={() => setNcQueAcepta(prev =>
+                                          prev.includes(cat.nombre) ? prev.filter(x => x !== cat.nombre) : [...prev, cat.nombre]
+                                        )}
+                                        className={`rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${
+                                          ncQueAcepta.includes(cat.nombre) ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                                        }`}>
+                                        {cat.nombre}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })()}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">Instagram (opcional)</label>

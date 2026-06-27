@@ -10,10 +10,9 @@ const MapaPicker = dynamic(() => import('@/components/MapaPicker'), { ssr: false
 
 const TIPOS_NEGOCIO = [
   { value: 'restaurante', label: 'Restaurante' },
-  { value: 'cafe', label: 'Café' },
-  { value: 'bar', label: 'Bar' },
   { value: 'tienda', label: 'Tienda' },
-  { value: 'empresa', label: 'Empresa' },
+  { value: 'cafeteria', label: 'Cafetería' },
+  { value: 'ecommerce', label: 'Ecommerce' },
   { value: 'otro', label: 'Otro' },
 ]
 
