@@ -16,10 +16,29 @@ const MapaNegocios = dynamic(() => import('@/components/MapaNegocios'), { ssr: f
 
 type Tab = 'centros' | 'negocios'
 type UrgenciaFiltro = 'todos' | 'hoy' | 'semana' | 'permanente'
+type EstadoFiltro = 'todos' | 'abiertos' | 'cerrados'
+
+function toPanamaUTC(fechaFin: string): number {
+  const s = fechaFin.slice(0, 16)
+  if (s.includes('T')) {
+    const [dp, tp] = s.split('T')
+    const [y, mo, d] = dp.split('-').map(Number)
+    const [h, m] = (tp || '00:00').split(':').map(Number)
+    return Date.UTC(y, mo - 1, d, h + 5, m, 0)
+  }
+  const [y, mo, d] = s.split('-').map(Number)
+  return Date.UTC(y, mo - 1, d + 1, 5, 0, 0)
+}
+
+function estaAbierto(cerrado: boolean, fechaFin?: string | null): boolean {
+  if (cerrado) return false
+  if (fechaFin && toPanamaUTC(fechaFin) <= Date.now()) return false
+  return true
+}
 
 function nivelUrgencia(fechaFin?: string | null): 'hoy' | 'semana' | 'normal' | 'permanente' | 'expirado' {
   if (!fechaFin) return 'permanente'
-  const fin = new Date(fechaFin).getTime()
+  const fin = toPanamaUTC(fechaFin)
   const now = Date.now()
   if (fin <= now) return 'expirado'
   const finDeHoy = new Date(); finDeHoy.setHours(23, 59, 59, 999)
@@ -65,6 +84,7 @@ export default function Home() {
   const [busqueda, setBusqueda] = useState('')
   const [zonasFiltro, setZonasFiltro] = useState<string[]>([])
   const [urgenciaFiltro, setUrgenciaFiltro] = useState<UrgenciaFiltro>('todos')
+  const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>('todos')
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -100,7 +120,9 @@ export default function Home() {
       (urgenciaFiltro === 'hoy' && nivel === 'hoy') ||
       (urgenciaFiltro === 'semana' && (nivel === 'hoy' || nivel === 'semana')) ||
       (urgenciaFiltro === 'permanente' && nivel === 'permanente')
-    return matchB && matchZ && matchU
+    const abierto = estaAbierto(!!c.cerrado, c.fecha_fin)
+    const matchE = estadoFiltro === 'todos' || (estadoFiltro === 'abiertos' && abierto) || (estadoFiltro === 'cerrados' && !abierto)
+    return matchB && matchZ && matchU && matchE
   }))
 
   const negociosFiltrados = sortPorUrgencia(negocios.filter(n => {
@@ -115,15 +137,17 @@ export default function Home() {
       (urgenciaFiltro === 'hoy' && nivel === 'hoy') ||
       (urgenciaFiltro === 'semana' && (nivel === 'hoy' || nivel === 'semana')) ||
       (urgenciaFiltro === 'permanente' && nivel === 'permanente')
-    return matchB && matchZ && matchU
+    const abierto = estaAbierto(!n.activo, n.fecha_fin)
+    const matchE = estadoFiltro === 'todos' || (estadoFiltro === 'abiertos' && abierto) || (estadoFiltro === 'cerrados' && !abierto)
+    return matchB && matchZ && matchU && matchE
   }))
 
   // Agrupar por zona solo cuando no hay filtros activos (para reducir scroll)
-  const agruparPorZona = q === '' && zonasFiltro.length === 0 && urgenciaFiltro === 'todos'
+  const agruparPorZona = q === '' && zonasFiltro.length === 0 && urgenciaFiltro === 'todos' && estadoFiltro === 'todos'
   const centrosAgrupados = agruparPorZona ? groupByZona(centrosFiltrados) : null
   const negociosAgrupados = agruparPorZona ? groupByZona(negociosFiltrados) : null
 
-  const filtrosActivos = q !== '' || zonasFiltro.length > 0 || urgenciaFiltro !== 'todos'
+  const filtrosActivos = q !== '' || zonasFiltro.length > 0 || urgenciaFiltro !== 'todos' || estadoFiltro !== 'todos'
 
   function toggleZona(z: string) {
     setZonasFiltro(prev =>
@@ -135,6 +159,7 @@ export default function Home() {
     setBusqueda('')
     setZonasFiltro([])
     setUrgenciaFiltro('todos')
+    setEstadoFiltro('todos')
   }
 
   function abrirCentro(c: CentroAcopio) {
@@ -158,6 +183,7 @@ export default function Home() {
     setBusqueda('')
     setZonasFiltro([])
     setUrgenciaFiltro('todos')
+    setEstadoFiltro('todos')
     setSeleccionado(null)
     setSeleccionadoNegocio(null)
     setMapaActivo(false)
@@ -277,6 +303,21 @@ export default function Home() {
                     <X size={13} /> Limpiar
                   </button>
                 )}
+              </div>
+
+              {/* Estado (abierto/cerrado) */}
+              <div className="flex flex-wrap gap-1.5">
+                <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1 self-center">Estado:</span>
+                {(['todos', 'abiertos', 'cerrados'] as const).map(e => (
+                  <button key={e} onClick={() => setEstadoFiltro(e)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                      estadoFiltro === e
+                        ? tab === 'centros' ? 'bg-red-500 text-white border-red-500' : 'bg-amber-500 text-white border-amber-500'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}>
+                    {e === 'todos' ? 'Todos' : e === 'abiertos' ? 'Abiertos' : 'Cerrados'}
+                  </button>
+                ))}
               </div>
 
               {/* Zona */}

@@ -86,6 +86,10 @@ export default function AdminPage() {
   const [nuevaCategoria, setNuevaCategoria] = useState('')
   const [nuevoGrupo, setNuevoGrupo] = useState('')
   const dragId = useRef<number | null>(null)
+  const [editandoGrupoId, setEditandoGrupoId] = useState<number | null>(null)
+  const [editandoGrupoNombre, setEditandoGrupoNombre] = useState('')
+  const [editandoCatId, setEditandoCatId] = useState<number | null>(null)
+  const [editandoCatNombre, setEditandoCatNombre] = useState('')
 
   const [formCentro, setFormCentro] = useState(FORM_CENTRO_VACIO())
   const [formNegocio, setFormNegocio] = useState(FORM_NEGOCIO_VACIO())
@@ -267,6 +271,36 @@ export default function AdminPage() {
 
   async function eliminarCategoria(id: number) {
     await db({ table: 'categorias', op: 'delete', eq: [['id', id]] })
+    cargar()
+  }
+
+  async function renombrarGrupo(id: number, nombreViejo: string, nombreNuevo: string) {
+    if (!nombreNuevo.trim() || nombreNuevo.trim() === nombreViejo) { setEditandoGrupoId(null); return }
+    const nuevo = nombreNuevo.trim()
+    await db({ table: 'grupos_categorias', op: 'update', data: { nombre: nuevo }, eq: [['id', id]] })
+    await db({ table: 'categorias', op: 'update', data: { grupo: nuevo }, eq: [['grupo', nombreViejo]] })
+    setEditandoGrupoId(null)
+    cargar()
+  }
+
+  async function renombrarCategoria(id: number, nombreViejo: string, nombreNuevo: string) {
+    if (!nombreNuevo.trim() || nombreNuevo.trim() === nombreViejo) { setEditandoCatId(null); return }
+    const nuevo = nombreNuevo.trim()
+    await db({ table: 'categorias', op: 'update', data: { nombre: nuevo }, eq: [['id', id]] })
+    // Actualizar que_acepta en todos los centros que usan este insumo
+    const { data: centrosAfectados } = await db({
+      table: 'centros', op: 'select', contains: [['que_acepta', [nombreViejo]]],
+    }) as { data: { id: number; que_acepta: string[] }[] | null; error: unknown }
+    if (centrosAfectados) {
+      for (const c of centrosAfectados) {
+        await db({
+          table: 'centros', op: 'update',
+          data: { que_acepta: c.que_acepta.map((n: string) => n === nombreViejo ? nuevo : n) },
+          eq: [['id', c.id]],
+        })
+      }
+    }
+    setEditandoCatId(null)
     cargar()
   }
 
@@ -1203,9 +1237,28 @@ export default function AdminPage() {
                       className="rounded-xl border-2 border-dashed border-gray-200 p-3 min-h-[60px] hover:border-blue-300 transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">{grupo.nombre}</p>
+                        {editandoGrupoId === grupo.id ? (
+                          <input
+                            autoFocus
+                            value={editandoGrupoNombre}
+                            onChange={e => setEditandoGrupoNombre(e.target.value)}
+                            onBlur={() => renombrarGrupo(grupo.id, grupo.nombre, editandoGrupoNombre)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') renombrarGrupo(grupo.id, grupo.nombre, editandoGrupoNombre)
+                              if (e.key === 'Escape') setEditandoGrupoId(null)
+                            }}
+                            className="flex-1 text-xs font-bold text-gray-600 uppercase tracking-wide border-b border-blue-400 bg-transparent focus:outline-none mr-2"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => { setEditandoGrupoId(grupo.id); setEditandoGrupoNombre(grupo.nombre) }}
+                            className="text-xs font-bold text-gray-600 uppercase tracking-wide hover:text-blue-600 transition-colors text-left"
+                          >
+                            {grupo.nombre}
+                          </button>
+                        )}
                         <button onClick={() => eliminarGrupo(grupo.id, grupo.nombre)}
-                          className="text-gray-300 hover:text-red-400 transition-colors">
+                          className="text-gray-300 hover:text-red-400 transition-colors shrink-0">
                           <Trash2 size={12} />
                         </button>
                       </div>
@@ -1213,11 +1266,29 @@ export default function AdminPage() {
                         {insumos.map(cat => (
                           <div
                             key={cat.id}
-                            draggable
+                            draggable={editandoCatId !== cat.id}
                             onDragStart={() => { dragId.current = cat.id }}
                             className="flex items-center gap-1 rounded-full bg-blue-100 pl-2.5 pr-1.5 py-1 cursor-grab active:cursor-grabbing"
                           >
-                            <span className="text-xs font-medium text-blue-700">{cat.nombre}</span>
+                            {editandoCatId === cat.id ? (
+                              <input
+                                autoFocus
+                                value={editandoCatNombre}
+                                onChange={e => setEditandoCatNombre(e.target.value)}
+                                onBlur={() => renombrarCategoria(cat.id, cat.nombre, editandoCatNombre)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') renombrarCategoria(cat.id, cat.nombre, editandoCatNombre)
+                                  if (e.key === 'Escape') setEditandoCatId(null)
+                                }}
+                                className="text-xs font-medium text-blue-700 bg-transparent border-b border-blue-400 focus:outline-none w-24"
+                                onClick={e => e.stopPropagation()}
+                              />
+                            ) : (
+                              <span
+                                className="text-xs font-medium text-blue-700 cursor-text"
+                                onDoubleClick={() => { setEditandoCatId(cat.id); setEditandoCatNombre(cat.nombre) }}
+                              >{cat.nombre}</span>
+                            )}
                             <button onClick={() => eliminarCategoria(cat.id)}
                               className="text-blue-300 hover:text-red-400 transition-colors">
                               <Trash2 size={11} />
@@ -1261,11 +1332,29 @@ export default function AdminPage() {
                   {categorias.filter(c => !c.grupo).map(cat => (
                     <div
                       key={cat.id}
-                      draggable
+                      draggable={editandoCatId !== cat.id}
                       onDragStart={() => { dragId.current = cat.id }}
                       className="flex items-center gap-1 rounded-full bg-gray-100 pl-2.5 pr-1.5 py-1 cursor-grab active:cursor-grabbing"
                     >
-                      <span className="text-xs font-medium text-gray-700">{cat.nombre}</span>
+                      {editandoCatId === cat.id ? (
+                        <input
+                          autoFocus
+                          value={editandoCatNombre}
+                          onChange={e => setEditandoCatNombre(e.target.value)}
+                          onBlur={() => renombrarCategoria(cat.id, cat.nombre, editandoCatNombre)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') renombrarCategoria(cat.id, cat.nombre, editandoCatNombre)
+                            if (e.key === 'Escape') setEditandoCatId(null)
+                          }}
+                          className="text-xs font-medium text-gray-700 bg-transparent border-b border-blue-400 focus:outline-none w-24"
+                          onClick={e => e.stopPropagation()}
+                        />
+                      ) : (
+                        <span
+                          className="text-xs font-medium text-gray-700 cursor-text"
+                          onDoubleClick={() => { setEditandoCatId(cat.id); setEditandoCatNombre(cat.nombre) }}
+                        >{cat.nombre}</span>
+                      )}
                       <button onClick={() => eliminarCategoria(cat.id)}
                         className="text-gray-300 hover:text-red-400 transition-colors">
                         <Trash2 size={11} />

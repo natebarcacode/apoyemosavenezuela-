@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   const token = req.cookies.get(COOKIE_NAME)?.value
   if (!token || !verifyToken(token)) return unauthorized()
 
-  const { table, op, data, eq, order, single } = await req.json()
+  const { table, op, data, eq, order, single, contains } = await req.json()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = getSupabaseAdmin().from(table)
@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     if (op === 'select') {
       q = q.select('*')
       if (eq) for (const [col, val] of eq) q = q.eq(col, val)
+      if (contains) for (const [col, val] of contains) q = q.contains(col, val)
       if (order) q = q.order(order.column, { ascending: order.ascending })
       return NextResponse.json(await q)
     }
