@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 
 export const ZONAS_PANAMA = [
@@ -25,21 +25,44 @@ export default function ZonaSelect({ value, onChange, zonas = ZONAS_PANAMA, ring
   ringClass?: string
 }) {
   const [open, setOpen] = useState(false)
-  const [dropRect, setDropRect] = useState<DOMRect | null>(null)
+  const [rect, setRect] = useState<DOMRect | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const filtered = zonas.filter(z =>
     !value || z.toLowerCase().includes(value.toLowerCase())
   )
 
-  function openWith() {
-    if (inputRef.current) setDropRect(inputRef.current.getBoundingClientRect())
+  function measure() {
+    if (inputRef.current) setRect(inputRef.current.getBoundingClientRect())
+  }
+
+  // Reposition when keyboard resizes the visual viewport
+  useEffect(() => {
+    if (!open) return
+    const vv = window.visualViewport
+    if (!vv) return
+    vv.addEventListener('resize', measure)
+    vv.addEventListener('scroll', measure)
+    return () => {
+      vv.removeEventListener('resize', measure)
+      vv.removeEventListener('scroll', measure)
+    }
+  }, [open])
+
+  function handleFocus() {
+    measure()
     setOpen(true)
   }
 
-  const portal = open && dropRect && filtered.length > 0 && typeof document !== 'undefined'
+  const portal = open && rect && filtered.length > 0 && typeof document !== 'undefined'
     ? createPortal(
-        <DropdownPanel dropRect={dropRect} filtered={filtered} value={value} onChange={onChange} onClose={() => setOpen(false)} />,
+        <DropdownPanel
+          rect={rect}
+          filtered={filtered}
+          value={value}
+          onChange={onChange}
+          onClose={() => setOpen(false)}
+        />,
         document.body
       )
     : null
@@ -49,9 +72,9 @@ export default function ZonaSelect({ value, onChange, zonas = ZONAS_PANAMA, ring
       <input
         ref={inputRef}
         value={value}
-        onChange={e => { onChange(e.target.value); openWith() }}
-        onFocus={openWith}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        onChange={e => { onChange(e.target.value); measure(); setOpen(true) }}
+        onFocus={handleFocus}
+        onBlur={() => setTimeout(() => setOpen(false), 300)}
         placeholder="Selecciona o escribe una zona..."
         className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${ringClass}`}
       />
@@ -60,41 +83,51 @@ export default function ZonaSelect({ value, onChange, zonas = ZONAS_PANAMA, ring
   )
 }
 
-function DropdownPanel({ dropRect, filtered, value, onChange, onClose }: {
-  dropRect: DOMRect
+function DropdownPanel({ rect, filtered, value, onChange, onClose }: {
+  rect: DOMRect
   filtered: string[]
   value: string
   onChange: (v: string) => void
   onClose: () => void
 }) {
   const vw = window.innerWidth
-  // Use visual viewport height to account for open keyboard on mobile
   const vh = window.visualViewport?.height ?? window.innerHeight
+  const offsetTop = window.visualViewport?.offsetTop ?? 0
 
   const minWidth = Math.min(260, vw - 16)
-  const dropWidth = Math.max(dropRect.width, minWidth)
-  const dropLeft = Math.min(dropRect.left, vw - dropWidth - 8)
-  const availableBelow = vh - dropRect.bottom - 8
-  const dropMaxHeight = Math.min(240, Math.max(100, availableBelow))
+  const dropWidth = Math.max(rect.width, minWidth)
+  const dropLeft = Math.max(8, Math.min(rect.left, vw - dropWidth - 8))
+
+  const spaceBelow = vh - (rect.bottom - offsetTop) - 8
+  const spaceAbove = (rect.top - offsetTop) - 8
+  const useAbove = spaceBelow < 140 && spaceAbove > spaceBelow
+  const maxHeight = Math.min(220, useAbove ? spaceAbove : Math.max(100, spaceBelow))
+
+  const top = useAbove
+    ? (rect.top - offsetTop) - maxHeight - 4
+    : (rect.bottom - offsetTop) + 4
 
   return (
     <div
+      // Prevent input blur when touching the dropdown (enables scroll + tap)
+      onPointerDown={e => e.preventDefault()}
       style={{
         position: 'fixed',
-        top: dropRect.bottom + 4,
-        left: Math.max(8, dropLeft),
+        top,
+        left: dropLeft,
         width: dropWidth,
         zIndex: 9999,
-        maxHeight: dropMaxHeight,
+        maxHeight,
         overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
       }}
       className="bg-white rounded-xl border border-gray-200 shadow-2xl"
     >
       {filtered.map(z => (
         <button key={z} type="button"
           onPointerDown={() => { onChange(z); onClose() }}
-          className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-0 ${
-            value === z ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+          className={`w-full text-left px-4 py-3 text-sm transition-colors border-b border-gray-50 last:border-0 ${
+            value === z ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-700 active:bg-gray-100'
           }`}>
           {z}
         </button>
