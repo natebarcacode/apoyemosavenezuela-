@@ -29,7 +29,7 @@ function countdownCorto(fechaFin: string) {
   const h = ms / 3600000
   if (h < 1) return `Termina en ${Math.max(1, Math.round(ms / 60000))}m`
   if (h < 24) return `Termina en ${Math.round(h)}h`
-  return `Termina en ${Math.ceil(h / 24)}d`
+  return terminaLabel(fechaFin)
 }
 
 function terminaLabel(fechaFin: string): string {
