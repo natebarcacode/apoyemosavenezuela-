@@ -149,7 +149,6 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
           {centro.fecha_fin && (
             <CountdownTimer
               fechaFin={centro.fecha_fin}
-              label={`Termina el ${new Date(centro.fecha_fin).toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' })} ·`}
             />
           )}
 

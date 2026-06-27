@@ -5,7 +5,7 @@ import { Clock } from 'lucide-react'
 
 type Props = {
   fechaFin: string
-  label?: string
+  label?: string  // si se pasa, sobreescribe la detección automática hoy/mañana/fecha
 }
 
 // Siempre interpreta fechaFin como hora de Panamá (UTC-5)
@@ -24,6 +24,23 @@ function toPanamaUTC(fechaFin: string): number {
   return Date.UTC(y, mo - 1, d + 1, 5, 0, 0)
 }
 
+function labelFin(fechaFin: string): string {
+  // Fecha Panama de hoy
+  const ahoraPanama = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const hoyY = ahoraPanama.getUTCFullYear()
+  const hoyM = ahoraPanama.getUTCMonth()
+  const hoyD = ahoraPanama.getUTCDate()
+  // Fecha Panama del cierre (los primeros 10 chars son YYYY-MM-DD en hora Panama)
+  const [y, mo, d] = fechaFin.slice(0, 10).split('-').map(Number)
+  if (y === hoyY && mo - 1 === hoyM && d === hoyD) return 'Termina hoy ·'
+  const mañana = new Date(Date.UTC(hoyY, hoyM, hoyD + 1))
+  if (y === mañana.getUTCFullYear() && mo - 1 === mañana.getUTCMonth() && d === mañana.getUTCDate()) return 'Termina mañana ·'
+  // Fecha formateada
+  const fecha = new Date(fechaFin.slice(0, 10) + 'T12:00:00Z')
+    .toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' })
+  return `Termina el ${fecha} ·`
+}
+
 function calcular(fechaFin: string) {
   const diff = toPanamaUTC(fechaFin) - Date.now()
   if (diff <= 0) return null
@@ -34,7 +51,7 @@ function calcular(fechaFin: string) {
   return { d, h, m, s, totalHoras: diff / 3600000 }
 }
 
-export default function CountdownTimer({ fechaFin, label = 'Cierra' }: Props) {
+export default function CountdownTimer({ fechaFin, label }: Props) {
   const [tiempo, setTiempo] = useState(() => calcular(fechaFin))
 
   useEffect(() => {
@@ -55,11 +72,12 @@ export default function CountdownTimer({ fechaFin, label = 'Cierra' }: Props) {
   const urgente = totalHoras < 24
   const proximo = totalHoras >= 24 && totalHoras < 48
 
+  const prefijo = label ?? labelFin(fechaFin)
   const texto = d > 0
-    ? `${label} en ${d}d ${h}h ${m}m`
+    ? `${prefijo} en ${d}d ${h}h ${m}m`
     : h > 0
-    ? `${label} en ${h}h ${m}m ${s}s`
-    : `${label} en ${m}m ${s}s`
+    ? `${prefijo} en ${h}h ${m}m ${s}s`
+    : `${prefijo} en ${m}m ${s}s`
 
   if (urgente) return (
     <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 animate-pulse">

@@ -146,7 +146,6 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
           {negocio.fecha_fin && (
             <CountdownTimer
               fechaFin={negocio.fecha_fin}
-              label={`Termina el ${new Date(negocio.fecha_fin).toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' })} ·`}
             />
           )}
         </div>
