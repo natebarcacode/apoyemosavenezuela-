@@ -1,8 +1,26 @@
 'use client'
 
-import { useState } from 'react'
-import { X, Package, Store, Clock, DoorClosed, DoorOpen, PenLine, ChevronLeft, Check, Search } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, Package, Store, Clock, DoorClosed, DoorOpen, PenLine, ChevronLeft, Check, Search, AlertTriangle } from 'lucide-react'
 import { CentroAcopio, NegocioSolidario } from '@/lib/supabase'
+
+type SolicitudPendiente = {
+  id: number
+  tipo: string
+  referencia_tipo: string | null
+  referencia_id: number | null
+  datos: Record<string, unknown>
+  created_at: string
+}
+
+function tiempoRelativo(fecha: string) {
+  const mins = Math.floor((Date.now() - new Date(fecha).getTime()) / 60000)
+  if (mins < 1) return 'hace menos de 1 min'
+  if (mins < 60) return `hace ${mins} min`
+  const h = Math.floor(mins / 60)
+  if (h < 24) return `hace ${h}h`
+  return `hace ${Math.floor(h / 24)} días`
+}
 
 type Tipo = 'nuevo_centro' | 'nuevo_negocio' | 'horarios' | 'cerrar' | 'reabrir' | 'correccion'
 
@@ -34,6 +52,10 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
   const [lugarSeleccionado, setLugarSeleccionado] = useState<LugarRef | null>(null)
   const [horarios, setHorarios] = useState(horarioVacio())
   const [notaCorreccion, setNotaCorreccion] = useState('')
+  const [solicitudesPendientes, setSolicitudesPendientes] = useState<SolicitudPendiente[]>([])
+  const [duplicado, setDuplicado] = useState<SolicitudPendiente | null>(null)
+  const [ignorarDuplicado, setIgnorarDuplicado] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Nuevo centro
   const [ncNombre, setNcNombre] = useState('')
@@ -49,6 +71,48 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
   const [nnDireccion, setNnDireccion] = useState('')
   const [nnIniciativa, setNnIniciativa] = useState('')
   const [nnInstagram, setNnInstagram] = useState('')
+
+  // Cargar solicitudes pendientes al abrir
+  useEffect(() => {
+    fetch('/api/solicitudes')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setSolicitudesPendientes(data) })
+      .catch(() => {})
+  }, [])
+
+  // Detectar duplicados cuando cambia el lugar seleccionado o el nombre
+  useEffect(() => {
+    setIgnorarDuplicado(false)
+    if (!tipo) { setDuplicado(null); return }
+
+    if (lugarSeleccionado && (tipo === 'cerrar' || tipo === 'reabrir' || tipo === 'horarios' || tipo === 'correccion')) {
+      const match = solicitudesPendientes.find(
+        s => s.tipo === tipo && s.referencia_id === lugarSeleccionado.id
+      )
+      setDuplicado(match ?? null)
+      return
+    }
+    setDuplicado(null)
+  }, [tipo, lugarSeleccionado, solicitudesPendientes])
+
+  // Detectar duplicados para nuevos lugares (con debounce)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if ((tipo !== 'nuevo_centro' && tipo !== 'nuevo_negocio')) return
+    const nombre = tipo === 'nuevo_centro' ? ncNombre : nnNombre
+    if (nombre.length < 4) { setDuplicado(null); return }
+    debounceRef.current = setTimeout(() => {
+      const needle = nombre.toLowerCase()
+      const match = solicitudesPendientes.find(s => {
+        if (s.tipo !== tipo) return false
+        const n = typeof s.datos?.nombre === 'string' ? s.datos.nombre.toLowerCase() : ''
+        return n.includes(needle.slice(0, 8)) || needle.includes(n.slice(0, 8))
+      })
+      setDuplicado(match ?? null)
+      setIgnorarDuplicado(false)
+    }, 400)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [ncNombre, nnNombre, tipo, solicitudesPendientes])
 
   const lugares: LugarRef[] = [
     ...centros.map(c => ({ id: c.id, nombre: c.nombre, zona: c.zona, tipo_ref: 'centro' as const })),
@@ -368,10 +432,29 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
 
         {/* Footer */}
         {step === 'form' && (
-          <div className="px-5 pb-5 pt-3 border-t border-gray-100">
+          <div className="px-5 pb-5 pt-3 border-t border-gray-100 flex flex-col gap-3">
+            {duplicado && !ignorarDuplicado && (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-amber-700">Ya existe un reporte similar</p>
+                    <p className="text-xs text-amber-600 mt-0.5">
+                      Alguien ya reportó algo parecido {tiempoRelativo(duplicado.created_at)}. El equipo lo está revisando.
+                    </p>
+                    <button
+                      onClick={() => setIgnorarDuplicado(true)}
+                      className="text-[11px] text-amber-600 underline mt-1.5 font-medium"
+                    >
+                      Enviar de todas formas →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             <button
               onClick={enviar}
-              disabled={!puedeEnviar() || enviando}
+              disabled={!puedeEnviar() || enviando || (!!duplicado && !ignorarDuplicado)}
               className="w-full rounded-2xl bg-gray-900 text-white text-sm font-bold py-3 hover:bg-gray-700 transition-colors disabled:opacity-40"
             >
               {enviando ? 'Enviando...' : 'Enviar reporte'}
