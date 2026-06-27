@@ -93,7 +93,7 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
   const dotColor = cerrado
     ? 'bg-red-400'
     : abiertoAhora === false
-    ? 'bg-red-400'
+    ? 'bg-slate-300'
     : nivel === 'urgente'
     ? 'bg-red-400 animate-pulse'
     : nivel === 'proximo'
@@ -117,7 +117,7 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {cerrado && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
                 Cerrado
               </span>
             )}
@@ -127,16 +127,16 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
               </span>
             )}
             {!cerrado && abiertoAhora === false && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
                 Cerrado ahora
               </span>
             )}
             {!cerrado && tieneFechaFin && (nivel === 'urgente' || nivel === 'proximo') && (
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                nivel === 'urgente' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
+                nivel === 'urgente' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-700'
               }`}>
-                <Clock size={8} className="inline mr-0.5" />
-                {countdownCorto(negocio.fecha_fin!)}
+                <Clock size={8} />
+                {countdownCorto(negocio.fecha_fin!).replace('Cierra', 'Termina')}
               </span>
             )}
             {!cerrado && !!negocio.consultar_horarios && (
