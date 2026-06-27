@@ -1,6 +1,6 @@
 'use client'
 
-import { CentroAcopio } from '@/lib/supabase'
+import { CentroAcopio, HorarioDia } from '@/lib/supabase'
 import { ChevronRight, Clock, MapPin } from 'lucide-react'
 
 function urgencia(fechaFin?: string) {
@@ -22,6 +22,20 @@ function countdownCorto(fechaFin: string) {
   return `Cierra en ${d}d`
 }
 
+// Panama = UTC-5, sin cambio de horario
+function estaAbiertoAhora(horarios?: HorarioDia[]): boolean | null {
+  if (!horarios || horarios.length === 0) return null
+  const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  const hoy = diasJS[p.getUTCDay()]
+  const entrada = horarios.find(h => h.dia === hoy)
+  if (!entrada || !entrada.apertura || !entrada.cierre) return false
+  const [ha, ma] = entrada.apertura.split(':').map(Number)
+  const [hc, mc] = entrada.cierre.split(':').map(Number)
+  const min = p.getUTCHours() * 60 + p.getUTCMinutes()
+  return min >= ha * 60 + ma && min < hc * 60 + mc
+}
+
 type Props = {
   centro: CentroAcopio
   seleccionado?: boolean
@@ -33,13 +47,24 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
   const preview = centro.que_acepta.slice(0, 3)
   const extra = centro.que_acepta.length - preview.length
   const cerrado = !!centro.cerrado
+  const abiertoAhora = cerrado ? false : estaAbiertoAhora(centro.horarios)
   const abierto = !cerrado && nivel !== 'expirado'
+
+  const dotColor = cerrado || abiertoAhora === false
+    ? 'bg-red-400'
+    : !abierto
+    ? 'bg-gray-300'
+    : nivel === 'urgente'
+    ? 'bg-red-400 animate-pulse'
+    : nivel === 'proximo'
+    ? 'bg-yellow-400'
+    : 'bg-emerald-400'
 
   return (
     <div
       onClick={onClick}
       className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden active:scale-[0.985] active:shadow-none
-        ${seleccionado ? 'border-red-300 shadow-md ring-2 ring-red-100' : 'border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200'}
+        ${seleccionado ? 'border-red-300 shadow-md ring-2 ring-red-100' : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'}
         ${cerrado ? 'opacity-60' : ''}
         ${nivel === 'expirado' && !cerrado ? 'opacity-40' : ''}
       `}
@@ -48,21 +73,25 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
         {/* Fila principal */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className={`shrink-0 w-2 h-2 rounded-full ${
-              cerrado ? 'bg-gray-300' :
-              !abierto ? 'bg-gray-300' :
-              nivel === 'urgente' ? 'bg-red-400 animate-pulse' :
-              nivel === 'proximo' ? 'bg-yellow-400' :
-              'bg-emerald-400'
-            }`} />
+            <span className={`shrink-0 w-2 h-2 rounded-full ${dotColor}`} />
             <p className={`font-bold text-sm truncate ${cerrado ? 'line-through text-gray-400' : 'text-gray-900'}`}>
               {centro.nombre}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {cerrado && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
                 Cerrado
+              </span>
+            )}
+            {!cerrado && abiertoAhora === false && centro.horarios && centro.horarios.length > 0 && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
+                Cerrado ahora
+              </span>
+            )}
+            {!cerrado && abiertoAhora === true && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                Abierto ahora
               </span>
             )}
             {!cerrado && centro.fecha_fin && nivel !== 'normal' && nivel !== 'expirado' && (
@@ -73,7 +102,7 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
                 {countdownCorto(centro.fecha_fin)}
               </span>
             )}
-            <ChevronRight size={14} className="text-gray-300" />
+            <ChevronRight size={16} className="text-gray-400" />
           </div>
         </div>
 

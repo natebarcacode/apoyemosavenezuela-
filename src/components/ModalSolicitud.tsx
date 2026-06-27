@@ -257,6 +257,9 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
           {/* PASO: form */}
           {step === 'form' && (
             <div className="flex flex-col gap-4">
+              <div className="rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3">
+                <p className="text-xs text-amber-700 leading-snug">Por favor llena el formulario lo más completo posible — eso nos ayuda a actualizar la información más rápido. ¡Muchas gracias por tu apoyo!</p>
+              </div>
 
               {/* Selector de lugar existente */}
               {(tipo === 'horarios' || tipo === 'cerrar' || tipo === 'reabrir' || tipo === 'correccion') && (

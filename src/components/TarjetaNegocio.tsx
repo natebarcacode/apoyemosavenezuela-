@@ -1,6 +1,6 @@
 'use client'
 
-import { NegocioSolidario } from '@/lib/supabase'
+import { NegocioSolidario, HorarioDia } from '@/lib/supabase'
 import { ChevronRight, Clock, MapPin } from 'lucide-react'
 
 function urgencia(fechaFin?: string) {
@@ -22,6 +22,20 @@ function countdownCorto(fechaFin: string) {
   return `Cierra en ${d}d`
 }
 
+// Panama = UTC-5, sin cambio de horario
+function estaAbiertoAhora(horarios?: HorarioDia[]): boolean | null {
+  if (!horarios || horarios.length === 0) return null
+  const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  const hoy = diasJS[p.getUTCDay()]
+  const entrada = horarios.find(h => h.dia === hoy)
+  if (!entrada || !entrada.apertura || !entrada.cierre) return false
+  const [ha, ma] = entrada.apertura.split(':').map(Number)
+  const [hc, mc] = entrada.cierre.split(':').map(Number)
+  const min = p.getUTCHours() * 60 + p.getUTCMinutes()
+  return min >= ha * 60 + ma && min < hc * 60 + mc
+}
+
 const TIPOS: Record<string, string> = {
   restaurante: 'Restaurante', tienda: 'Tienda', empresa: 'Empresa',
   cafe: 'Café', bar: 'Bar', otro: 'Negocio',
@@ -36,12 +50,23 @@ type Props = {
 export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props) {
   const nivel = urgencia(negocio.fecha_fin)
   const abierto = negocio.activo && nivel !== 'expirado'
+  const abiertoAhora = abierto ? estaAbiertoAhora(negocio.horarios) : false
+
+  const dotColor = abiertoAhora === false && negocio.horarios && negocio.horarios.length > 0
+    ? 'bg-red-400'
+    : !abierto
+    ? 'bg-gray-300'
+    : nivel === 'urgente'
+    ? 'bg-red-400 animate-pulse'
+    : nivel === 'proximo'
+    ? 'bg-yellow-400'
+    : 'bg-emerald-400'
 
   return (
     <div
       onClick={onClick}
       className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden active:scale-[0.985] active:shadow-none
-        ${seleccionado ? 'border-amber-300 shadow-md ring-2 ring-amber-100' : 'border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200'}
+        ${seleccionado ? 'border-amber-300 shadow-md ring-2 ring-amber-100' : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'}
         ${nivel === 'expirado' ? 'opacity-40' : ''}
       `}
     >
@@ -49,15 +74,20 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
         {/* Fila principal */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className={`shrink-0 w-2 h-2 rounded-full ${
-              !abierto ? 'bg-gray-300' :
-              nivel === 'urgente' ? 'bg-red-400 animate-pulse' :
-              nivel === 'proximo' ? 'bg-yellow-400' :
-              'bg-emerald-400'
-            }`} />
+            <span className={`shrink-0 w-2 h-2 rounded-full ${dotColor}`} />
             <p className="font-bold text-gray-900 text-sm truncate">{negocio.nombre}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {abiertoAhora === false && negocio.horarios && negocio.horarios.length > 0 && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
+                Cerrado ahora
+              </span>
+            )}
+            {abiertoAhora === true && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                Abierto ahora
+              </span>
+            )}
             {negocio.fecha_fin && nivel !== 'normal' && nivel !== 'expirado' && (
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 nivel === 'urgente' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'
@@ -66,7 +96,7 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
                 {countdownCorto(negocio.fecha_fin)}
               </span>
             )}
-            <ChevronRight size={14} className="text-gray-300" />
+            <ChevronRight size={16} className="text-gray-400" />
           </div>
         </div>
 
