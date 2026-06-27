@@ -188,6 +188,7 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
           {negocio.fecha_fin && (
             <CountdownTimer
               fechaFin={negocio.fecha_fin}
+              soloFecha={negocio.consultar_horarios || negocio.todas_sucursales}
             />
           )}
         </div>

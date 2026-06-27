@@ -5,7 +5,8 @@ import { Clock } from 'lucide-react'
 
 type Props = {
   fechaFin: string
-  label?: string  // si se pasa, sobreescribe la detección automática hoy/mañana/fecha
+  label?: string
+  soloFecha?: boolean  // fuerza mostrar solo la fecha sin countdown exacto
 }
 
 // Siempre interpreta fechaFin como hora de Panamá (UTC-5)
@@ -49,8 +50,8 @@ function calcular(fechaFin: string) {
   return { d, h, m, s, totalHoras: diff / 3600000 }
 }
 
-export default function CountdownTimer({ fechaFin, label }: Props) {
-  const soloFecha = !fechaFin.includes('T')
+export default function CountdownTimer({ fechaFin, label, soloFecha: soloFechaProp }: Props) {
+  const soloFecha = soloFechaProp || !fechaFin.includes('T')
   const [tiempo, setTiempo] = useState(() => calcular(fechaFin))
 
   useEffect(() => {

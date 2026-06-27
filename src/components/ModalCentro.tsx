@@ -191,6 +191,7 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
           {centro.fecha_fin && (
             <CountdownTimer
               fechaFin={centro.fecha_fin}
+              soloFecha={centro.consultar_horarios || centro.todas_sucursales}
             />
           )}
 
