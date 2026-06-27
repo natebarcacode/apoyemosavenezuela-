@@ -52,6 +52,7 @@ export type CentroAcopio = {
   lat: number
   lng: number
   activo: boolean
+  cerrado?: boolean
   notas?: string
   horarios?: HorarioDia[]
   fecha_inicio?: string

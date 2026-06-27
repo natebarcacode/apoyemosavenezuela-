@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria, MensajeWA } from '@/lib/supabase'
 import { useRef } from 'react'
-import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X, CopyPlus } from 'lucide-react'
+import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X, CopyPlus, DoorClosed, DoorOpen } from 'lucide-react'
 import BuscadorUbicacion from '@/components/BuscadorUbicacion'
 import dynamic from 'next/dynamic'
 const MapaPicker = dynamic(() => import('@/components/MapaPicker'), { ssr: false })
@@ -257,6 +257,11 @@ export default function AdminPage() {
 
   async function toggleActivo(tabla: string, id: number, actual: boolean) {
     await db({ table: tabla, op: 'update', data: { activo: !actual }, eq: [['id', id]] })
+    cargar()
+  }
+
+  async function toggleCerrado(id: number, actual: boolean) {
+    await db({ table: 'centros_acopio', op: 'update', data: { cerrado: !actual }, eq: [['id', id]] })
     cargar()
   }
 
@@ -1060,11 +1065,15 @@ export default function AdminPage() {
               const msgs = mensajesWA.filter(m => m.tipo === 'centro' && m.referencia_id === c.id)
               const abierto = mensajesAbiertos[key]
               return (
-                <div key={c.id} className={`bg-white rounded-xl border ${c.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'}`}>
+                <div key={c.id} className={`bg-white rounded-xl border ${c.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'} ${c.cerrado ? 'bg-gray-50' : ''}`}>
                   <div className="flex items-start gap-3 px-4 py-3">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${c.activo ? 'bg-green-400' : 'bg-gray-300'}`} title={c.activo ? 'Visible al público' : 'Oculto'} />
+                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!c.activo ? 'bg-gray-300' : c.cerrado ? 'bg-red-400' : 'bg-green-400'}`}
+                      title={!c.activo ? 'Oculto' : c.cerrado ? 'Cerrado' : 'Abierto'} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{c.nombre}</p>
+                      <div className="flex items-center gap-2">
+                        <p className={`font-semibold text-sm truncate ${c.cerrado ? 'line-through text-gray-400' : 'text-gray-900'}`}>{c.nombre}</p>
+                        {c.cerrado && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-500 shrink-0">CERRADO</span>}
+                      </div>
                       <p className="text-xs text-gray-400 truncate mt-0.5">{c.zona}{c.direccion ? ` · ${c.direccion}` : ''}</p>
                       {c.que_acepta?.length > 0 && (
                         <p className="text-[10px] text-gray-400 mt-1">
@@ -1079,6 +1088,10 @@ export default function AdminPage() {
                         className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
                       <button onClick={() => duplicarCentro(c)} title="Duplicar como sucursal" className="p-2 rounded-lg text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"><CopyPlus size={15} /></button>
                       <button onClick={() => abrirEditarCentro(c)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
+                      <button onClick={() => toggleCerrado(c.id, !!c.cerrado)} title={c.cerrado ? 'Marcar como abierto' : 'Marcar como cerrado'}
+                        className={`p-2 rounded-lg transition-colors ${c.cerrado ? 'text-red-400 hover:bg-red-50' : 'text-gray-400 hover:bg-red-50 hover:text-red-400'}`}>
+                        {c.cerrado ? <DoorOpen size={15} /> : <DoorClosed size={15} />}
+                      </button>
                       <button onClick={() => toggleActivo('centros_acopio', c.id, c.activo)} title={c.activo ? 'Ocultar' : 'Publicar'}
                         className={`p-2 rounded-lg transition-colors ${c.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
                         {c.activo ? <Eye size={15} /> : <EyeOff size={15} />}
