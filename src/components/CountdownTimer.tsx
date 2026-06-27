@@ -8,14 +8,30 @@ type Props = {
   label?: string
 }
 
+// Siempre interpreta fechaFin como hora de Panamá (UTC-5)
+// independientemente de cómo lo devuelva Supabase
+function toPanamaUTC(fechaFin: string): number {
+  const s = fechaFin.slice(0, 16) // "2026-06-27T13:30"
+  if (s.includes('T')) {
+    const [datePart, timePart] = s.split('T')
+    const [y, mo, d] = datePart.split('-').map(Number)
+    const [h, m] = (timePart || '00:00').split(':').map(Number)
+    // Panama = UTC-5 → sumar 5h para obtener UTC
+    return Date.UTC(y, mo - 1, d, h + 5, m, 0)
+  }
+  // Solo fecha: fin del día en Panamá (medianoche = siguiente día 05:00 UTC)
+  const [y, mo, d] = s.split('-').map(Number)
+  return Date.UTC(y, mo - 1, d + 1, 5, 0, 0)
+}
+
 function calcular(fechaFin: string) {
-  const diff = new Date(fechaFin).getTime() - Date.now()
+  const diff = toPanamaUTC(fechaFin) - Date.now()
   if (diff <= 0) return null
-  const h = Math.floor(diff / 3600000)
+  const d = Math.floor(diff / 86400000)
+  const h = Math.floor((diff % 86400000) / 3600000)
   const m = Math.floor((diff % 3600000) / 60000)
   const s = Math.floor((diff % 60000) / 1000)
-  const d = Math.floor(h / 24)
-  return { d, h: h % 24, m, s, totalHoras: h }
+  return { d, h, m, s, totalHoras: diff / 3600000 }
 }
 
 export default function CountdownTimer({ fechaFin, label = 'Cierra' }: Props) {
@@ -36,7 +52,6 @@ export default function CountdownTimer({ fechaFin, label = 'Cierra' }: Props) {
   }
 
   const { d, h, m, s, totalHoras } = tiempo
-
   const urgente = totalHoras < 24
   const proximo = totalHoras >= 24 && totalHoras < 48
 
@@ -46,23 +61,19 @@ export default function CountdownTimer({ fechaFin, label = 'Cierra' }: Props) {
     ? `${label} en ${h}h ${m}m ${s}s`
     : `${label} en ${m}m ${s}s`
 
-  if (urgente) {
-    return (
-      <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 animate-pulse">
-        <Clock size={12} className="text-red-500" />
-        <span className="text-xs font-bold text-red-600">{texto}</span>
-      </div>
-    )
-  }
+  if (urgente) return (
+    <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 animate-pulse">
+      <Clock size={12} className="text-red-500" />
+      <span className="text-xs font-bold text-red-600">{texto}</span>
+    </div>
+  )
 
-  if (proximo) {
-    return (
-      <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-yellow-100 px-3 py-1.5">
-        <Clock size={12} className="text-yellow-600" />
-        <span className="text-xs font-bold text-yellow-700">{texto}</span>
-      </div>
-    )
-  }
+  if (proximo) return (
+    <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-yellow-100 px-3 py-1.5">
+      <Clock size={12} className="text-yellow-600" />
+      <span className="text-xs font-bold text-yellow-700">{texto}</span>
+    </div>
+  )
 
   return (
     <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-green-100 px-3 py-1.5">

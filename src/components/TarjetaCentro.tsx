@@ -3,22 +3,31 @@
 import { CentroAcopio, HorarioDia } from '@/lib/supabase'
 import { ChevronRight, Clock, MapPin } from 'lucide-react'
 
+function toPanamaUTC(fechaFin: string): number {
+  const s = fechaFin.slice(0, 16)
+  if (s.includes('T')) {
+    const [dp, tp] = s.split('T')
+    const [y, mo, d] = dp.split('-').map(Number)
+    const [h, m] = (tp || '00:00').split(':').map(Number)
+    return Date.UTC(y, mo - 1, d, h + 5, m, 0)
+  }
+  const [y, mo, d] = s.split('-').map(Number)
+  return Date.UTC(y, mo - 1, d + 1, 5, 0, 0)
+}
+
 function urgencia(fechaFin?: string) {
   if (!fechaFin) return 'normal'
-  const fin = new Date(fechaFin).getTime()
-  const now = Date.now()
-  if (fin <= now) return 'expirado'
-  const h = (fin - now) / 3600000
-  if (h < 24) return 'urgente'
-  if (h < 72) return 'proximo'
+  const diff = (toPanamaUTC(fechaFin) - Date.now()) / 3600000
+  if (diff <= 0) return 'expirado'
+  if (diff < 24) return 'urgente'
+  if (diff < 72) return 'proximo'
   return 'normal'
 }
 
 function countdownCorto(fechaFin: string) {
-  const h = (new Date(fechaFin).getTime() - Date.now()) / 3600000
+  const h = (toPanamaUTC(fechaFin) - Date.now()) / 3600000
   if (h < 24) return `Cierra en ${Math.round(h)}h`
-  const d = Math.ceil(h / 24)
-  return `Cierra en ${d}d`
+  return `Cierra en ${Math.ceil(h / 24)}d`
 }
 
 function formatHora(t: string) {
