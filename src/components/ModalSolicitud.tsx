@@ -116,6 +116,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
   const [ncDireccion, setNcDireccion] = useState('')
   const [ncQueAcepta, setNcQueAcepta] = useState<string[]>([])
   const [ncInstagram, setNcInstagram] = useState('')
+  const [ncFechaFin, setNcFechaFin] = useState('')
 
   // Nuevo negocio
   const [nnNombre, setNnNombre] = useState('')
@@ -124,6 +125,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
   const [nnDireccion, setNnDireccion] = useState('')
   const [nnIniciativa, setNnIniciativa] = useState('')
   const [nnInstagram, setNnInstagram] = useState('')
+  const [nnFechaFin, setNnFechaFin] = useState('')
 
   // Cargar solicitudes pendientes + categorías al abrir
   useEffect(() => {
@@ -191,9 +193,9 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
     let body: Record<string, unknown> = { tipo }
 
     if (tipo === 'nuevo_centro') {
-      body.datos = { nombre: ncNombre, zona: ncZona, direccion: ncDireccion, que_acepta: ncQueAcepta, instagram: ncInstagram ? `@${ncInstagram}` : '' }
+      body.datos = { nombre: ncNombre, zona: ncZona, direccion: ncDireccion, que_acepta: ncQueAcepta, instagram: ncInstagram ? `@${ncInstagram}` : '', fecha_fin: ncFechaFin || null }
     } else if (tipo === 'nuevo_negocio') {
-      body.datos = { nombre: nnNombre, tipo: nnTipo, zona: nnZona, direccion: nnDireccion, iniciativa: nnIniciativa, instagram: nnInstagram ? `@${nnInstagram}` : '' }
+      body.datos = { nombre: nnNombre, tipo: nnTipo, zona: nnZona, direccion: nnDireccion, iniciativa: nnIniciativa, instagram: nnInstagram ? `@${nnInstagram}` : '', fecha_fin: nnFechaFin || null }
     } else if (lugarSeleccionado) {
       body.referencia_tipo = lugarSeleccionado.tipo_ref
       body.referencia_id = lugarSeleccionado.id
@@ -346,26 +348,34 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
               {/* Horarios */}
               {tipo === 'horarios' && lugarSeleccionado && (
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-2 block">Nuevos horarios</label>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Nuevos horarios</label>
+                  <p className="text-[11px] text-gray-400 mb-2">Toca un día para activarlo y configurar el horario</p>
                   <div className="rounded-xl border border-gray-200 overflow-hidden">
                     {horarios.map((h, i) => (
-                      <div key={h.dia} className={`flex items-center gap-3 px-3 py-2 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                      <div key={h.dia} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                         <button type="button"
                           onClick={() => setHorarios(prev => prev.map(x => x.dia === h.dia ? { ...x, activo: !x.activo } : x))}
-                          className={`w-10 shrink-0 text-xs font-bold rounded-full py-1 border transition-colors ${h.activo ? 'bg-blue-500 text-white border-blue-500' : 'text-gray-400 border-gray-200 hover:border-blue-300'}`}>
-                          {h.dia}
+                          className={`w-full flex items-center justify-between px-3 py-2.5 transition-colors ${h.activo ? 'bg-blue-50' : 'hover:bg-gray-100'}`}>
+                          <div className="flex items-center gap-2.5">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${h.activo ? 'bg-blue-500' : 'bg-gray-200'}`} />
+                            <span className={`text-sm font-semibold ${h.activo ? 'text-blue-700' : 'text-gray-500'}`}>{h.dia}</span>
+                          </div>
+                          {h.activo
+                            ? <span className="text-[10px] font-bold text-blue-400 bg-blue-100 rounded-full px-2 py-0.5">Activo — toca para quitar</span>
+                            : <span className="text-[10px] text-gray-300">+ Agregar horario</span>
+                          }
                         </button>
-                        {h.activo ? (
-                          <div className="flex items-center gap-2 flex-1">
+                        {h.activo && (
+                          <div className="flex items-center gap-2 px-3 pb-2.5 pt-1 bg-blue-50 border-t border-blue-100">
                             <input type="time" value={h.apertura}
                               onChange={e => setHorarios(prev => prev.map(x => x.dia === h.dia ? { ...x, apertura: e.target.value } : x))}
-                              className="flex-1 rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300" />
-                            <span className="text-xs text-gray-400">a</span>
+                              className="flex-1 rounded-lg border border-blue-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" />
+                            <span className="text-xs text-gray-400 shrink-0">a</span>
                             <input type="time" value={h.cierre}
                               onChange={e => setHorarios(prev => prev.map(x => x.dia === h.dia ? { ...x, cierre: e.target.value } : x))}
-                              className="flex-1 rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300" />
+                              className="flex-1 rounded-lg border border-blue-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" />
                           </div>
-                        ) : <span className="text-xs text-gray-300 italic">Cerrado</span>}
+                        )}
                       </div>
                     ))}
                   </div>
@@ -522,6 +532,12 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                         className="flex-1 px-2 py-2.5 text-sm focus:outline-none bg-transparent" />
                     </div>
                   </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">¿Hasta cuándo? (opcional)</label>
+                    <input type="datetime-local" value={ncFechaFin} onChange={e => setNcFechaFin(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
+                    <p className="text-[10px] text-gray-400 mt-1">Déjalo vacío si no tiene fecha límite.</p>
+                  </div>
                 </div>
               )}
 
@@ -564,6 +580,12 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                       <input value={nnInstagram} onChange={e => setNnInstagram(e.target.value.replace('@', ''))} placeholder="usuario"
                         className="flex-1 px-2 py-2.5 text-sm focus:outline-none bg-transparent" />
                     </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">¿Hasta cuándo? (opcional)</label>
+                    <input type="datetime-local" value={nnFechaFin} onChange={e => setNnFechaFin(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+                    <p className="text-[10px] text-gray-400 mt-1">Déjalo vacío si no tiene fecha límite.</p>
                   </div>
                 </div>
               )}
