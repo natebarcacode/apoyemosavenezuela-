@@ -116,6 +116,13 @@ export default function Home() {
   const [cerradosHoyVisible, setCerradosHoyVisible] = useState(false)
   const [cerradosVisible, setCerradosVisible] = useState(false)
   const [cargando, setCargando] = useState(true)
+  const [, setTick] = useState(0)
+
+  // Re-render every 60s so open/closed status, struck-through days, and sections update automatically
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     async function cargar() {

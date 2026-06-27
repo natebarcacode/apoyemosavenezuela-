@@ -70,6 +70,9 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
   const [ncQueAcepta, setNcQueAcepta] = useState<string[]>([])
   const [ncInstagram, setNcInstagram] = useState('')
   const [ncFechaFin, setNcFechaFin] = useState('')
+  const [ncTipoFecha, setNcTipoFecha] = useState<'date'|'datetime'>('date')
+  const [ncHorarios, setNcHorarios] = useState(horarioVacio())
+  const [ncConsultarHorarios, setNcConsultarHorarios] = useState(false)
 
   // Nuevo negocio
   const [nnNombre, setNnNombre] = useState('')
@@ -78,7 +81,11 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
   const [nnDireccion, setNnDireccion] = useState('')
   const [nnIniciativa, setNnIniciativa] = useState('')
   const [nnInstagram, setNnInstagram] = useState('')
+  const [nnSitioWeb, setNnSitioWeb] = useState('')
   const [nnFechaFin, setNnFechaFin] = useState('')
+  const [nnTipoFecha, setNnTipoFecha] = useState<'date'|'datetime'>('date')
+  const [nnHorarios, setNnHorarios] = useState(horarioVacio())
+  const [nnConsultarHorarios, setNnConsultarHorarios] = useState(false)
 
   // Cargar solicitudes pendientes + categorías al abrir
   useEffect(() => {
@@ -146,9 +153,22 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
     let body: Record<string, unknown> = { tipo }
 
     if (tipo === 'nuevo_centro') {
-      body.datos = { nombre: ncNombre, zona: ncZona, direccion: ncDireccion, que_acepta: ncQueAcepta, instagram: ncInstagram ? `@${ncInstagram}` : '', fecha_fin: ncFechaFin || null }
+      body.datos = {
+        nombre: ncNombre, zona: ncZona, direccion: ncDireccion, que_acepta: ncQueAcepta,
+        instagram: ncInstagram ? `@${ncInstagram}` : '',
+        fecha_fin: ncFechaFin || null,
+        consultar_horarios: ncConsultarHorarios,
+        horarios: ncConsultarHorarios ? [] : ncHorarios.filter(h => h.activo).map(({ dia, apertura, cierre }) => ({ dia, apertura, cierre })),
+      }
     } else if (tipo === 'nuevo_negocio') {
-      body.datos = { nombre: nnNombre, tipo: nnTipo, zona: nnZona, direccion: nnDireccion, iniciativa: nnIniciativa, instagram: nnInstagram ? `@${nnInstagram}` : '', fecha_fin: nnFechaFin || null }
+      body.datos = {
+        nombre: nnNombre, tipo: nnTipo, zona: nnZona, direccion: nnDireccion, iniciativa: nnIniciativa,
+        instagram: nnInstagram ? `@${nnInstagram}` : '',
+        sitio_web: nnSitioWeb || null,
+        fecha_fin: nnFechaFin || null,
+        consultar_horarios: nnConsultarHorarios,
+        horarios: nnConsultarHorarios ? [] : nnHorarios.filter(h => h.activo).map(({ dia, apertura, cierre }) => ({ dia, apertura, cierre })),
+      }
     } else if (lugarSeleccionado) {
       body.referencia_tipo = lugarSeleccionado.tipo_ref
       body.referencia_id = lugarSeleccionado.id
@@ -497,9 +517,53 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                         className="flex-1 px-2 py-2.5 text-sm focus:outline-none bg-transparent" />
                     </div>
                   </div>
+
+                  {/* Horarios */}
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">¿Hasta cuándo serán centro de acopio? (opcional)</label>
-                    <input type="datetime-local" value={ncFechaFin} onChange={e => setNcFechaFin(e.target.value)}
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-gray-600">Horarios (opcional)</label>
+                      <button type="button" onClick={() => setNcConsultarHorarios(v => !v)}
+                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${ncConsultarHorarios ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                        Consultar por otro medio
+                      </button>
+                    </div>
+                    {!ncConsultarHorarios && (
+                      <div className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200 overflow-hidden">
+                        {ncHorarios.map((h, i) => (
+                          <div key={h.dia} className={`flex items-center gap-2 px-3 py-2 transition-colors ${h.activo ? 'bg-white' : 'bg-gray-50'}`}>
+                            <button type="button" onClick={() => setNcHorarios(prev => prev.map((x, j) => j === i ? { ...x, activo: !x.activo } : x))}
+                              className={`shrink-0 w-8 h-5 rounded-full transition-colors ${h.activo ? 'bg-red-500' : 'bg-gray-200'}`}>
+                              <span className={`block w-3.5 h-3.5 bg-white rounded-full shadow transition-transform mx-auto ${h.activo ? 'translate-x-1.5' : '-translate-x-1.5'}`} />
+                            </button>
+                            <span className={`text-xs w-8 shrink-0 font-medium ${h.activo ? 'text-gray-700' : 'text-gray-400'}`}>{h.dia}</span>
+                            {h.activo && (
+                              <>
+                                <input type="time" value={h.apertura} onChange={e => setNcHorarios(prev => prev.map((x, j) => j === i ? { ...x, apertura: e.target.value } : x))}
+                                  className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-300" />
+                                <span className="text-gray-300 text-xs">–</span>
+                                <input type="time" value={h.cierre} onChange={e => setNcHorarios(prev => prev.map((x, j) => j === i ? { ...x, cierre: e.target.value } : x))}
+                                  className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-300" />
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-gray-600">¿Hasta cuándo? (opcional)</label>
+                      <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                        {(['date','datetime'] as const).map(t => (
+                          <button key={t} type="button" onClick={() => { setNcTipoFecha(t); setNcFechaFin(f => t === 'date' ? f.slice(0,10) : f ? f.slice(0,10)+'T23:59' : '') }}
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${ncTipoFecha === t ? 'bg-white shadow text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}>
+                            {t === 'date' ? 'Solo fecha' : 'Fecha y hora'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <input type={ncTipoFecha === 'date' ? 'date' : 'datetime-local'} value={ncFechaFin} onChange={e => setNcFechaFin(e.target.value)}
                       className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
                     <p className="text-[10px] text-gray-400 mt-1">Déjalo vacío si no tiene fecha límite.</p>
                   </div>
@@ -546,17 +610,68 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                       placeholder="Ej: 20% de las ventas del fin de semana van directo a Venezuela"
                       className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none" />
                   </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Instagram (opcional)</label>
-                    <div className="flex items-center rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-amber-300 overflow-hidden">
-                      <span className="pl-4 text-sm text-gray-400 select-none">@</span>
-                      <input value={nnInstagram} onChange={e => setNnInstagram(e.target.value.replace('@', ''))} placeholder="usuario"
-                        className="flex-1 px-2 py-2.5 text-sm focus:outline-none bg-transparent" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Instagram (opcional)</label>
+                      <div className="flex items-center rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-amber-300 overflow-hidden">
+                        <span className="pl-4 text-sm text-gray-400 select-none">@</span>
+                        <input value={nnInstagram} onChange={e => setNnInstagram(e.target.value.replace('@', ''))} placeholder="usuario"
+                          className="flex-1 px-2 py-2.5 text-sm focus:outline-none bg-transparent" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Sitio web (opcional)</label>
+                      <input value={nnSitioWeb} onChange={e => setNnSitioWeb(e.target.value)} placeholder="https://..."
+                        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
                     </div>
                   </div>
+
+                  {/* Horarios */}
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">¿Hasta cuándo durará la iniciativa? (opcional)</label>
-                    <input type="datetime-local" value={nnFechaFin} onChange={e => setNnFechaFin(e.target.value)}
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-gray-600">Horarios (opcional)</label>
+                      <button type="button" onClick={() => setNnConsultarHorarios(v => !v)}
+                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${nnConsultarHorarios ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                        Consultar por otro medio
+                      </button>
+                    </div>
+                    {!nnConsultarHorarios && (
+                      <div className="flex flex-col divide-y divide-gray-100 rounded-xl border border-gray-200 overflow-hidden">
+                        {nnHorarios.map((h, i) => (
+                          <div key={h.dia} className={`flex items-center gap-2 px-3 py-2 transition-colors ${h.activo ? 'bg-white' : 'bg-gray-50'}`}>
+                            <button type="button" onClick={() => setNnHorarios(prev => prev.map((x, j) => j === i ? { ...x, activo: !x.activo } : x))}
+                              className={`shrink-0 w-8 h-5 rounded-full transition-colors ${h.activo ? 'bg-amber-400' : 'bg-gray-200'}`}>
+                              <span className={`block w-3.5 h-3.5 bg-white rounded-full shadow transition-transform mx-auto ${h.activo ? 'translate-x-1.5' : '-translate-x-1.5'}`} />
+                            </button>
+                            <span className={`text-xs w-8 shrink-0 font-medium ${h.activo ? 'text-gray-700' : 'text-gray-400'}`}>{h.dia}</span>
+                            {h.activo && (
+                              <>
+                                <input type="time" value={h.apertura} onChange={e => setNnHorarios(prev => prev.map((x, j) => j === i ? { ...x, apertura: e.target.value } : x))}
+                                  className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-300" />
+                                <span className="text-gray-300 text-xs">–</span>
+                                <input type="time" value={h.cierre} onChange={e => setNnHorarios(prev => prev.map((x, j) => j === i ? { ...x, cierre: e.target.value } : x))}
+                                  className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-300" />
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-gray-600">¿Hasta cuándo? (opcional)</label>
+                      <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                        {(['date','datetime'] as const).map(t => (
+                          <button key={t} type="button" onClick={() => { setNnTipoFecha(t); setNnFechaFin(f => t === 'date' ? f.slice(0,10) : f ? f.slice(0,10)+'T23:59' : '') }}
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${nnTipoFecha === t ? 'bg-white shadow text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}>
+                            {t === 'date' ? 'Solo fecha' : 'Fecha y hora'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <input type={nnTipoFecha === 'date' ? 'date' : 'datetime-local'} value={nnFechaFin} onChange={e => setNnFechaFin(e.target.value)}
                       className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
                     <p className="text-[10px] text-gray-400 mt-1">Déjalo vacío si no tiene fecha límite.</p>
                   </div>
