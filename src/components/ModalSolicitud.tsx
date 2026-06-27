@@ -581,8 +581,8 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                 <Check size={28} className="text-emerald-500" />
               </div>
               <div>
-                <p className="font-bold text-gray-900 text-base">¡Reporte enviado!</p>
-                <p className="text-sm text-gray-500 mt-1">El equipo lo revisará y aplicará el cambio pronto.</p>
+                <p className="font-bold text-gray-900 text-base">¡Formulario enviado!</p>
+                <p className="text-sm text-gray-500 mt-1 leading-snug">Tan pronto podamos realizaremos los cambios en la plataforma.<br />¡Muchas gracias por tu apoyo!</p>
               </div>
               <button onClick={onClose}
                 className="mt-2 rounded-full bg-gray-900 text-white text-sm font-semibold px-6 py-2.5 hover:bg-gray-700 transition-colors">
