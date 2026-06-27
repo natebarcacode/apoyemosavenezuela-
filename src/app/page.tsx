@@ -16,7 +16,7 @@ const MapaNegocios = dynamic(() => import('@/components/MapaNegocios'), { ssr: f
 
 type Tab = 'centros' | 'negocios'
 type UrgenciaFiltro = 'todos' | 'hoy' | 'semana' | 'permanente'
-type EstadoFiltro = 'todos' | 'abiertos' | 'cerrados'
+type EstadoFiltro = 'todos' | 'abiertos' | 'cerrados' | 'sin_horario'
 
 function toPanamaUTC(fechaFin: string): number {
   const s = fechaFin.slice(0, 16)
@@ -155,7 +155,12 @@ export default function Home() {
       (urgenciaFiltro === 'semana' && (nivel === 'hoy' || nivel === 'semana')) ||
       (urgenciaFiltro === 'permanente' && nivel === 'permanente')
     const abierto = estaAbierto(!!c.cerrado, c.fecha_fin)
-    const matchE = estadoFiltro === 'todos' || (estadoFiltro === 'abiertos' && abierto) || (estadoFiltro === 'cerrados' && !abierto)
+    const sinHorario = !c.cerrado && !c.horarios?.length && !c.consultar_horarios
+    const consultarHorario = !c.cerrado && (!!c.consultar_horarios || sinHorario)
+    const matchE = estadoFiltro === 'todos'
+      || (estadoFiltro === 'abiertos' && abierto)
+      || (estadoFiltro === 'cerrados' && !abierto && !consultarHorario)
+      || (estadoFiltro === 'sin_horario' && consultarHorario)
     return matchB && matchZ && matchU && matchE
   }))
 
@@ -172,7 +177,12 @@ export default function Home() {
       (urgenciaFiltro === 'semana' && (nivel === 'hoy' || nivel === 'semana')) ||
       (urgenciaFiltro === 'permanente' && nivel === 'permanente')
     const abierto = estaAbierto(!n.activo, n.fecha_fin)
-    const matchE = estadoFiltro === 'todos' || (estadoFiltro === 'abiertos' && abierto) || (estadoFiltro === 'cerrados' && !abierto)
+    const sinHorario = n.activo && !n.horarios?.length && !n.consultar_horarios
+    const consultarHorario = n.activo && (!!n.consultar_horarios || sinHorario)
+    const matchE = estadoFiltro === 'todos'
+      || (estadoFiltro === 'abiertos' && abierto)
+      || (estadoFiltro === 'cerrados' && !abierto && !consultarHorario)
+      || (estadoFiltro === 'sin_horario' && consultarHorario)
     return matchB && matchZ && matchU && matchE
   }))
 
@@ -342,14 +352,19 @@ export default function Home() {
               {/* Estado (abierto/cerrado) */}
               <div className="flex flex-wrap gap-1.5">
                 <span className="flex items-center gap-1 text-[11px] text-gray-400 mr-1 self-center">Estado:</span>
-                {(['todos', 'abiertos', 'cerrados'] as const).map(e => (
-                  <button key={e} onClick={() => setEstadoFiltro(e)}
+                {([
+                  { id: 'todos', label: 'Todos' },
+                  { id: 'abiertos', label: 'Abiertos' },
+                  { id: 'cerrados', label: 'Cerrados ahora' },
+                  { id: 'sin_horario', label: 'Consultar horario' },
+                ] as { id: EstadoFiltro; label: string }[]).map(({ id, label }) => (
+                  <button key={id} onClick={() => setEstadoFiltro(id)}
                     className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                      estadoFiltro === e
+                      estadoFiltro === id
                         ? tab === 'centros' ? 'bg-red-500 text-white border-red-500' : 'bg-amber-500 text-white border-amber-500'
                         : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
                     }`}>
-                    {e === 'todos' ? 'Todos' : e === 'abiertos' ? 'Abiertos' : 'Cerrados'}
+                    {label}
                   </button>
                 ))}
               </div>

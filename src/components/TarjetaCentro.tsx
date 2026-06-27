@@ -161,6 +161,16 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
                 {countdownCorto(centro.fecha_fin!)}
               </span>
             )}
+            {!cerrado && !!centro.consultar_horarios && (
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-400 border border-gray-100 flex items-center gap-1">
+                <Clock size={8} /> Consultar horario
+              </span>
+            )}
+            {!cerrado && !tieneHorarios && !centro.consultar_horarios && abiertoAhora === null && (
+              <span className="text-[10px] text-gray-300 flex items-center gap-1">
+                <Clock size={9} /> Ver horario
+              </span>
+            )}
             <ChevronRight size={15} className="text-gray-300 group-hover:text-gray-400 transition-colors" />
           </div>
         </div>
