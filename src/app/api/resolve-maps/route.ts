@@ -16,9 +16,27 @@ function extractCoords(text: string) {
   return null
 }
 
+const ALLOWED_HOSTS = [
+  'maps.google.com',
+  'www.google.com',
+  'maps.app.goo.gl',
+  'goo.gl',
+]
+
+function isMapsUrl(raw: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(raw)
+    if (protocol !== 'https:') return false
+    return ALLOWED_HOSTS.some(h => hostname === h || hostname.endsWith('.' + h))
+  } catch {
+    return false
+  }
+}
+
 export async function POST(req: NextRequest) {
   const { url } = await req.json()
   if (!url) return NextResponse.json({ error: 'No URL' }, { status: 400 })
+  if (!isMapsUrl(url)) return NextResponse.json({ error: 'Solo se aceptan links de Google Maps.' }, { status: 400 })
 
   // Try direct parse first
   const direct = extractCoords(url)
