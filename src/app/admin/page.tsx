@@ -690,15 +690,6 @@ export default function AdminPage() {
                   }
                 />
               </div>
-              {formCentro.lat && formCentro.lng && (
-                <div className="sm:col-span-2">
-                  <MapaPicker
-                    lat={formCentro.lat}
-                    lng={formCentro.lng}
-                    onChange={(lat, lng) => setFormCentro(f => ({ ...f, lat, lng }))}
-                  />
-                </div>
-              )}
               <div className="sm:col-span-2">
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Dirección *</label>
                 <input value={formCentro.direccion} onChange={(e) => setFormCentro({ ...formCentro, direccion: e.target.value })}
@@ -709,7 +700,88 @@ export default function AdminPage() {
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Zona *</label>
                 <input value={formCentro.zona} onChange={(e) => setFormCentro({ ...formCentro, zona: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                  placeholder="Ej: Ciudad de Panamá" />
+                  placeholder="Ej: Bella Vista" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud *</label>
+                <input value={formCentro.lat} onChange={(e) => setFormCentro({ ...formCentro, lat: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  placeholder="Ej: 8.9936" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Longitud *</label>
+                <input value={formCentro.lng} onChange={(e) => setFormCentro({ ...formCentro, lng: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  placeholder="Ej: -79.5197" />
+              </div>
+              {formCentro.lat && formCentro.lng && (
+                <>
+                  <div className="sm:col-span-2">
+                    <MapaPicker lat={formCentro.lat} lng={formCentro.lng} onChange={(lat, lng) => setFormCentro(f => ({ ...f, lat, lng }))} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <a href={`https://www.google.com/maps?q=${formCentro.lat},${formCentro.lng}`} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors">
+                      Verificar en Google Maps →
+                    </a>
+                  </div>
+                </>
+              )}
+              {/* ── Sección: Insumos ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Qué insumos acepta</p>
+                {categorias.length === 0 && (
+                  <p className="text-xs text-amber-500 mb-3">Primero agrega insumos en el tab "Insumos"</p>
+                )}
+              </div>
+              <div className="sm:col-span-2">
+                <div className="flex flex-col gap-3">
+                  {grupos.map((grupo) => {
+                    const insumos = categorias.filter(c => c.grupo === grupo.nombre)
+                    if (insumos.length === 0) return null
+                    const todosSeleccionados = insumos.every(i => formCentro.que_acepta.includes(i.nombre))
+                    const algunoSeleccionado = insumos.some(i => formCentro.que_acepta.includes(i.nombre))
+                    return (
+                      <div key={grupo.id} className="rounded-xl border border-gray-200 p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <button type="button" onClick={() => toggleGrupoCompleto(grupo.nombre)}
+                            className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border transition-colors ${
+                              todosSeleccionados ? 'bg-red-500 text-white border-red-500'
+                              : algunoSeleccionado ? 'bg-red-100 text-red-600 border-red-300'
+                              : 'bg-gray-100 text-gray-600 border-gray-200 hover:border-red-300'
+                            }`}>
+                            {todosSeleccionados ? '✓ ' : algunoSeleccionado ? '— ' : '+ '}{grupo.nombre}
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 pl-1">
+                          {insumos.map((cat) => (
+                            <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
+                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                                formCentro.que_acepta.includes(cat.nombre) ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                              }`}>
+                              {cat.nombre}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {categorias.filter(c => !c.grupo).length > 0 && (
+                    <div className="rounded-xl border border-gray-200 p-3">
+                      <p className="text-xs font-bold text-gray-500 mb-2">Sin categoría</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {categorias.filter(c => !c.grupo).map((cat) => (
+                          <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                              formCentro.que_acepta.includes(cat.nombre) ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                            }`}>
+                            {cat.nombre}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               {/* ── Sección: Horario ── */}
               <div className="sm:col-span-2 border-t border-gray-100 pt-3">
@@ -741,114 +813,22 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud *</label>
-                <input value={formCentro.lat} onChange={(e) => setFormCentro({ ...formCentro, lat: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                  placeholder="Ej: 8.9936" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Longitud *</label>
-                <input value={formCentro.lng} onChange={(e) => setFormCentro({ ...formCentro, lng: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                  placeholder="Ej: -79.5197" />
-              </div>
-              {formCentro.lat && formCentro.lng && (
-                <div className="sm:col-span-2">
-                  <a
-                    href={`https://www.google.com/maps?q=${formCentro.lat},${formCentro.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
-                  >
-                    Verificar ubicación en Google Maps →
-                  </a>
-                  <p className="text-xs text-gray-400 mt-1">Si el pin está mal: right-click en el lugar correcto → copia las coordenadas → pégalas arriba.</p>
-                </div>
-              )}
-              {/* ── Sección: Insumos ── */}
+              {/* ── Sección: Contacto y fecha ── */}
               <div className="sm:col-span-2 border-t border-gray-100 pt-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Qué insumos acepta</p>
-                {categorias.length === 0 && (
-                  <p className="text-xs text-amber-500 mb-3">Primero agrega insumos en el tab "Insumos"</p>
-                )}
-              </div>
-              <div className="sm:col-span-2">
-                <label className="sr-only">Qué acepta</label>
-                <div className="flex flex-col gap-3">
-                  {grupos.map((grupo) => {
-                    const insumos = categorias.filter(c => c.grupo === grupo.nombre)
-                    if (insumos.length === 0) return null
-                    const todosSeleccionados = insumos.every(i => formCentro.que_acepta.includes(i.nombre))
-                    const algunoSeleccionado = insumos.some(i => formCentro.que_acepta.includes(i.nombre))
-                    return (
-                      <div key={grupo.id} className="rounded-xl border border-gray-200 p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <button
-                            type="button"
-                            onClick={() => toggleGrupoCompleto(grupo.nombre)}
-                            className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border transition-colors ${
-                              todosSeleccionados
-                                ? 'bg-red-500 text-white border-red-500'
-                                : algunoSeleccionado
-                                ? 'bg-red-100 text-red-600 border-red-300'
-                                : 'bg-gray-100 text-gray-600 border-gray-200 hover:border-red-300'
-                            }`}
-                          >
-                            {todosSeleccionados ? '✓ ' : algunoSeleccionado ? '— ' : '+ '}{grupo.nombre}
-                          </button>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 pl-1">
-                          {insumos.map((cat) => (
-                            <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
-                                formCentro.que_acepta.includes(cat.nombre)
-                                  ? 'bg-red-500 text-white border-red-500'
-                                  : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
-                              }`}>
-                              {cat.nombre}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  })}
-                  {/* Insumos sin grupo */}
-                  {categorias.filter(c => !c.grupo).length > 0 && (
-                    <div className="rounded-xl border border-gray-200 p-3">
-                      <p className="text-xs font-bold text-gray-500 mb-2">Sin categoría</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {categorias.filter(c => !c.grupo).map((cat) => (
-                          <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
-                              formCentro.que_acepta.includes(cat.nombre)
-                                ? 'bg-red-500 text-white border-red-500'
-                                : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
-                            }`}>
-                            {cat.nombre}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              {/* ── Sección: Opcionales ── */}
-              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Fechas y detalles opcionales</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre</label>
-                <input type="datetime-local" value={formCentro.fecha_fin}
-                  onChange={(e) => setFormCentro({ ...formCentro, fecha_fin: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
-                <p className="text-xs text-gray-400 mt-1">El timer y el color de la tarjeta cambian según esta fecha.</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Contacto y fecha de cierre</p>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Instagram (opcional)</label>
                 <input value={formCentro.instagram} onChange={(e) => setFormCentro({ ...formCentro, instagram: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                   placeholder="@usuario" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre</label>
+                <input type="datetime-local" value={formCentro.fecha_fin}
+                  onChange={(e) => setFormCentro({ ...formCentro, fecha_fin: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                <p className="text-xs text-gray-400 mt-1">El timer de la tarjeta cambia según esta fecha.</p>
               </div>
             </div>
             <div className="mt-4 flex flex-col gap-3">
@@ -882,40 +862,8 @@ export default function AdminPage() {
               {editandoId ? 'Editar negocio solidario' : 'Agregar negocio solidario'}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* ── Sección: Ubicación ── */}
-              <div className="sm:col-span-2 border-t border-gray-100 pt-3 -mt-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Ubicación</p>
-              </div>
-              <div className="sm:col-span-2">
-                <BuscadorUbicacion
-                  onSeleccionar={({ lat, lng, direccion, zona, nombre }) =>
-                    setFormNegocio((f) => ({ ...f, lat, lng, direccion: direccion || f.direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud</label>
-                <input value={formNegocio.lat} onChange={(e) => setFormNegocio({ ...formNegocio, lat: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="Ej: 8.9936" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Longitud</label>
-                <input value={formNegocio.lng} onChange={(e) => setFormNegocio({ ...formNegocio, lng: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="Ej: -79.5197" />
-              </div>
-              {formNegocio.lat && formNegocio.lng && (
-                <div className="sm:col-span-2">
-                  <MapaPicker
-                    lat={formNegocio.lat}
-                    lng={formNegocio.lng}
-                    onChange={(lat, lng) => setFormNegocio(f => ({ ...f, lat, lng }))}
-                  />
-                </div>
-              )}
               {/* ── Sección: Info ── */}
-              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3 -mt-1">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Información del negocio</p>
               </div>
               <div>
@@ -937,6 +885,17 @@ export default function AdminPage() {
                   rows={2} className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
                   placeholder="Ej: 20% de las ventas del fin de semana van directo a Venezuela" />
               </div>
+              {/* ── Sección: Ubicación ── */}
+              <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Ubicación</p>
+              </div>
+              <div className="sm:col-span-2">
+                <BuscadorUbicacion
+                  onSeleccionar={({ lat, lng, direccion, zona, nombre }) =>
+                    setFormNegocio((f) => ({ ...f, lat, lng, direccion: direccion || f.direccion, zona: zona || f.zona, nombre: nombre || f.nombre }))
+                  }
+                />
+              </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Zona *</label>
                 <input value={formNegocio.zona} onChange={(e) => setFormNegocio({ ...formNegocio, zona: e.target.value })}
@@ -950,12 +909,31 @@ export default function AdminPage() {
                   placeholder="Ej: Calle 50, local 3" />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Instagram (opcional)</label>
-                <input value={formNegocio.instagram} onChange={(e) => setFormNegocio({ ...formNegocio, instagram: e.target.value })}
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud</label>
+                <input value={formNegocio.lat} onChange={(e) => setFormNegocio({ ...formNegocio, lat: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="@nombredelnegocio" />
+                  placeholder="Ej: 8.9936" />
               </div>
-              {/* ── Sección: Horario negocio ── */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Longitud</label>
+                <input value={formNegocio.lng} onChange={(e) => setFormNegocio({ ...formNegocio, lng: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  placeholder="Ej: -79.5197" />
+              </div>
+              {formNegocio.lat && formNegocio.lng && (
+                <>
+                  <div className="sm:col-span-2">
+                    <MapaPicker lat={formNegocio.lat} lng={formNegocio.lng} onChange={(lat, lng) => setFormNegocio(f => ({ ...f, lat, lng }))} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <a href={`https://www.google.com/maps?q=${formNegocio.lat},${formNegocio.lng}`} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors">
+                      Verificar en Google Maps →
+                    </a>
+                  </div>
+                </>
+              )}
+              {/* ── Sección: Horario ── */}
               <div className="sm:col-span-2 border-t border-gray-100 pt-3">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Horario de atención</p>
               </div>
@@ -985,9 +963,15 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
-              {/* ── Sección: Fechas negocio ── */}
+              {/* ── Sección: Contacto y fecha ── */}
               <div className="sm:col-span-2 border-t border-gray-100 pt-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Fechas opcionales</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Contacto y fecha de cierre</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Instagram (opcional)</label>
+                <input value={formNegocio.instagram} onChange={(e) => setFormNegocio({ ...formNegocio, instagram: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  placeholder="@nombredelnegocio" />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre (opcional)</label>
