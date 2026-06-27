@@ -49,7 +49,7 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
       {/* Modal */}
       <div
         className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col"
-        style={{ maxHeight: '90vh' }}
+        style={{ maxHeight: '92dvh' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

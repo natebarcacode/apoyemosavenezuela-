@@ -456,10 +456,10 @@ export default function Home() {
         />
       )}
 
-      {/* Botón flotante */}
+      {/* Botón flotante — oculto cuando hay cualquier modal abierto */}
       <button
         onClick={() => setModalSolicitud(true)}
-        className="fixed bottom-6 right-5 z-[100] flex items-center gap-2.5 rounded-full text-white text-sm font-extrabold px-5 py-3.5 shadow-2xl hover:scale-[1.04] active:scale-[0.97] transition-all"
+        className={`fixed bottom-6 right-5 z-[90] flex items-center gap-2.5 rounded-full text-white text-sm font-extrabold px-5 py-3.5 shadow-2xl hover:scale-[1.04] active:scale-[0.97] transition-all ${modalCentro || modalNegocio || modalSolicitud ? 'hidden' : ''}`}
         style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)' }}
       >
         <span className="text-base leading-none">🤝</span>
