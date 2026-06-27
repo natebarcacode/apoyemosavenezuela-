@@ -123,6 +123,9 @@ export default function AdminPage() {
   const [adminQ, setAdminQ] = useState('')
   const [adminEstado, setAdminEstado] = useState<AdminEstado>('todos')
   const [adminZona, setAdminZona] = useState('')
+
+  const [tipoFechaCentro, setTipoFechaCentro] = useState<'date' | 'datetime'>('datetime')
+  const [tipoFechaNegocio, setTipoFechaNegocio] = useState<'date' | 'datetime'>('datetime')
   const [waMensaje, setWaMensaje] = useState('')
   const [waMostrar, setWaMostrar] = useState(false)
   const [waCopied, setWaCopied] = useState(false)
@@ -351,12 +354,13 @@ export default function AdminPage() {
       }),
       consultar_horarios: !!c.consultar_horarios,
       fecha_inicio: c.fecha_inicio ? c.fecha_inicio.slice(0, 10) : '',
-      fecha_fin: c.fecha_fin ? c.fecha_fin.slice(0, 16) : '',
+      fecha_fin: c.fecha_fin ? (c.fecha_fin.includes('T') ? c.fecha_fin.slice(0, 16) : c.fecha_fin.slice(0, 10)) : '',
       sucursales: (c.sucursales ?? []).map((s: {nombre:string;direccion?:string;lat?:string;lng?:string}) => ({
         nombre: s.nombre, direccion: s.direccion ?? '', lat: s.lat ?? '', lng: s.lng ?? '',
       })),
       todas_sucursales: !!c.todas_sucursales,
     })
+    setTipoFechaCentro(c.fecha_fin && !c.fecha_fin.includes('T') ? 'date' : 'datetime')
     setEditandoId(c.id)
     setNotificarWA(false)
     setMostrarForm(true)
@@ -376,12 +380,13 @@ export default function AdminPage() {
       }),
       consultar_horarios: !!n.consultar_horarios,
       fecha_inicio: n.fecha_inicio ?? '',
-      fecha_fin: n.fecha_fin ? n.fecha_fin.slice(0, 16) : '',
+      fecha_fin: n.fecha_fin ? (n.fecha_fin.includes('T') ? n.fecha_fin.slice(0, 16) : n.fecha_fin.slice(0, 10)) : '',
       sucursales: (n.sucursales ?? []).map((s: {nombre:string;direccion?:string;lat?:string;lng?:string}) => ({
         nombre: s.nombre, direccion: s.direccion ?? '', lat: s.lat ?? '', lng: s.lng ?? '',
       })),
       todas_sucursales: !!n.todas_sucursales,
     })
+    setTipoFechaNegocio(n.fecha_fin && !n.fecha_fin.includes('T') ? 'date' : 'datetime')
     setEditandoId(n.id)
     setNotificarWA(false)
     setMostrarForm(true)
@@ -932,11 +937,31 @@ export default function AdminPage() {
               placeholder="@usuario" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre</label>
-            <input type="datetime-local" value={formCentro.fecha_fin}
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-gray-600">Fecha de cierre</label>
+              <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                {(['date', 'datetime'] as const).map(tipo => (
+                  <button key={tipo} type="button"
+                    onClick={() => {
+                      const cur = formCentro.fecha_fin
+                      const next = tipo === 'date'
+                        ? cur.slice(0, 10)
+                        : cur ? cur.slice(0, 10) + 'T23:59' : ''
+                      setTipoFechaCentro(tipo)
+                      setFormCentro(f => ({ ...f, fecha_fin: next }))
+                    }}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${tipoFechaCentro === tipo ? 'bg-white shadow text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}>
+                    {tipo === 'date' ? 'Solo fecha' : 'Fecha y hora'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input type={tipoFechaCentro === 'date' ? 'date' : 'datetime-local'} value={formCentro.fecha_fin}
               onChange={(e) => setFormCentro({ ...formCentro, fecha_fin: e.target.value })}
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
-            <p className="text-xs text-gray-400 mt-1">El timer de la tarjeta cambia según esta fecha.</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {tipoFechaCentro === 'date' ? 'Cierra al final del día seleccionado.' : 'El timer de la tarjeta cambia según esta fecha.'}
+            </p>
           </div>
         </div>
         <div className="mt-4 flex flex-col gap-3">
@@ -1133,11 +1158,31 @@ export default function AdminPage() {
               placeholder="@nombredelnegocio" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre (opcional)</label>
-            <input type="datetime-local" value={formNegocio.fecha_fin}
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-gray-600">Fecha de cierre (opcional)</label>
+              <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                {(['date', 'datetime'] as const).map(tipo => (
+                  <button key={tipo} type="button"
+                    onClick={() => {
+                      const cur = formNegocio.fecha_fin
+                      const next = tipo === 'date'
+                        ? cur.slice(0, 10)
+                        : cur ? cur.slice(0, 10) + 'T23:59' : ''
+                      setTipoFechaNegocio(tipo)
+                      setFormNegocio(f => ({ ...f, fecha_fin: next }))
+                    }}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${tipoFechaNegocio === tipo ? 'bg-white shadow text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}>
+                    {tipo === 'date' ? 'Solo fecha' : 'Fecha y hora'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input type={tipoFechaNegocio === 'date' ? 'date' : 'datetime-local'} value={formNegocio.fecha_fin}
               onChange={(e) => setFormNegocio({ ...formNegocio, fecha_fin: e.target.value })}
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
-            <p className="text-xs text-gray-400 mt-1">El timer de la tarjeta cambia según esta fecha.</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {tipoFechaNegocio === 'date' ? 'Cierra al final del día seleccionado.' : 'El timer de la tarjeta cambia según esta fecha.'}
+            </p>
           </div>
         </div>
         <div className="mt-4 flex flex-col gap-3">
