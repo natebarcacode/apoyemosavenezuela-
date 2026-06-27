@@ -8,17 +8,19 @@ export const contentType = 'image/png'
 export default function Image() {
   return new ImageResponse(
     (
-      <div style={{ background: '#ffffff', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', gap: 24 }}>
-        {/* Bandera venezolana — 3 franjas */}
-        <div style={{ display: 'flex', flexDirection: 'column', width: 120, height: 80, borderRadius: 12, overflow: 'hidden' }}>
-          <div style={{ flex: 1, background: '#FFCC00', display: 'flex' }} />
-          <div style={{ flex: 1, background: '#00247D', display: 'flex' }} />
-          <div style={{ flex: 1, background: '#CF142B', display: 'flex' }} />
-        </div>
+      <div style={{ background: '#ffffff', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', gap: 28 }}>
+        {/* Logo corazón venezolano */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://apoyemosavenezuela.vercel.app/logo.svg"
+          width={130}
+          height={120}
+          alt="Venezuela"
+        />
         {/* Título */}
         <div style={{ display: 'flex', fontSize: 72, fontWeight: 900, color: '#111827', letterSpacing: -2 }}>
-          Apoyemos a{' '}
-          <span style={{ color: '#dc2626', marginLeft: 16 }}>Venezuela</span>
+          {'Apoyemos a '}
+          <span style={{ color: '#dc2626', marginLeft: 12 }}>Venezuela</span>
         </div>
         {/* Subtítulo */}
         <div style={{ fontSize: 30, color: '#6b7280', display: 'flex' }}>
