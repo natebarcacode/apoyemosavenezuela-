@@ -16,15 +16,13 @@ function urgencia(fechaFin?: string) {
 
 function countdownCorto(fechaFin: string) {
   const h = (new Date(fechaFin).getTime() - Date.now()) / 3600000
-  if (h <= 0) return 'Cerrado'
   if (h < 24) return `Cierra en ${Math.round(h)}h`
   const d = Math.ceil(h / 24)
   return `Cierra en ${d}d`
 }
 
 // Panama = UTC-5, sin cambio de horario
-function estaAbiertoAhora(horarios?: HorarioDia[]): boolean | null {
-  if (!horarios || horarios.length === 0) return null
+function estaAbiertoAhora(horarios: HorarioDia[]): boolean {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
   const hoy = diasJS[p.getUTCDay()]
@@ -46,14 +44,20 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
   const nivel = urgencia(centro.fecha_fin)
   const preview = centro.que_acepta.slice(0, 3)
   const extra = centro.que_acepta.length - preview.length
-  const cerrado = !!centro.cerrado
-  const abiertoAhora = cerrado ? false : estaAbiertoAhora(centro.horarios)
-  const abierto = !cerrado && nivel !== 'expirado'
+  const cerradoManual = !!centro.cerrado
+  const cerradoPorFecha = nivel === 'expirado'
+  const cerrado = cerradoManual || cerradoPorFecha
 
-  const dotColor = cerrado || abiertoAhora === false
+  const tieneHorarios = !!centro.horarios && centro.horarios.length > 0
+  const tieneFechaFin = !!centro.fecha_fin
+  const abiertoAhora = !cerrado && tieneHorarios && !tieneFechaFin
+    ? estaAbiertoAhora(centro.horarios!)
+    : null
+
+  const dotColor = cerrado
     ? 'bg-red-400'
-    : !abierto
-    ? 'bg-gray-300'
+    : abiertoAhora === false
+    ? 'bg-red-400'
     : nivel === 'urgente'
     ? 'bg-red-400 animate-pulse'
     : nivel === 'proximo'
@@ -66,7 +70,6 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
       className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden active:scale-[0.985] active:shadow-none
         ${seleccionado ? 'border-red-300 shadow-md ring-2 ring-red-100' : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'}
         ${cerrado ? 'opacity-60' : ''}
-        ${nivel === 'expirado' && !cerrado ? 'opacity-40' : ''}
       `}
     >
       <div className="px-4 py-3">
@@ -79,27 +82,37 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* Cerrado (manual o por fecha) */}
             {cerrado && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
                 Cerrado
               </span>
             )}
-            {!cerrado && abiertoAhora === false && centro.horarios && centro.horarios.length > 0 && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
-                Cerrado ahora
-              </span>
-            )}
+            {/* Abierto/Cerrado según horarios diarios */}
             {!cerrado && abiertoAhora === true && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
                 Abierto ahora
               </span>
             )}
-            {!cerrado && centro.fecha_fin && nivel !== 'normal' && nivel !== 'expirado' && (
+            {!cerrado && abiertoAhora === false && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
+                Cerrado ahora
+              </span>
+            )}
+            {/* Countdown para fecha_fin próxima */}
+            {!cerrado && tieneFechaFin && (nivel === 'urgente' || nivel === 'proximo') && (
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 nivel === 'urgente' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'
               }`}>
                 <Clock size={8} className="inline mr-0.5" />
-                {countdownCorto(centro.fecha_fin)}
+                {countdownCorto(centro.fecha_fin!)}
+              </span>
+            )}
+            {/* Sin fecha ni horarios → invitar a entrar */}
+            {!cerrado && !tieneFechaFin && !tieneHorarios && (
+              <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                <Clock size={9} />
+                Ver horarios
               </span>
             )}
             <ChevronRight size={16} className="text-gray-400" />

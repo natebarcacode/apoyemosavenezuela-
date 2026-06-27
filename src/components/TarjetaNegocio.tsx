@@ -16,15 +16,13 @@ function urgencia(fechaFin?: string) {
 
 function countdownCorto(fechaFin: string) {
   const h = (new Date(fechaFin).getTime() - Date.now()) / 3600000
-  if (h <= 0) return 'Cerrado'
   if (h < 24) return `Cierra en ${Math.round(h)}h`
   const d = Math.ceil(h / 24)
   return `Cierra en ${d}d`
 }
 
 // Panama = UTC-5, sin cambio de horario
-function estaAbiertoAhora(horarios?: HorarioDia[]): boolean | null {
-  if (!horarios || horarios.length === 0) return null
+function estaAbiertoAhora(horarios: HorarioDia[]): boolean {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
   const hoy = diasJS[p.getUTCDay()]
@@ -49,13 +47,19 @@ type Props = {
 
 export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props) {
   const nivel = urgencia(negocio.fecha_fin)
-  const abierto = negocio.activo && nivel !== 'expirado'
-  const abiertoAhora = abierto ? estaAbiertoAhora(negocio.horarios) : false
+  const cerradoPorFecha = nivel === 'expirado'
+  const cerrado = cerradoPorFecha || !negocio.activo
 
-  const dotColor = abiertoAhora === false && negocio.horarios && negocio.horarios.length > 0
+  const tieneHorarios = !!negocio.horarios && negocio.horarios.length > 0
+  const tieneFechaFin = !!negocio.fecha_fin
+  const abiertoAhora = !cerrado && tieneHorarios && !tieneFechaFin
+    ? estaAbiertoAhora(negocio.horarios!)
+    : null
+
+  const dotColor = cerrado
     ? 'bg-red-400'
-    : !abierto
-    ? 'bg-gray-300'
+    : abiertoAhora === false
+    ? 'bg-red-400'
     : nivel === 'urgente'
     ? 'bg-red-400 animate-pulse'
     : nivel === 'proximo'
@@ -67,7 +71,7 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
       onClick={onClick}
       className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden active:scale-[0.985] active:shadow-none
         ${seleccionado ? 'border-amber-300 shadow-md ring-2 ring-amber-100' : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'}
-        ${nivel === 'expirado' ? 'opacity-40' : ''}
+        ${cerrado ? 'opacity-60' : ''}
       `}
     >
       <div className="px-4 py-3">
@@ -75,25 +79,36 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <span className={`shrink-0 w-2 h-2 rounded-full ${dotColor}`} />
-            <p className="font-bold text-gray-900 text-sm truncate">{negocio.nombre}</p>
+            <p className={`font-bold text-sm truncate ${cerrado ? 'line-through text-gray-400' : 'text-gray-900'}`}>{negocio.nombre}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {abiertoAhora === false && negocio.horarios && negocio.horarios.length > 0 && (
+            {cerrado && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
-                Cerrado ahora
+                Cerrado
               </span>
             )}
-            {abiertoAhora === true && (
+            {!cerrado && abiertoAhora === true && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
                 Abierto ahora
               </span>
             )}
-            {negocio.fecha_fin && nivel !== 'normal' && nivel !== 'expirado' && (
+            {!cerrado && abiertoAhora === false && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
+                Cerrado ahora
+              </span>
+            )}
+            {!cerrado && tieneFechaFin && (nivel === 'urgente' || nivel === 'proximo') && (
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 nivel === 'urgente' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'
               }`}>
                 <Clock size={8} className="inline mr-0.5" />
-                {countdownCorto(negocio.fecha_fin)}
+                {countdownCorto(negocio.fecha_fin!)}
+              </span>
+            )}
+            {!cerrado && !tieneFechaFin && !tieneHorarios && (
+              <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                <Clock size={9} />
+                Ver horarios
               </span>
             )}
             <ChevronRight size={16} className="text-gray-400" />
