@@ -11,7 +11,7 @@ export default function Image() {
       <div style={{ background: '#ffffff', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', gap: 24 }}>
         {/* Bandera venezolana — 3 franjas */}
         <div style={{ display: 'flex', flexDirection: 'column', width: 120, height: 80, borderRadius: 12, overflow: 'hidden' }}>
-          <div style={{ flex: 1, background: '#CF142B', display: 'flex' }} />
+          <div style={{ flex: 1, background: '#FFCC00', display: 'flex' }} />
           <div style={{ flex: 1, background: '#00247D', display: 'flex' }} />
           <div style={{ flex: 1, background: '#CF142B', display: 'flex' }} />
         </div>
