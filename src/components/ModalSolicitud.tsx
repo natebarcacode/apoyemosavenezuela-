@@ -257,8 +257,12 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
           {/* PASO: form */}
           {step === 'form' && (
             <div className="flex flex-col gap-4">
-              <div className="rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3">
-                <p className="text-xs text-amber-700 leading-snug">Por favor llena el formulario lo más completo posible — eso nos ayuda a actualizar la información más rápido. ¡Muchas gracias por tu apoyo!</p>
+              <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3.5 flex items-start gap-3">
+                <span className="text-lg shrink-0 mt-0.5">🙏</span>
+                <div>
+                  <p className="text-xs font-semibold text-amber-800 mb-0.5">¡Gracias por tu apoyo!</p>
+                  <p className="text-xs text-amber-700 leading-relaxed">Llena el formulario lo más completo posible — eso nos ayuda a actualizar la información más rápido.</p>
+                </div>
               </div>
 
               {/* Selector de lugar existente */}
@@ -370,9 +374,9 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
               {/* Nuevo centro */}
               {tipo === 'nuevo_centro' && (
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3.5 py-2.5">
-                    <span className="text-blue-400 text-sm shrink-0 mt-px">ℹ️</span>
-                    <p className="text-xs text-blue-700 leading-snug">Si el centro tiene varias sucursales, por favor envía <span className="font-semibold">un formulario por cada sucursal</span>.</p>
+                  <div className="flex items-start gap-3 rounded-2xl bg-blue-50 border border-blue-100 px-4 py-3">
+                    <span className="text-base shrink-0 mt-0.5">🏢</span>
+                    <p className="text-xs text-blue-700 leading-relaxed"><span className="font-semibold text-blue-800">¿Varias sucursales?</span> Envía un formulario por cada una para que podamos registrarlas correctamente.</p>
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre del centro *</label>
@@ -505,9 +509,9 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
               {/* Nuevo negocio */}
               {tipo === 'nuevo_negocio' && (
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3.5 py-2.5">
-                    <span className="text-blue-400 text-sm shrink-0 mt-px">ℹ️</span>
-                    <p className="text-xs text-blue-700 leading-snug">Si el negocio tiene varias sucursales, por favor envía <span className="font-semibold">un formulario por cada sucursal</span>.</p>
+                  <div className="flex items-start gap-3 rounded-2xl bg-blue-50 border border-blue-100 px-4 py-3">
+                    <span className="text-base shrink-0 mt-0.5">🏢</span>
+                    <p className="text-xs text-blue-700 leading-relaxed"><span className="font-semibold text-blue-800">¿Varias sucursales?</span> Envía un formulario por cada una para que podamos registrarlas correctamente.</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
