@@ -25,7 +25,9 @@ function urgencia(fechaFin?: string) {
 }
 
 function countdownCorto(fechaFin: string) {
-  const h = (toPanamaUTC(fechaFin) - Date.now()) / 3600000
+  const ms = toPanamaUTC(fechaFin) - Date.now()
+  const h = ms / 3600000
+  if (h < 1) return `Cierra en ${Math.max(1, Math.round(ms / 60000))}m`
   if (h < 24) return `Cierra en ${Math.round(h)}h`
   return `Cierra en ${Math.ceil(h / 24)}d`
 }
