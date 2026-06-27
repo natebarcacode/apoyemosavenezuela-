@@ -85,7 +85,7 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
 
   const tieneHorarios = !!centro.horarios && centro.horarios.length > 0
   const tieneFechaFin = !!centro.fecha_fin
-  const abiertoAhora = !cerrado && tieneHorarios && !tieneFechaFin
+  const abiertoAhora = !cerrado && tieneHorarios && nivel !== 'expirado'
     ? estaAbiertoAhora(centro.horarios!)
     : null
 

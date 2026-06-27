@@ -84,7 +84,7 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
 
   const tieneHorarios = !!negocio.horarios && negocio.horarios.length > 0
   const tieneFechaFin = !!negocio.fecha_fin
-  const abiertoAhora = !cerrado && tieneHorarios && !tieneFechaFin
+  const abiertoAhora = !cerrado && tieneHorarios && nivel !== 'expirado'
     ? estaAbiertoAhora(negocio.horarios!)
     : null
 
