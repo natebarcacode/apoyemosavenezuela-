@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Package, Store, Clock, DoorClosed, DoorOpen, PenLine, ChevronLeft, Check, Search, AlertTriangle } from 'lucide-react'
-import { supabase, CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria } from '@/lib/supabase'
+import { CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria } from '@/lib/supabase'
 
 const ZONAS_PANAMA = [
   'Albrook','Amador','Ancón','Arraiján','Balboa','Bella Vista','Betania','Boca la Caja',
@@ -151,13 +151,13 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setSolicitudesPendientes(data) })
       .catch(() => {})
-    Promise.all([
-      supabase.from('categorias').select('*').order('nombre'),
-      supabase.from('grupos_categorias').select('*').order('nombre'),
-    ]).then(([{ data: cats }, { data: grps }]) => {
-      setCategorias((cats as Categoria[]) ?? [])
-      setGrupos((grps as GrupoCategoria[]) ?? [])
-    }).catch(() => {})
+    fetch('/api/categorias')
+      .then(r => r.json())
+      .then(({ categorias: cats, grupos: grps }) => {
+        setCategorias((cats as Categoria[]) ?? [])
+        setGrupos((grps as GrupoCategoria[]) ?? [])
+      })
+      .catch(() => {})
   }, [])
 
   // Detectar duplicados cuando cambia el lugar seleccionado o el nombre
