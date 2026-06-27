@@ -996,12 +996,6 @@ export default function AdminPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
                 <p className="text-xs text-gray-400 mt-1">El timer de la tarjeta cambia según esta fecha.</p>
               </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Vigencia (opcional)</label>
-                <input value={formNegocio.vigencia} onChange={(e) => setFormNegocio({ ...formNegocio, vigencia: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="Ej: Permanente / Solo este mes" />
-              </div>
             </div>
             <div className="mt-4 flex flex-col gap-3">
               <label className="flex items-center gap-2 cursor-pointer select-none">
