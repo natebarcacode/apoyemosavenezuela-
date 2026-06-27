@@ -742,12 +742,6 @@ export default function AdminPage() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha de inicio (opcional)</label>
-                <input type="date" value={formCentro.fecha_inicio}
-                  onChange={(e) => setFormCentro({ ...formCentro, fecha_inicio: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
-              </div>
-              <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud *</label>
                 <input value={formCentro.lat} onChange={(e) => setFormCentro({ ...formCentro, lat: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
@@ -851,22 +845,10 @@ export default function AdminPage() {
                 <p className="text-xs text-gray-400 mt-1">El timer y el color de la tarjeta cambian según esta fecha.</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Notas</label>
-                <textarea value={formCentro.notas} onChange={(e) => setFormCentro({ ...formCentro, notas: e.target.value })}
-                  rows={2} className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
-                  placeholder="Ej: Solo medicamentos sellados" />
-              </div>
-              <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Instagram (opcional)</label>
                 <input value={formCentro.instagram} onChange={(e) => setFormCentro({ ...formCentro, instagram: e.target.value })}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                   placeholder="@usuario" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Sitio web (opcional)</label>
-                <input value={formCentro.sitio_web} onChange={(e) => setFormCentro({ ...formCentro, sitio_web: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                  placeholder="https://..." />
               </div>
             </div>
             <div className="mt-4 flex flex-col gap-3">
@@ -973,12 +955,6 @@ export default function AdminPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
                   placeholder="@nombredelnegocio" />
               </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Sitio web (opcional)</label>
-                <input value={formNegocio.sitio_web} onChange={(e) => setFormNegocio({ ...formNegocio, sitio_web: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  placeholder="https://..." />
-              </div>
               {/* ── Sección: Horario negocio ── */}
               <div className="sm:col-span-2 border-t border-gray-100 pt-3">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Horario de atención</p>
@@ -1012,12 +988,6 @@ export default function AdminPage() {
               {/* ── Sección: Fechas negocio ── */}
               <div className="sm:col-span-2 border-t border-gray-100 pt-3">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Fechas opcionales</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha de inicio</label>
-                <input type="date" value={formNegocio.fecha_inicio}
-                  onChange={(e) => setFormNegocio({ ...formNegocio, fecha_inicio: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Fecha y hora de cierre (opcional)</label>
