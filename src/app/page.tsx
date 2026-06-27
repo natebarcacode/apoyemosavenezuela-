@@ -82,9 +82,10 @@ function nivelUrgencia(fechaFin?: string | null): 'hoy' | 'semana' | 'normal' | 
   const fin = toPanamaUTC(fechaFin)
   const now = Date.now()
   if (fin <= now) return 'expirado'
-  const finDeHoy = new Date(); finDeHoy.setHours(23, 59, 59, 999)
-  if (fin <= finDeHoy.getTime()) return 'hoy'
-  const en7dias = now + 7 * 24 * 3600000
+  const p = new Date(now - 5 * 60 * 60 * 1000)
+  const finDeHoy = Date.UTC(p.getUTCFullYear(), p.getUTCMonth(), p.getUTCDate() + 1, 5, 0, 0)
+  if (fin <= finDeHoy) return 'hoy'
+  const en7dias = Date.UTC(p.getUTCFullYear(), p.getUTCMonth(), p.getUTCDate() + 8, 5, 0, 0)
   if (fin <= en7dias) return 'semana'
   return 'normal'
 }

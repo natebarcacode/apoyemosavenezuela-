@@ -17,10 +17,15 @@ function toPanamaUTC(fechaFin: string): number {
 
 function urgencia(fechaFin?: string) {
   if (!fechaFin) return 'normal'
-  const diff = (toPanamaUTC(fechaFin) - Date.now()) / 3600000
-  if (diff <= 0) return 'expirado'
-  if (diff < 24) return 'urgente'
-  if (diff < 72) return 'proximo'
+  const fin = toPanamaUTC(fechaFin)
+  const now = Date.now()
+  if (fin <= now) return 'expirado'
+  // Calcular en días calendario Panama
+  const p = new Date(now - 5 * 60 * 60 * 1000)
+  const hoy = Date.UTC(p.getUTCFullYear(), p.getUTCMonth(), p.getUTCDate() + 1, 5, 0, 0) // medianoche hoy Panama
+  const en3 = Date.UTC(p.getUTCFullYear(), p.getUTCMonth(), p.getUTCDate() + 4, 5, 0, 0) // 3 días
+  if (fin <= hoy) return 'urgente'   // termina hoy → rojo
+  if (fin <= en3) return 'proximo'   // termina mañana/pasado/lunes → ámbar
   return 'normal'
 }
 

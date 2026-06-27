@@ -17,10 +17,14 @@ function toPanamaUTC(fechaFin: string): number {
 
 function urgencia(fechaFin?: string) {
   if (!fechaFin) return 'normal'
-  const diff = (toPanamaUTC(fechaFin) - Date.now()) / 3600000
-  if (diff <= 0) return 'expirado'
-  if (diff < 24) return 'urgente'
-  if (diff < 72) return 'proximo'
+  const fin = toPanamaUTC(fechaFin)
+  const now = Date.now()
+  if (fin <= now) return 'expirado'
+  const p = new Date(now - 5 * 60 * 60 * 1000)
+  const hoy = Date.UTC(p.getUTCFullYear(), p.getUTCMonth(), p.getUTCDate() + 1, 5, 0, 0)
+  const en3 = Date.UTC(p.getUTCFullYear(), p.getUTCMonth(), p.getUTCDate() + 4, 5, 0, 0)
+  if (fin <= hoy) return 'urgente'
+  if (fin <= en3) return 'proximo'
   return 'normal'
 }
 
