@@ -226,6 +226,17 @@ export default function Home() {
         </div>
       </header>
 
+      {/* ── DISCLAIMER ── */}
+      <div className="bg-amber-50 border-b border-amber-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-start gap-2">
+          <span className="text-amber-500 text-sm leading-none mt-px shrink-0">⚠️</span>
+          <p className="text-xs text-amber-700 leading-snug">
+            <span className="font-semibold">Información no verificada.</span>{' '}
+            Recomendamos corroborar la disponibilidad y horarios por otro medio antes de acudir a cualquier centro o comercio. La info puede cambiar sin previo aviso.
+          </p>
+        </div>
+      </div>
+
       {/* ── MAIN ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-28 lg:pb-10">
 
