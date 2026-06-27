@@ -68,6 +68,25 @@ function estaAbiertoAhora(horarios: HorarioDia[]): boolean {
   return min >= ha * 60 + ma && min < hc * 60 + mc
 }
 
+function proximaApertura(horarios: HorarioDia[]): string | null {
+  const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  const hoyIdx = p.getUTCDay()
+  const minActual = p.getUTCHours() * 60 + p.getUTCMinutes()
+  for (let i = 0; i < 7; i++) {
+    const diaNombre = diasJS[(hoyIdx + i) % 7]
+    const entrada = horarios.find(h => h.dia === diaNombre)
+    if (!entrada?.apertura) continue
+    const [ha, ma] = entrada.apertura.split(':').map(Number)
+    if (i === 0 && ha * 60 + ma <= minActual) continue
+    const hora = formatHora(entrada.apertura)
+    if (i === 0) return `Abre hoy a las ${hora}`
+    if (i === 1) return `Abre mañana a las ${hora}`
+    return `Abre el ${diaNombre} a las ${hora}`
+  }
+  return null
+}
+
 const TIPOS: Record<string, string> = {
   restaurante: 'Restaurante', tienda: 'Tienda', empresa: 'Empresa',
   cafe: 'Café', bar: 'Bar', otro: 'Negocio',
@@ -166,10 +185,20 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
 
         {/* Iniciativa */}
         {negocio.iniciativa && (
-          <p className="text-xs text-gray-500 mt-2.5 ml-[18px] leading-relaxed line-clamp-2 italic">
-            {negocio.iniciativa}
-          </p>
+          <div className="mt-2.5 ml-[18px] pl-2.5 border-l-2 border-amber-300">
+            <p className="text-xs text-gray-700 leading-relaxed line-clamp-2 font-medium">
+              {negocio.iniciativa}
+            </p>
+          </div>
         )}
+
+        {/* Próxima apertura */}
+        {!cerrado && abiertoAhora === false && tieneHorarios && (() => {
+          const prox = proximaApertura(negocio.horarios!)
+          return prox ? (
+            <p className="text-[10px] text-gray-400 mt-1.5 ml-[18px]">{prox}</p>
+          ) : null
+        })()}
 
         {/* Horarios */}
         {!cerrado && tieneHorarios && (

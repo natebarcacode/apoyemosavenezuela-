@@ -68,6 +68,25 @@ function estaAbiertoAhora(horarios: HorarioDia[]): boolean {
   return min >= ha * 60 + ma && min < hc * 60 + mc
 }
 
+function proximaApertura(horarios: HorarioDia[]): string | null {
+  const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  const hoyIdx = p.getUTCDay()
+  const minActual = p.getUTCHours() * 60 + p.getUTCMinutes()
+  for (let i = 0; i < 7; i++) {
+    const diaNombre = diasJS[(hoyIdx + i) % 7]
+    const entrada = horarios.find(h => h.dia === diaNombre)
+    if (!entrada?.apertura) continue
+    const [ha, ma] = entrada.apertura.split(':').map(Number)
+    if (i === 0 && ha * 60 + ma <= minActual) continue
+    const hora = formatHora(entrada.apertura)
+    if (i === 0) return `Abre hoy a las ${hora}`
+    if (i === 1) return `Abre mañana a las ${hora}`
+    return `Abre el ${diaNombre} a las ${hora}`
+  }
+  return null
+}
+
 type Props = {
   centro: CentroAcopio
   seleccionado?: boolean
@@ -158,6 +177,14 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
             </span>
           )}
         </div>
+
+        {/* Próxima apertura */}
+        {!cerrado && abiertoAhora === false && tieneHorarios && (() => {
+          const prox = proximaApertura(centro.horarios!)
+          return prox ? (
+            <p className="text-[10px] text-gray-400 mt-1.5 ml-[18px]">{prox}</p>
+          ) : null
+        })()}
 
         {/* Insumos aceptados */}
         {preview.length > 0 && (
