@@ -95,7 +95,7 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
       onClick={onClick}
       className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden active:scale-[0.985] active:shadow-none
         ${seleccionado ? 'border-red-300 shadow-md ring-2 ring-red-100' : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'}
-        ${cerrado ? 'opacity-60' : nivel === 'expirado' ? 'opacity-40' : ''}
+        ${cerrado ? 'opacity-60' : ''}
       `}
     >
       <div className="px-4 py-3">
