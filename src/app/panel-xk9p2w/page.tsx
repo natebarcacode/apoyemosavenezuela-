@@ -784,13 +784,13 @@ export default function AdminPage() {
             <input type="checkbox" checked={notificarWA} onChange={e => setNotificarWA(e.target.checked)} className="w-4 h-4 accent-red-500" />
             <span className="text-sm text-gray-600">Generar mensaje de WhatsApp</span>
           </label>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button onClick={guardarCentro} disabled={guardando}
-              className="rounded-xl bg-red-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-50">
+              className="w-full sm:w-auto rounded-xl bg-red-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-50">
               {guardando ? 'Guardando...' : editandoId ? 'Actualizar' : 'Agregar'}
             </button>
             <button onClick={() => setMostrarForm(false)}
-              className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+              className="w-full sm:w-auto rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
               Cancelar
             </button>
           </div>
@@ -929,13 +929,13 @@ export default function AdminPage() {
             <input type="checkbox" checked={notificarWA} onChange={e => setNotificarWA(e.target.checked)} className="w-4 h-4 accent-yellow-500" />
             <span className="text-sm text-gray-600">Generar mensaje de WhatsApp</span>
           </label>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button onClick={guardarNegocio} disabled={guardando}
-              className="rounded-xl bg-yellow-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-yellow-600 transition-colors disabled:opacity-50">
+              className="w-full sm:w-auto rounded-xl bg-yellow-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-yellow-600 transition-colors disabled:opacity-50">
               {guardando ? 'Guardando...' : editandoId ? 'Actualizar' : 'Agregar'}
             </button>
             <button onClick={() => setMostrarForm(false)}
-              className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+              className="w-full sm:w-auto rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
               Cancelar
             </button>
           </div>
@@ -991,7 +991,7 @@ export default function AdminPage() {
               <button onClick={abrirNuevo}
                 className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white transition-colors ${tab === 'centros' ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'}`}>
                 <Plus size={15} />
-                Agregar {tab === 'centros' ? 'centro' : 'negocio'}
+                <span className="hidden sm:inline">Agregar </span>{tab === 'centros' ? 'Centro' : 'Negocio'}
               </button>
             )}
             <button onClick={logout} title="Cerrar sesión" className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
@@ -1000,27 +1000,27 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 pb-3 flex gap-1">
+        <div className="max-w-4xl mx-auto px-4 pb-3 flex gap-1 overflow-x-auto scrollbar-none">
           <button onClick={() => { setTab('centros'); setMostrarForm(false) }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
+            className={`shrink-0 flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
               tab === 'centros' ? 'bg-red-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
             }`}>
             <Package size={13} /> Centros <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${tab === 'centros' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>{centros.length}</span>
           </button>
           <button onClick={() => { setTab('negocios'); setMostrarForm(false) }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
+            className={`shrink-0 flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
               tab === 'negocios' ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
             }`}>
             <Store size={13} /> Negocios <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${tab === 'negocios' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>{negocios.length}</span>
           </button>
           <button onClick={() => { setTab('categorias'); setMostrarForm(false) }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
+            className={`shrink-0 flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
               tab === 'categorias' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
             }`}>
             <Tag size={13} /> Insumos <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${tab === 'categorias' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>{categorias.length}</span>
           </button>
           <button onClick={() => { setTab('solicitudes'); setMostrarForm(false) }}
-            className={`relative flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
+            className={`shrink-0 relative flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
               tab === 'solicitudes' ? 'bg-violet-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
             }`}>
             <Inbox size={13} /> Por revisar
@@ -1127,7 +1127,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 px-4 pb-3">
+                  <div className="flex flex-wrap items-center gap-2 px-4 pb-3">
                     <button
                       onClick={() => aprobarSolicitud(s)}
                       className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white transition-colors ${
@@ -1286,7 +1286,7 @@ export default function AdminPage() {
               return (
                 <div key={c.id}>
                 <div className={`bg-white rounded-xl border ${c.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'} ${c.cerrado ? 'bg-gray-50' : ''}`}>
-                  <div className="flex items-start gap-3 px-4 py-3">
+                  <div className="flex items-start gap-3 px-4 pt-3 pb-1">
                     <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!c.activo ? 'bg-gray-300' : c.cerrado ? 'bg-red-400' : 'bg-green-400'}`}
                       title={!c.activo ? 'Oculto' : c.cerrado ? 'Cerrado' : 'Abierto'} />
                     <div className="flex-1 min-w-0">
@@ -1302,21 +1302,21 @@ export default function AdminPage() {
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => guardarYMostrarMensaje('centro', c.id, mensajeCentro(c, c.fecha_fin && new Date(c.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
-                        title="Generar mensaje WhatsApp"
-                        className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
-                      <button onClick={() => duplicarCentro(c)} title="Duplicar como sucursal" className="p-2 rounded-lg text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"><CopyPlus size={15} /></button>
-                      <button onClick={() => abrirEditarCentro(c)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
-                      <button onClick={() => toggleCerrado(c.id, !!c.cerrado)} title={c.cerrado ? 'Marcar como abierto' : 'Marcar como cerrado'}
-                        className={`p-2 rounded-lg transition-colors ${c.cerrado ? 'text-red-400 hover:bg-red-50' : 'text-gray-400 hover:bg-red-50 hover:text-red-400'}`}>
-                        {c.cerrado ? <DoorOpen size={15} /> : <DoorClosed size={15} />}
-                      </button>
-                      <button onClick={() => toggleActivo('centros_acopio', c.id, c.activo)} title={c.activo ? 'Ocultar' : 'Publicar'}
-                        className={`p-2 rounded-lg transition-colors ${c.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
-                        {c.activo ? <Eye size={15} /> : <EyeOff size={15} />}
-                      </button>
-                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 justify-end px-4 pb-2">
+                    <button onClick={() => guardarYMostrarMensaje('centro', c.id, mensajeCentro(c, c.fecha_fin && new Date(c.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
+                      title="Generar mensaje WhatsApp"
+                      className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
+                    <button onClick={() => duplicarCentro(c)} title="Duplicar como sucursal" className="p-2 rounded-lg text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"><CopyPlus size={15} /></button>
+                    <button onClick={() => abrirEditarCentro(c)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
+                    <button onClick={() => toggleCerrado(c.id, !!c.cerrado)} title={c.cerrado ? 'Marcar como abierto' : 'Marcar como cerrado'}
+                      className={`p-2 rounded-lg transition-colors ${c.cerrado ? 'text-red-400 hover:bg-red-50' : 'text-gray-400 hover:bg-red-50 hover:text-red-400'}`}>
+                      {c.cerrado ? <DoorOpen size={15} /> : <DoorClosed size={15} />}
+                    </button>
+                    <button onClick={() => toggleActivo('centros_acopio', c.id, c.activo)} title={c.activo ? 'Ocultar' : 'Publicar'}
+                      className={`p-2 rounded-lg transition-colors ${c.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
+                      {c.activo ? <Eye size={15} /> : <EyeOff size={15} />}
+                    </button>
                   </div>
                   {msgs.length > 0 && (
                     <div className="border-t border-gray-100">
@@ -1366,7 +1366,7 @@ export default function AdminPage() {
               return (
                 <div key={n.id}>
                 <div className={`bg-white rounded-xl border ${n.activo ? 'border-gray-200' : 'border-gray-100 opacity-50'}`}>
-                  <div className="flex items-start gap-3 px-4 py-3">
+                  <div className="flex items-start gap-3 px-4 pt-3 pb-1">
                     <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.activo ? 'bg-green-400' : 'bg-gray-300'}`} title={n.activo ? 'Visible al público' : 'Oculto'} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
@@ -1380,17 +1380,17 @@ export default function AdminPage() {
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => guardarYMostrarMensaje('negocio', n.id, mensajeNegocio(n, n.fecha_fin && new Date(n.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
-                        title="Generar mensaje WhatsApp"
-                        className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
-                      <button onClick={() => duplicarNegocio(n)} title="Duplicar como sucursal" className="p-2 rounded-lg text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"><CopyPlus size={15} /></button>
-                      <button onClick={() => abrirEditarNegocio(n)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
-                      <button onClick={() => toggleActivo('negocios_solidarios', n.id, n.activo)} title={n.activo ? 'Ocultar' : 'Publicar'}
-                        className={`p-2 rounded-lg transition-colors ${n.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
-                        {n.activo ? <Eye size={15} /> : <EyeOff size={15} />}
-                      </button>
-                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 justify-end px-4 pb-2">
+                    <button onClick={() => guardarYMostrarMensaje('negocio', n.id, mensajeNegocio(n, n.fecha_fin && new Date(n.fecha_fin).getTime() - Date.now() < 48 * 3600000 ? 'cierre' : 'actualizado'))}
+                      title="Generar mensaje WhatsApp"
+                      className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
+                    <button onClick={() => duplicarNegocio(n)} title="Duplicar como sucursal" className="p-2 rounded-lg text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"><CopyPlus size={15} /></button>
+                    <button onClick={() => abrirEditarNegocio(n)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
+                    <button onClick={() => toggleActivo('negocios_solidarios', n.id, n.activo)} title={n.activo ? 'Ocultar' : 'Publicar'}
+                      className={`p-2 rounded-lg transition-colors ${n.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
+                      {n.activo ? <Eye size={15} /> : <EyeOff size={15} />}
+                    </button>
                   </div>
                   {msgs.length > 0 && (
                     <div className="border-t border-gray-100">
