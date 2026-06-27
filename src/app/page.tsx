@@ -48,17 +48,23 @@ function nivelUrgencia(fechaFin?: string | null): 'hoy' | 'semana' | 'normal' | 
   return 'normal'
 }
 
-function urgenciaScore(fechaFin?: string | null) {
-  const n = nivelUrgencia(fechaFin)
-  if (n === 'hoy') return 0
-  if (n === 'semana') return 1
-  if (n === 'normal') return 2
-  if (n === 'permanente') return 3
-  return 4
-}
-
-function sortPorUrgencia<T extends { fecha_fin?: string | null }>(items: T[]): T[] {
-  return [...items].sort((a, b) => urgenciaScore(a.fecha_fin) - urgenciaScore(b.fecha_fin))
+function sortPorCierre<T extends { fecha_fin?: string | null }>(items: T[]): T[] {
+  const now = Date.now()
+  return [...items].sort((a, b) => {
+    const aFin = a.fecha_fin ? toPanamaUTC(a.fecha_fin) : null
+    const bFin = b.fecha_fin ? toPanamaUTC(b.fecha_fin) : null
+    const aExp = aFin !== null && aFin <= now
+    const bExp = bFin !== null && bFin <= now
+    // Expirados al final
+    if (aExp && !bExp) return 1
+    if (!aExp && bExp) return -1
+    // Permanentes (sin fecha_fin) antes de expirados, después de los activos con fecha
+    if (aFin !== null && bFin === null) return -1
+    if (aFin === null && bFin !== null) return 1
+    // Ambos tienen fecha_fin activa: el que cierra antes va primero
+    if (aFin !== null && bFin !== null) return aFin - bFin
+    return 0
+  })
 }
 
 function groupByZona<T extends { zona: string }>(items: T[]): { zona: string; items: T[] }[] {
@@ -108,7 +114,7 @@ export default function Home() {
 
   const q = busqueda.toLowerCase().trim()
 
-  const centrosFiltrados = sortPorUrgencia(centros.filter(c => {
+  const centrosFiltrados = sortPorCierre(centros.filter(c => {
     const matchB = q === '' ||
       c.nombre.toLowerCase().includes(q) ||
       c.direccion.toLowerCase().includes(q) ||
@@ -125,7 +131,7 @@ export default function Home() {
     return matchB && matchZ && matchU && matchE
   }))
 
-  const negociosFiltrados = sortPorUrgencia(negocios.filter(n => {
+  const negociosFiltrados = sortPorCierre(negocios.filter(n => {
     const matchB = q === '' ||
       n.nombre.toLowerCase().includes(q) ||
       n.iniciativa.toLowerCase().includes(q) ||
@@ -142,10 +148,10 @@ export default function Home() {
     return matchB && matchZ && matchU && matchE
   }))
 
-  // Agrupar por zona solo cuando no hay filtros activos (para reducir scroll)
-  const agruparPorZona = q === '' && zonasFiltro.length === 0 && urgenciaFiltro === 'todos' && estadoFiltro === 'todos'
-  const centrosAgrupados = agruparPorZona ? groupByZona(centrosFiltrados) : null
-  const negociosAgrupados = agruparPorZona ? groupByZona(negociosFiltrados) : null
+  // Sin agrupamiento por zona — la lista siempre muestra orden por cierre
+  const agruparPorZona = false
+  const centrosAgrupados = null
+  const negociosAgrupados = null
 
   const filtrosActivos = q !== '' || zonasFiltro.length > 0 || urgenciaFiltro !== 'todos' || estadoFiltro !== 'todos'
 
@@ -356,23 +362,6 @@ export default function Home() {
                   <Package size={32} className="opacity-20" />
                   <p className="text-sm">No hay centros con esos filtros</p>
                 </div>
-              ) : centrosAgrupados ? (
-                centrosAgrupados.map(({ zona, items }) => (
-                  <div key={zona}>
-                    <div className="flex items-center gap-2 px-1 pt-2 pb-1">
-                      <MapPin size={11} className="text-gray-400 shrink-0" />
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{zona}</p>
-                      <span className="text-[11px] text-gray-300">· {items.length}</span>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      {items.map(centro => (
-                        <div key={centro.id} id={`centro-${centro.id}`}>
-                          <TarjetaCentro centro={centro} seleccionado={seleccionado?.id === centro.id} onClick={() => abrirCentro(centro)} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
               ) : centrosFiltrados.map(centro => (
                 <div key={centro.id} id={`centro-${centro.id}`}>
                   <TarjetaCentro centro={centro} seleccionado={seleccionado?.id === centro.id} onClick={() => abrirCentro(centro)} />
@@ -410,23 +399,6 @@ export default function Home() {
                   <Store size={32} className="opacity-20" />
                   <p className="text-sm">No hay negocios con esos filtros</p>
                 </div>
-              ) : negociosAgrupados ? (
-                negociosAgrupados.map(({ zona, items }) => (
-                  <div key={zona}>
-                    <div className="flex items-center gap-2 px-1 pt-2 pb-1">
-                      <MapPin size={11} className="text-gray-400 shrink-0" />
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{zona}</p>
-                      <span className="text-[11px] text-gray-300">· {items.length}</span>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      {items.map(n => (
-                        <div key={n.id} id={`negocio-${n.id}`}>
-                          <TarjetaNegocio negocio={n} seleccionado={seleccionadoNegocio?.id === n.id} onClick={() => abrirNegocio(n)} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
               ) : negociosFiltrados.map(n => (
                 <div key={n.id} id={`negocio-${n.id}`}>
                   <TarjetaNegocio negocio={n} seleccionado={seleccionadoNegocio?.id === n.id} onClick={() => abrirNegocio(n)} />
