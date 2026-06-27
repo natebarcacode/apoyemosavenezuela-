@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { CentroAcopio, HorarioDia, Categoria } from '@/lib/supabase'
-import { X, MapPin, Clock, Calendar, Package, Globe } from 'lucide-react'
+import { X, MapPin, Clock, Calendar, Package, Globe, ChevronDown } from 'lucide-react'
 import { WazeIcon, GoogleMapsIcon, InstagramIcon } from './BrandIcons'
 import CountdownTimer from './CountdownTimer'
 
@@ -32,6 +33,16 @@ type Props = {
 }
 
 export default function ModalCentro({ centro, categorias, onClose }: Props) {
+  const [gruposAbiertos, setGruposAbiertos] = useState<Set<string>>(new Set())
+
+  function toggleGrupo(g: string) {
+    setGruposAbiertos(prev => {
+      const next = new Set(prev)
+      next.has(g) ? next.delete(g) : next.add(g)
+      return next
+    })
+  }
+
   const wazeUrl = `https://waze.com/ul?ll=${centro.lat},${centro.lng}&navigate=yes`
   const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${centro.lat},${centro.lng}`
 
@@ -131,26 +142,48 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
             </p>
           )}
 
-          {/* Acepta — agrupado por categoría */}
+          {/* Acepta — agrupado por categoría, colapsable */}
           {Object.keys(porGrupo).length > 0 && (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Acepta</p>
-              <div className="flex flex-col gap-3">
-                {Object.entries(porGrupo).map(([grupo, items]) => (
-                  <div key={grupo}>
-                    <p className="text-xs font-semibold text-gray-500 mb-1.5">{grupo}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {items.map(item => (
-                        <span
-                          key={item}
-                          className="rounded-full bg-gray-100 border border-gray-200 px-2.5 py-1 text-xs text-gray-600 leading-none"
-                        >
-                          {item}
-                        </span>
-                      ))}
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Acepta</p>
+              <div className="flex flex-col gap-1.5">
+                {Object.entries(porGrupo).map(([grupo, items]) => {
+                  const abierto = gruposAbiertos.has(grupo)
+                  return (
+                    <div key={grupo} className="rounded-xl border border-gray-100 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => toggleGrupo(grupo)}
+                        className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-gray-700">{grupo}</span>
+                          <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5 font-medium">
+                            {items.length}
+                          </span>
+                        </div>
+                        <ChevronDown
+                          size={14}
+                          className={`text-gray-400 transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+                      {abierto && (
+                        <div className="px-3.5 pb-3 pt-1 border-t border-gray-100 bg-gray-50">
+                          <div className="flex flex-wrap gap-1.5">
+                            {items.map(item => (
+                              <span
+                                key={item}
+                                className="rounded-full bg-white border border-gray-200 px-2.5 py-1 text-xs text-gray-600 leading-none"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}

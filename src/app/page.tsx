@@ -7,7 +7,7 @@ import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
 import ModalCentro from '@/components/ModalCentro'
 import ModalNegocio from '@/components/ModalNegocio'
-import { Search, Package, Store, MapPin, Users, X, PenLine } from 'lucide-react'
+import { Search, Package, Store, MapPin, Users, X, PenLine, Lock, Unlock } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/BrandIcons'
 import ViendoAhora from '@/components/ViendoAhora'
 import ModalSolicitud from '@/components/ModalSolicitud'
@@ -161,11 +161,13 @@ export default function Home() {
     setUrgenciaFiltro('todos')
     setSeleccionado(null)
     setSeleccionadoNegocio(null)
+    setMapaActivo(false)
   }
 
   const negociosConMapa = negociosFiltrados.filter(n => n.lat != null && n.lng != null)
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
   const [modalSolicitud, setModalSolicitud] = useState(false)
+  const [mapaActivo, setMapaActivo] = useState(false)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -360,9 +362,25 @@ export default function Home() {
               ))}
             </div>
             {/* Mapa — sticky debajo del header */}
-            <div className="hidden lg:block rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky"
+            <div className="hidden lg:block rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky relative"
               style={{ top: 112, height: 'calc(100vh - 120px)' }}>
               <MapaCentros centros={centrosFiltrados} onSelect={abrirCentro} />
+              {!mapaActivo && (
+                <div className="absolute inset-0 z-[400] flex flex-col items-center justify-center cursor-pointer"
+                  style={{ background: 'rgba(15,23,42,0.18)', backdropFilter: 'blur(1px)' }}
+                  onClick={() => setMapaActivo(true)}>
+                  <div className="bg-white rounded-2xl shadow-xl px-5 py-3.5 flex items-center gap-3">
+                    <Unlock size={16} className="text-gray-500" />
+                    <span className="text-sm font-bold text-gray-800">Haz clic para activar el mapa</span>
+                  </div>
+                </div>
+              )}
+              {mapaActivo && (
+                <button onClick={() => setMapaActivo(false)}
+                  className="absolute top-3 right-3 z-[400] bg-white rounded-xl shadow-md px-3 py-2 text-xs font-semibold text-gray-600 flex items-center gap-1.5 hover:bg-gray-50 transition-colors border border-gray-100">
+                  <Lock size={12} /> Bloquear mapa
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -398,7 +416,7 @@ export default function Home() {
               ))}
             </div>
             {/* Mapa — sticky */}
-            <div className="hidden lg:block rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky"
+            <div className="hidden lg:block rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky relative"
               style={{ top: 112, height: 'calc(100vh - 120px)' }}>
               {negociosConMapa.length > 0 ? (
                 <MapaNegocios negocios={negociosConMapa} onSelect={abrirNegocio} />
@@ -410,6 +428,22 @@ export default function Home() {
                     <p className="text-xs text-amber-300 mt-1">Los negocios con ubicación aparecerán aquí</p>
                   </div>
                 </div>
+              )}
+              {negociosConMapa.length > 0 && !mapaActivo && (
+                <div className="absolute inset-0 z-[400] flex flex-col items-center justify-center cursor-pointer"
+                  style={{ background: 'rgba(15,23,42,0.18)', backdropFilter: 'blur(1px)' }}
+                  onClick={() => setMapaActivo(true)}>
+                  <div className="bg-white rounded-2xl shadow-xl px-5 py-3.5 flex items-center gap-3">
+                    <Unlock size={16} className="text-gray-500" />
+                    <span className="text-sm font-bold text-gray-800">Haz clic para activar el mapa</span>
+                  </div>
+                </div>
+              )}
+              {negociosConMapa.length > 0 && mapaActivo && (
+                <button onClick={() => setMapaActivo(false)}
+                  className="absolute top-3 right-3 z-[400] bg-white rounded-xl shadow-md px-3 py-2 text-xs font-semibold text-gray-600 flex items-center gap-1.5 hover:bg-gray-50 transition-colors border border-gray-100">
+                  <Lock size={12} /> Bloquear mapa
+                </button>
               )}
             </div>
           </div>
