@@ -7,9 +7,10 @@ import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
 import ModalCentro from '@/components/ModalCentro'
 import ModalNegocio from '@/components/ModalNegocio'
-import { Search, Package, Store, MapPin, Users, X, Clock, Zap, Infinity } from 'lucide-react'
+import { Search, Package, Store, MapPin, Users, X, PenLine } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/BrandIcons'
 import ViendoAhora from '@/components/ViendoAhora'
+import ModalSolicitud from '@/components/ModalSolicitud'
 
 const MapaCentros = dynamic(() => import('@/components/MapaCentros'), { ssr: false })
 const MapaNegocios = dynamic(() => import('@/components/MapaNegocios'), { ssr: false })
@@ -164,6 +165,7 @@ export default function Home() {
 
   const negociosConMapa = negociosFiltrados.filter(n => n.lat != null && n.lng != null)
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
+  const [modalSolicitud, setModalSolicitud] = useState(false)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -430,6 +432,23 @@ export default function Home() {
         <ModalNegocio
           negocio={modalNegocio}
           onClose={() => setModalNegocio(null)}
+        />
+      )}
+
+      {/* Botón flotante */}
+      <button
+        onClick={() => setModalSolicitud(true)}
+        className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-full bg-white border border-gray-200 shadow-xl px-5 py-3 text-sm font-semibold text-gray-700 hover:shadow-2xl hover:border-gray-300 hover:scale-[1.02] transition-all"
+      >
+        <PenLine size={14} className="text-gray-500" />
+        ¿Conoces un lugar?
+      </button>
+
+      {modalSolicitud && (
+        <ModalSolicitud
+          centros={centros}
+          negocios={negocios}
+          onClose={() => setModalSolicitud(false)}
         />
       )}
     </div>

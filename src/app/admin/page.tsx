@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria, MensajeWA } from '@/lib/supabase'
 import { useRef } from 'react'
-import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X, CopyPlus, DoorClosed, DoorOpen } from 'lucide-react'
+import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X, CopyPlus, DoorClosed, DoorOpen, Inbox } from 'lucide-react'
 import BuscadorUbicacion from '@/components/BuscadorUbicacion'
 import dynamic from 'next/dynamic'
 const MapaPicker = dynamic(() => import('@/components/MapaPicker'), { ssr: false })
@@ -37,7 +37,17 @@ const FORM_NEGOCIO_VACIO = () => ({
   lat: '', lng: '',
 })
 
-type Tab = 'centros' | 'negocios' | 'categorias'
+type Tab = 'centros' | 'negocios' | 'categorias' | 'solicitudes'
+
+type Solicitud = {
+  id: number
+  tipo: string
+  estado: string
+  referencia_tipo: string | null
+  referencia_id: number | null
+  datos: Record<string, unknown>
+  created_at: string
+}
 
 async function resolverCoordsDeGoogleMaps(url: string): Promise<{ lat: string; lng: string } | string> {
   const res = await fetch('/api/resolve-maps', {
@@ -77,6 +87,9 @@ export default function AdminPage() {
   const [waMostrar, setWaMostrar] = useState(false)
   const [waCopied, setWaCopied] = useState(false)
   const [notificarWA, setNotificarWA] = useState(true)
+  const [solicitudes, setSolicitudes] = useState<Solicitud[]>([])
+  const solicitudIdAprobando = useRef<number | null>(null)
+  const [gruposExpandidos, setGruposExpandidos] = useState<Set<string>>(new Set())
 
   // Check existing session on mount
   useEffect(() => {
@@ -128,6 +141,86 @@ export default function AdminPage() {
     setCategorias((dcat as Categoria[]) ?? [])
     setGrupos((dgr as GrupoCategoria[]) ?? [])
     setMensajesWA((dmsg as MensajeWA[]) ?? [])
+    cargarSolicitudes()
+  }
+
+  async function cargarSolicitudes() {
+    const res = await fetch('/api/solicitudes')
+    const data = await res.json()
+    setSolicitudes(Array.isArray(data) ? data : [])
+  }
+
+  async function marcarSolicitud(id: number, estado: 'aprobado' | 'rechazado') {
+    await fetch('/api/solicitudes', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, estado }),
+    })
+    cargarSolicitudes()
+  }
+
+  async function aprobarSolicitud(s: Solicitud) {
+    const datos = s.datos
+    if (s.tipo === 'cerrar') {
+      if (s.referencia_tipo === 'centro') {
+        await db({ table: 'centros_acopio', op: 'update', data: { cerrado: true }, eq: [['id', s.referencia_id]] })
+      } else {
+        await db({ table: 'negocios_solidarios', op: 'update', data: { activo: false }, eq: [['id', s.referencia_id]] })
+      }
+      await marcarSolicitud(s.id, 'aprobado')
+      cargar()
+    } else if (s.tipo === 'reabrir') {
+      if (s.referencia_tipo === 'centro') {
+        await db({ table: 'centros_acopio', op: 'update', data: { cerrado: false }, eq: [['id', s.referencia_id]] })
+      } else {
+        await db({ table: 'negocios_solidarios', op: 'update', data: { activo: true }, eq: [['id', s.referencia_id]] })
+      }
+      await marcarSolicitud(s.id, 'aprobado')
+      cargar()
+    } else if (s.tipo === 'horarios') {
+      const tabla = s.referencia_tipo === 'centro' ? 'centros_acopio' : 'negocios_solidarios'
+      await db({ table: tabla, op: 'update', data: { horarios: datos.horarios }, eq: [['id', s.referencia_id]] })
+      await marcarSolicitud(s.id, 'aprobado')
+      cargar()
+    } else if (s.tipo === 'nuevo_centro') {
+      setFormCentro({
+        nombre: String(datos.nombre ?? ''),
+        direccion: String(datos.direccion ?? ''),
+        zona: String(datos.zona ?? ''),
+        que_acepta: [],
+        lat: '', lng: '',
+        notas: String(datos.que_acepta_texto ?? ''),
+        instagram: String(datos.instagram ?? ''),
+        sitio_web: '',
+        horarios: horarioVacio(),
+        fecha_inicio: '', fecha_fin: '',
+      })
+      setEditandoId(null)
+      setNotificarWA(true)
+      setTab('centros')
+      setMostrarForm(true)
+      solicitudIdAprobando.current = s.id
+    } else if (s.tipo === 'nuevo_negocio') {
+      setFormNegocio({
+        nombre: String(datos.nombre ?? ''),
+        tipo: String(datos.tipo ?? 'restaurante'),
+        iniciativa: String(datos.iniciativa ?? ''),
+        zona: String(datos.zona ?? ''),
+        direccion: String(datos.direccion ?? ''),
+        instagram: String(datos.instagram ?? ''),
+        sitio_web: '', vigencia: '',
+        horarios: horarioVacio(),
+        fecha_inicio: '', fecha_fin: '',
+        lat: '', lng: '',
+      })
+      setEditandoId(null)
+      setNotificarWA(true)
+      setTab('negocios')
+      setMostrarForm(true)
+      solicitudIdAprobando.current = s.id
+    } else if (s.tipo === 'correccion') {
+      await marcarSolicitud(s.id, 'aprobado')
+    }
   }
 
   useEffect(() => { if (autenticado) cargar() }, [autenticado])
@@ -414,6 +507,10 @@ export default function AdminPage() {
     setMostrarForm(false)
     setMensaje(msg)
     setTimeout(() => setMensaje(''), 3000)
+    if (solicitudIdAprobando.current) {
+      marcarSolicitud(solicitudIdAprobando.current, 'aprobado')
+      solicitudIdAprobando.current = null
+    }
     cargar()
   }
 
@@ -538,6 +635,17 @@ export default function AdminPage() {
             }`}>
             <Tag size={13} /> Insumos <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${tab === 'categorias' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>{categorias.length}</span>
           </button>
+          <button onClick={() => { setTab('solicitudes'); setMostrarForm(false) }}
+            className={`relative flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-all ${
+              tab === 'solicitudes' ? 'bg-violet-500 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
+            }`}>
+            <Inbox size={13} /> Por revisar
+            {solicitudes.length > 0 && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${tab === 'solicitudes' ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-600'}`}>
+                {solicitudes.length}
+              </span>
+            )}
+          </button>
         </div>
       </header>
 
@@ -545,6 +653,113 @@ export default function AdminPage() {
         {mensaje && (
           <div className={`mb-4 rounded-xl px-4 py-3 text-sm ${mensaje.includes('obligator') ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-green-50 border border-green-200 text-green-700'}`}>
             {mensaje}
+          </div>
+        )}
+
+        {/* Tab solicitudes */}
+        {tab === 'solicitudes' && (
+          <div className="flex flex-col gap-3">
+            {solicitudes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
+                <Inbox size={32} className="opacity-20" />
+                <p className="text-sm">No hay solicitudes pendientes</p>
+              </div>
+            ) : solicitudes.map((s) => {
+              const tipoLabel: Record<string, string> = {
+                nuevo_centro: 'Nuevo centro de acopio',
+                nuevo_negocio: 'Nueva iniciativa',
+                horarios: 'Actualización de horarios',
+                cerrar: 'Reportar cierre',
+                reabrir: 'Reportar reapertura',
+                correccion: 'Corrección de info',
+              }
+              const tipoColor: Record<string, string> = {
+                nuevo_centro: 'bg-red-50 border-red-200 text-red-600',
+                nuevo_negocio: 'bg-amber-50 border-amber-200 text-amber-600',
+                horarios: 'bg-blue-50 border-blue-200 text-blue-600',
+                cerrar: 'bg-gray-50 border-gray-200 text-gray-600',
+                reabrir: 'bg-emerald-50 border-emerald-200 text-emerald-600',
+                correccion: 'bg-purple-50 border-purple-200 text-purple-600',
+              }
+              const d = s.datos
+              return (
+                <div key={s.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="px-4 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border mb-2 ${tipoColor[s.tipo] ?? 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+                          {tipoLabel[s.tipo] ?? s.tipo}
+                        </span>
+                        <p className="text-xs text-gray-400 mb-2">
+                          {new Date(s.created_at).toLocaleString('es-PA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        {/* Datos resumidos */}
+                        {(s.tipo === 'nuevo_centro' || s.tipo === 'nuevo_negocio') && (
+                          <div className="text-sm space-y-1">
+                            {typeof d.nombre === 'string' && d.nombre && <p><span className="font-semibold text-gray-900">{d.nombre}</span></p>}
+                            {typeof d.zona === 'string' && d.zona && (
+                              <p className="text-gray-500 text-xs">{d.zona}{typeof d.direccion === 'string' && d.direccion ? ` · ${d.direccion}` : ''}</p>
+                            )}
+                            {s.tipo === 'nuevo_negocio' && typeof d.iniciativa === 'string' && d.iniciativa && (
+                              <p className="text-xs text-amber-600 bg-amber-50 rounded-md px-2 py-1 mt-1">{d.iniciativa}</p>
+                            )}
+                            {s.tipo === 'nuevo_centro' && typeof d.que_acepta_texto === 'string' && d.que_acepta_texto && (
+                              <p className="text-xs text-gray-500 bg-gray-50 rounded-md px-2 py-1 mt-1">Acepta: {d.que_acepta_texto}</p>
+                            )}
+                            {typeof d.instagram === 'string' && d.instagram && <p className="text-xs text-gray-400">{d.instagram}</p>}
+                          </div>
+                        )}
+                        {(s.tipo === 'cerrar' || s.tipo === 'reabrir' || s.tipo === 'horarios' || s.tipo === 'correccion') && s.referencia_id && (
+                          <div className="text-sm">
+                            {(() => {
+                              const lista = s.referencia_tipo === 'centro' ? centros : negocios
+                              const lugar = lista.find(x => x.id === s.referencia_id)
+                              return lugar ? (
+                                <div>
+                                  <p className="font-semibold text-gray-900">{lugar.nombre}</p>
+                                  <p className="text-xs text-gray-400">{lugar.zona}</p>
+                                </div>
+                              ) : <p className="text-xs text-gray-400">ID #{s.referencia_id} ({s.referencia_tipo})</p>
+                            })()}
+                          </div>
+                        )}
+                        {s.tipo === 'horarios' && Array.isArray(d.horarios) && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {(d.horarios as Array<{dia:string; apertura:string; cierre:string}>).map(h => (
+                              <span key={h.dia} className="text-[10px] bg-blue-50 text-blue-600 rounded-full px-2 py-0.5">
+                                {h.dia} {h.apertura}–{h.cierre}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {s.tipo === 'correccion' && typeof d.nota === 'string' && d.nota && (
+                          <p className="mt-2 text-xs text-gray-600 bg-purple-50 rounded-lg px-3 py-2 border border-purple-100">
+                            {d.nota}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 pb-3">
+                    <button
+                      onClick={() => aprobarSolicitud(s)}
+                      className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white transition-colors ${
+                        s.tipo === 'nuevo_centro' || s.tipo === 'nuevo_negocio' ? 'bg-violet-500 hover:bg-violet-600' : 'bg-emerald-500 hover:bg-emerald-600'
+                      }`}
+                    >
+                      <Check size={13} />
+                      {s.tipo === 'nuevo_centro' || s.tipo === 'nuevo_negocio' ? 'Abrir formulario' : 'Aplicar cambio'}
+                    </button>
+                    <button
+                      onClick={() => marcarSolicitud(s.id, 'rechazado')}
+                      className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+                    >
+                      <X size={13} /> Descartar
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
@@ -735,52 +950,105 @@ export default function AdminPage() {
                 )}
               </div>
               <div className="sm:col-span-2">
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   {grupos.map((grupo) => {
                     const insumos = categorias.filter(c => c.grupo === grupo.nombre)
                     if (insumos.length === 0) return null
                     const todosSeleccionados = insumos.every(i => formCentro.que_acepta.includes(i.nombre))
                     const algunoSeleccionado = insumos.some(i => formCentro.que_acepta.includes(i.nombre))
+                    const abierto = gruposExpandidos.has(grupo.nombre)
+                    const selCount = insumos.filter(i => formCentro.que_acepta.includes(i.nombre)).length
                     return (
-                      <div key={grupo.id} className="rounded-xl border border-gray-200 p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <button type="button" onClick={() => toggleGrupoCompleto(grupo.nombre)}
-                            className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border transition-colors ${
-                              todosSeleccionados ? 'bg-red-500 text-white border-red-500'
-                              : algunoSeleccionado ? 'bg-red-100 text-red-600 border-red-300'
-                              : 'bg-gray-100 text-gray-600 border-gray-200 hover:border-red-300'
-                            }`}>
-                            {todosSeleccionados ? '✓ ' : algunoSeleccionado ? '— ' : '+ '}{grupo.nombre}
-                          </button>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 pl-1">
-                          {insumos.map((cat) => (
-                            <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
-                                formCentro.que_acepta.includes(cat.nombre) ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
-                              }`}>
-                              {cat.nombre}
-                            </button>
-                          ))}
-                        </div>
+                      <div key={grupo.id} className="rounded-xl border border-gray-200 overflow-hidden">
+                        <button type="button"
+                          onClick={() => setGruposExpandidos(prev => {
+                            const next = new Set(prev)
+                            next.has(grupo.nombre) ? next.delete(grupo.nombre) : next.add(grupo.nombre)
+                            return next
+                          })}
+                          className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors text-left">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${todosSeleccionados ? 'bg-red-500' : algunoSeleccionado ? 'bg-red-300' : 'bg-gray-200'}`} />
+                            <span className="text-xs font-bold text-gray-700">{grupo.nombre}</span>
+                            {selCount > 0 && (
+                              <span className="text-[10px] font-bold bg-red-100 text-red-600 rounded-full px-1.5 py-0.5">
+                                {selCount}/{insumos.length}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {!abierto && algunoSeleccionado && !todosSeleccionados && (
+                              <button type="button" onClick={e => { e.stopPropagation(); toggleGrupoCompleto(grupo.nombre) }}
+                                className="text-[10px] text-red-500 hover:underline font-medium">todos</button>
+                            )}
+                            <span className={`text-gray-400 text-xs transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`}>▾</span>
+                          </div>
+                        </button>
+                        {abierto && (
+                          <div className="px-3 pb-3 pt-1 border-t border-gray-100 bg-gray-50">
+                            <div className="flex items-center justify-between mb-2">
+                              <button type="button" onClick={() => toggleGrupoCompleto(grupo.nombre)}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-colors ${
+                                  todosSeleccionados ? 'bg-red-500 text-white border-red-500'
+                                  : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                                }`}>
+                                {todosSeleccionados ? '✓ Todos' : 'Seleccionar todos'}
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {insumos.map((cat) => (
+                                <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
+                                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                                    formCentro.que_acepta.includes(cat.nombre) ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                                  }`}>
+                                  {cat.nombre}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
                   })}
-                  {categorias.filter(c => !c.grupo).length > 0 && (
-                    <div className="rounded-xl border border-gray-200 p-3">
-                      <p className="text-xs font-bold text-gray-500 mb-2">Sin categoría</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {categorias.filter(c => !c.grupo).map((cat) => (
-                          <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
-                              formCentro.que_acepta.includes(cat.nombre) ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
-                            }`}>
-                            {cat.nombre}
-                          </button>
-                        ))}
+                  {categorias.filter(c => !c.grupo).length > 0 && (() => {
+                    const sinGrupo = categorias.filter(c => !c.grupo)
+                    const abierto = gruposExpandidos.has('__sin_categoria__')
+                    const selCount = sinGrupo.filter(i => formCentro.que_acepta.includes(i.nombre)).length
+                    return (
+                      <div className="rounded-xl border border-gray-200 overflow-hidden">
+                        <button type="button"
+                          onClick={() => setGruposExpandidos(prev => {
+                            const next = new Set(prev)
+                            next.has('__sin_categoria__') ? next.delete('__sin_categoria__') : next.add('__sin_categoria__')
+                            return next
+                          })}
+                          className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors text-left">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${selCount > 0 ? 'bg-gray-400' : 'bg-gray-200'}`} />
+                            <span className="text-xs font-bold text-gray-500">Sin categoría</span>
+                            {selCount > 0 && (
+                              <span className="text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full px-1.5 py-0.5">{selCount}</span>
+                            )}
+                          </div>
+                          <span className={`text-gray-400 text-xs transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`}>▾</span>
+                        </button>
+                        {abierto && (
+                          <div className="px-3 pb-3 pt-1 border-t border-gray-100 bg-gray-50">
+                            <div className="flex flex-wrap gap-1.5">
+                              {sinGrupo.map((cat) => (
+                                <button key={cat.id} type="button" onClick={() => toggleCategoria(cat.nombre)}
+                                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                                    formCentro.que_acepta.includes(cat.nombre) ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-500 border-gray-200 hover:border-red-300'
+                                  }`}>
+                                  {cat.nombre}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    )
+                  })()}
                 </div>
               </div>
               {/* ── Sección: Horario ── */}
