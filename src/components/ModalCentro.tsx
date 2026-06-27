@@ -14,13 +14,20 @@ function formatHora(t: string) {
 }
 
 const DIAS_ORDEN = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const DIAS_JS   = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 function hoyPanamaIdx() {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const m: Record<number, number> = {1:0,2:1,3:2,4:3,5:4,6:5,0:6}
   return m[p.getUTCDay()]
 }
-function diaPasado(dia: string) {
-  return DIAS_ORDEN.indexOf(dia) < hoyPanamaIdx()
+function diaPasado(dia: string) { return DIAS_ORDEN.indexOf(dia) < hoyPanamaIdx() }
+function numDiaMes(dia: string, fechaFin: string): number | null {
+  const fin = new Date(fechaFin.slice(0, 10) + 'T12:00:00Z')
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(fin.getTime() - i * 86400000)
+    if (DIAS_JS[d.getUTCDay()] === dia) return d.getUTCDate()
+  }
+  return null
 }
 
 type Props = {
@@ -94,10 +101,10 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 p-5 flex flex-col gap-4" style={{ scrollbarWidth: 'thin' }}>
 
-          {/* Dirección */}
-          <div className="flex items-start gap-2.5 text-sm text-gray-600">
-            <MapPin size={15} className="text-gray-400 mt-0.5 shrink-0" />
-            <span>{centro.direccion}</span>
+          {/* Zona */}
+          <div className="flex items-center gap-2.5 text-sm text-gray-600">
+            <MapPin size={15} className="text-gray-400 shrink-0" />
+            <span>{centro.zona}</span>
           </div>
 
           {/* Horario */}
@@ -107,9 +114,12 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
               <div className="flex flex-col gap-1">
                 {horarios.map(h => {
                   const pasado = tieneFechaFin && diaPasado(h.dia)
+                  const ndm = tieneFechaFin ? numDiaMes(h.dia, centro.fecha_fin!) : null
                   return (
                     <div key={h.dia} className={`flex gap-3 text-sm ${pasado ? 'line-through text-gray-300' : 'text-gray-700'}`}>
-                      <span className="font-semibold w-8 shrink-0">{h.dia}</span>
+                      <span className="font-semibold w-16 shrink-0">
+                        {h.dia}{ndm != null ? ` ${ndm}` : ''}
+                      </span>
                       {h.apertura && h.cierre && (
                         <span className={pasado ? 'text-gray-300' : 'text-gray-400'}>
                           {formatHora(h.apertura)} – {formatHora(h.cierre)}

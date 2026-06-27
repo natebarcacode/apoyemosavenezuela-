@@ -29,13 +29,20 @@ function formatHora(t: string) {
 }
 
 const DIAS_ORDEN = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const DIAS_JS   = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 function hoyPanamaIdx() {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const m: Record<number, number> = {1:0,2:1,3:2,4:3,5:4,6:5,0:6}
   return m[p.getUTCDay()]
 }
-function diaPasado(dia: string) {
-  return DIAS_ORDEN.indexOf(dia) < hoyPanamaIdx()
+function diaPasado(dia: string) { return DIAS_ORDEN.indexOf(dia) < hoyPanamaIdx() }
+function numDiaMes(dia: string, fechaFin: string): number | null {
+  const fin = new Date(fechaFin.slice(0, 10) + 'T12:00:00Z')
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(fin.getTime() - i * 86400000)
+    if (DIAS_JS[d.getUTCDay()] === dia) return d.getUTCDate()
+  }
+  return null
 }
 
 // Panama = UTC-5, sin cambio de horario
@@ -64,8 +71,7 @@ type Props = {
 
 export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props) {
   const nivel = urgencia(negocio.fecha_fin)
-  const cerradoPorFecha = nivel === 'expirado'
-  const cerrado = cerradoPorFecha || !negocio.activo
+  const cerrado = !negocio.activo
 
   const tieneHorarios = !!negocio.horarios && negocio.horarios.length > 0
   const tieneFechaFin = !!negocio.fecha_fin
@@ -88,7 +94,7 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
       onClick={onClick}
       className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden active:scale-[0.985] active:shadow-none
         ${seleccionado ? 'border-amber-300 shadow-md ring-2 ring-amber-100' : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'}
-        ${cerrado ? 'opacity-60' : ''}
+        ${cerrado ? 'opacity-60' : nivel === 'expirado' ? 'opacity-40' : ''}
       `}
     >
       <div className="px-4 py-3">
@@ -152,9 +158,12 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
             <div className="flex flex-col gap-0.5">
               {negocio.horarios!.map(h => {
                 const pasado = tieneFechaFin && diaPasado(h.dia)
+                const ndm = tieneFechaFin ? numDiaMes(h.dia, negocio.fecha_fin!) : null
                 return (
                   <span key={h.dia} className={`text-[10px] flex gap-2 ${pasado ? 'line-through text-gray-300' : 'text-gray-500'}`}>
-                    <span className="font-semibold w-6 shrink-0">{h.dia}</span>
+                    <span className="font-semibold w-14 shrink-0">
+                      {h.dia}{ndm != null ? ` ${ndm}` : ''}
+                    </span>
                     {h.apertura && h.cierre && (
                       <span className={pasado ? 'text-gray-300' : 'text-gray-400'}>
                         {formatHora(h.apertura)} – {formatHora(h.cierre)}
