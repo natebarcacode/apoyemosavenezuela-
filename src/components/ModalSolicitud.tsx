@@ -52,6 +52,41 @@ const horarioVacio = () => DIAS.map(dia => ({ dia, activo: false, apertura: '08:
 
 type LugarRef = { id: number; nombre: string; zona: string; tipo_ref: 'centro' | 'negocio' }
 
+function ZonaSelect({ value, onChange, zonas, ringClass }: {
+  value: string; onChange: (v: string) => void; zonas: string[]; ringClass: string
+}) {
+  const [open, setOpen] = useState(false)
+  const filtered = zonas.filter(z =>
+    !value || z.toLowerCase().includes(value.toLowerCase())
+  )
+  return (
+    <div className="relative">
+      <input
+        value={value}
+        onChange={e => { onChange(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        placeholder="Selecciona o escribe..."
+        className={`w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${ringClass}`}
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute z-[300] left-0 right-0 mt-1 bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden"
+          style={{ maxHeight: 220, overflowY: 'auto' }}>
+          {filtered.slice(0, 40).map(z => (
+            <button key={z} type="button"
+              onMouseDown={() => { onChange(z); setOpen(false) }}
+              className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-0 ${
+                value === z ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+              }`}>
+              {z}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 type Props = {
   centros: CentroAcopio[]
   negocios: NegocioSolidario[]
@@ -374,11 +409,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-gray-600 mb-1 block">Zona *</label>
-                      <input list="zonas-centro" value={ncZona} onChange={e => setNcZona(e.target.value)} placeholder="Selecciona o escribe..."
-                        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
-                      <datalist id="zonas-centro">
-                        {zonas.map(z => <option key={z} value={z} />)}
-                      </datalist>
+                      <ZonaSelect value={ncZona} onChange={setNcZona} zonas={zonas} ringClass="focus:ring-red-300" />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 mb-1 block">Dirección</label>
@@ -512,11 +543,7 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 mb-1 block">Zona *</label>
-                      <input list="zonas-negocio" value={nnZona} onChange={e => setNnZona(e.target.value)} placeholder="Selecciona o escribe..."
-                        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-                      <datalist id="zonas-negocio">
-                        {zonas.map(z => <option key={z} value={z} />)}
-                      </datalist>
+                      <ZonaSelect value={nnZona} onChange={setNnZona} zonas={zonas} ringClass="focus:ring-amber-300" />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 mb-1 block">Dirección</label>
