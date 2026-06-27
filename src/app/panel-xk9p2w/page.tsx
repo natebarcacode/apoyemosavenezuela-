@@ -57,6 +57,19 @@ const FORM_NEGOCIO_VACIO = () => ({
 })
 
 type Tab = 'centros' | 'negocios' | 'categorias' | 'solicitudes'
+type AdminEstado = 'todos' | 'abiertos' | 'cerrados_hoy' | 'cerrados_temp'
+
+function estaAbiertoAhoraAdmin(horarios: { dia: string; apertura: string; cierre: string }[]): boolean {
+  const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  const hoy = diasJS[p.getUTCDay()]
+  const e = horarios.find(h => h.dia === hoy)
+  if (!e?.apertura || !e?.cierre) return false
+  const [ha, ma] = e.apertura.split(':').map(Number)
+  const [hc, mc] = e.cierre.split(':').map(Number)
+  const min = p.getUTCHours() * 60 + p.getUTCMinutes()
+  return min >= ha * 60 + ma && min < hc * 60 + mc
+}
 
 type Solicitud = {
   id: number
@@ -106,6 +119,10 @@ export default function AdminPage() {
   const [mensajesWA, setMensajesWA] = useState<MensajeWA[]>([])
   const [mensajesAbiertos, setMensajesAbiertos] = useState<Record<string, boolean>>({})
   const [copiandoMsgId, setCopiandoMsgId] = useState<number | null>(null)
+
+  const [adminQ, setAdminQ] = useState('')
+  const [adminEstado, setAdminEstado] = useState<AdminEstado>('todos')
+  const [adminZona, setAdminZona] = useState('')
   const [waMensaje, setWaMensaje] = useState('')
   const [waMostrar, setWaMostrar] = useState(false)
   const [waCopied, setWaCopied] = useState(false)
@@ -1139,6 +1156,34 @@ export default function AdminPage() {
     )
   }
 
+  const zonasCentros = [...new Set(centros.map(c => c.zona).filter(Boolean))].sort()
+  const zonasNegocios = [...new Set(negocios.map(n => n.zona).filter(Boolean))].sort()
+
+  function filtrarAdmin<T extends { nombre: string; zona?: string; horarios?: { dia: string; apertura: string; cierre: string }[]; fecha_fin?: string | null }>(
+    items: T[],
+    getCerrado: (item: T) => boolean
+  ): T[] {
+    return items.filter(item => {
+      const cerrado = getCerrado(item)
+      const tieneFechaFin = !!item.fecha_fin
+      const exp = tieneFechaFin && new Date(item.fecha_fin!).getTime() <= Date.now()
+      const tieneHorarios = !!item.horarios && item.horarios.length > 0
+      const cerradoHoy = !cerrado && tieneHorarios && !exp && !estaAbiertoAhoraAdmin(item.horarios!)
+      if (adminEstado === 'abiertos' && (cerrado || cerradoHoy)) return false
+      if (adminEstado === 'cerrados_hoy' && !cerradoHoy) return false
+      if (adminEstado === 'cerrados_temp' && !cerrado) return false
+      if (adminZona && item.zona !== adminZona) return false
+      if (adminQ) {
+        const q = adminQ.toLowerCase()
+        if (!item.nombre.toLowerCase().includes(q) && !(item.zona?.toLowerCase().includes(q))) return false
+      }
+      return true
+    })
+  }
+
+  const centrosFiltradosAdmin = filtrarAdmin(centros, c => !!c.cerrado)
+  const negociosFiltradosAdmin = filtrarAdmin(negocios, n => !n.activo)
+
   return (
     <div className="min-h-screen bg-gray-50">
 
@@ -1526,10 +1571,63 @@ export default function AdminPage() {
         {mostrarForm && tab === 'negocios' && !editandoId && renderNegocioForm()}
 
 
+        {/* Barra de filtros admin */}
+        {(tab === 'centros' || tab === 'negocios') && (
+          <div className="mb-4 flex flex-col gap-2">
+            {/* Búsqueda + zona */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  value={adminQ}
+                  onChange={e => setAdminQ(e.target.value)}
+                  placeholder="Buscar por nombre o zona…"
+                  className="w-full text-sm rounded-xl border border-gray-200 bg-white px-3 py-2 pl-8 focus:outline-none focus:ring-2 focus:ring-red-200"
+                />
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-300">
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="2"/><path d="M13.5 13.5L17 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                </span>
+              </div>
+              <select
+                value={adminZona}
+                onChange={e => setAdminZona(e.target.value)}
+                className="text-sm rounded-xl border border-gray-200 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-200 text-gray-600"
+              >
+                <option value="">Todas las zonas</option>
+                {(tab === 'centros' ? zonasCentros : zonasNegocios).map(z => (
+                  <option key={z} value={z}>{z}</option>
+                ))}
+              </select>
+            </div>
+            {/* Chips de estado */}
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
+              {([
+                { id: 'todos', label: 'Todos' },
+                { id: 'abiertos', label: 'Abiertos' },
+                { id: 'cerrados_hoy', label: 'Cerrados por hoy' },
+                { id: 'cerrados_temp', label: 'Cerrados temporalmente' },
+              ] as { id: AdminEstado; label: string }[]).map(({ id, label }) => (
+                <button key={id} onClick={() => setAdminEstado(id)}
+                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+                    adminEstado === id
+                      ? id === 'abiertos' ? 'bg-emerald-500 text-white'
+                        : id === 'cerrados_hoy' ? 'bg-orange-400 text-white'
+                        : id === 'cerrados_temp' ? 'bg-gray-500 text-white'
+                        : 'bg-gray-800 text-white'
+                      : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
+                  }`}
+                >{label}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Lista centros */}
         {tab === 'centros' && (
           <div className="flex flex-col gap-3">
-            {centros.map((c) => {
+            {centrosFiltradosAdmin.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-10">No hay centros con esos filtros</p>
+            )}
+            {centrosFiltradosAdmin.map((c) => {
               const key = `centro-${c.id}`
               const msgs = mensajesWA.filter(m => m.tipo === 'centro' && m.referencia_id === c.id)
               const abierto = mensajesAbiertos[key]
@@ -1623,7 +1721,10 @@ export default function AdminPage() {
         {/* Lista negocios */}
         {tab === 'negocios' && (
           <div className="flex flex-col gap-3">
-            {negocios.map((n) => {
+            {negociosFiltradosAdmin.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-10">No hay negocios con esos filtros</p>
+            )}
+            {negociosFiltradosAdmin.map((n) => {
               const key = `negocio-${n.id}`
               const msgs = mensajesWA.filter(m => m.tipo === 'negocio' && m.referencia_id === n.id)
               const abierto = mensajesAbiertos[key]
