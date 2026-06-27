@@ -1,23 +1,25 @@
 'use client'
 
 import { NegocioSolidario } from '@/lib/supabase'
-import { Store, ChevronRight, Clock } from 'lucide-react'
+import { ChevronRight, Clock, MapPin } from 'lucide-react'
 
 function urgencia(fechaFin?: string) {
   if (!fechaFin) return 'normal'
-  const h = (new Date(fechaFin).getTime() - Date.now()) / 3600000
-  if (h <= 0) return 'expirado'
+  const fin = new Date(fechaFin).getTime()
+  const now = Date.now()
+  if (fin <= now) return 'expirado'
+  const h = (fin - now) / 3600000
   if (h < 24) return 'urgente'
-  if (h < 48) return 'proximo'
+  if (h < 72) return 'proximo'
   return 'normal'
 }
 
 function countdownCorto(fechaFin: string) {
   const h = (new Date(fechaFin).getTime() - Date.now()) / 3600000
-  if (h <= 0) return 'Terminó'
-  if (h < 24) return `Termina en ${Math.round(h)}h`
+  if (h <= 0) return 'Cerrado'
+  if (h < 24) return `Cierra en ${Math.round(h)}h`
   const d = Math.ceil(h / 24)
-  return `Termina en ${d}d`
+  return `Cierra en ${d}d`
 }
 
 const TIPOS: Record<string, string> = {
@@ -33,48 +35,53 @@ type Props = {
 
 export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props) {
   const nivel = urgencia(negocio.fecha_fin)
-
-  const leftBorder =
-    seleccionado ? 'border-l-[3px] border-l-amber-500' :
-    nivel === 'urgente' ? 'border-l-[3px] border-l-red-400' :
-    nivel === 'proximo' ? 'border-l-[3px] border-l-yellow-400' :
-    'border-l-[3px] border-l-transparent'
+  const abierto = negocio.activo && nivel !== 'expirado'
 
   return (
     <div
       onClick={onClick}
-      className={`cursor-pointer bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-150 overflow-hidden ${leftBorder} ${seleccionado ? 'ring-2 ring-amber-200 ring-offset-1' : ''} ${nivel === 'expirado' ? 'opacity-50' : ''}`}
+      className={`cursor-pointer bg-white rounded-2xl border transition-all duration-150 overflow-hidden
+        ${seleccionado ? 'border-amber-300 shadow-md ring-2 ring-amber-100' : 'border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200'}
+        ${nivel === 'expirado' ? 'opacity-40' : ''}
+      `}
     >
-      <div className="px-4 py-3.5">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
-            <Store size={15} className="text-amber-500" />
+      <div className="px-4 py-3">
+        {/* Fila principal */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`shrink-0 w-2 h-2 rounded-full ${
+              !abierto ? 'bg-gray-300' :
+              nivel === 'urgente' ? 'bg-red-400 animate-pulse' :
+              nivel === 'proximo' ? 'bg-yellow-400' :
+              'bg-emerald-400'
+            }`} />
+            <p className="font-bold text-gray-900 text-sm truncate">{negocio.nombre}</p>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="font-semibold text-gray-900 text-sm leading-tight truncate">{negocio.nombre}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{negocio.zona} · {TIPOS[negocio.tipo] ?? negocio.tipo}</p>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {nivel === 'urgente' && <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />}
-                {nivel === 'proximo' && <span className="w-2 h-2 rounded-full bg-yellow-400" />}
-                <ChevronRight size={14} className="text-gray-300" />
-              </div>
-            </div>
-            {negocio.iniciativa && (
-              <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mt-2 line-clamp-2 leading-relaxed border border-amber-100">
-                {negocio.iniciativa}
-              </p>
-            )}
-            {negocio.fecha_fin && nivel !== 'normal' && (
-              <p className={`text-[10px] font-medium mt-1.5 flex items-center gap-1 ${nivel === 'urgente' ? 'text-red-400' : 'text-yellow-500'}`}>
-                <Clock size={10} />
+          <div className="flex items-center gap-2 shrink-0">
+            {negocio.fecha_fin && nivel !== 'normal' && nivel !== 'expirado' && (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                nivel === 'urgente' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'
+              }`}>
+                <Clock size={8} className="inline mr-0.5" />
                 {countdownCorto(negocio.fecha_fin)}
-              </p>
+              </span>
             )}
+            <ChevronRight size={14} className="text-gray-300" />
           </div>
         </div>
+
+        {/* Zona + tipo */}
+        <div className="flex items-center gap-1 mt-0.5 ml-4">
+          <MapPin size={10} className="text-gray-300 shrink-0" />
+          <p className="text-xs text-gray-400">{negocio.zona} · {TIPOS[negocio.tipo] ?? negocio.tipo}</p>
+        </div>
+
+        {/* Iniciativa */}
+        {negocio.iniciativa && (
+          <p className="text-xs text-amber-700 bg-amber-50 rounded-xl px-3 py-1.5 mt-2.5 ml-4 line-clamp-2 leading-relaxed">
+            {negocio.iniciativa}
+          </p>
+        )}
       </div>
     </div>
   )
