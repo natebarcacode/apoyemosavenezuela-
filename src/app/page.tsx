@@ -115,6 +115,7 @@ export default function Home() {
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>('todos')
   const [cerradosHoyVisible, setCerradosHoyVisible] = useState(false)
   const [cerradosVisible, setCerradosVisible] = useState(false)
+  const [negCerradosVisible, setNegCerradosVisible] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [, setTick] = useState(0)
 
@@ -145,11 +146,13 @@ export default function Home() {
 
   const q = busqueda.toLowerCase().trim()
 
-  const centrosCerradosTemp = centros.filter(c => !!c.cerrado)
-  const centrosCerradosHoy = centros.filter(c => cerradoPorHoy(c))
+  const isExpired = (fechaFin?: string | null) => !!fechaFin && toPanamaUTC(fechaFin) <= Date.now()
+
+  const centrosCerradosTemp = centros.filter(c => !!c.cerrado || isExpired(c.fecha_fin))
+  const centrosCerradosHoy = centros.filter(c => !c.cerrado && !isExpired(c.fecha_fin) && cerradoPorHoy(c))
 
   const centrosFiltrados = sortPorCierre(centros.filter(c => {
-    if (c.cerrado) return false
+    if (c.cerrado || isExpired(c.fecha_fin)) return false
     if (cerradoPorHoy(c)) return false  // cerrados por hoy van a su sección
     const matchB = q === '' ||
       c.nombre.toLowerCase().includes(q) ||
@@ -172,7 +175,10 @@ export default function Home() {
     return matchB && matchZ && matchU && matchE
   }))
 
+  const negociosCerradosTemp = negocios.filter(n => !n.activo || isExpired(n.fecha_fin))
+
   const negociosFiltrados = sortPorCierre(negocios.filter(n => {
+    if (!n.activo || isExpired(n.fecha_fin)) return false
     const matchB = q === '' ||
       n.nombre.toLowerCase().includes(q) ||
       n.iniciativa.toLowerCase().includes(q) ||
@@ -501,6 +507,29 @@ export default function Home() {
                   <TarjetaNegocio negocio={n} seleccionado={seleccionadoNegocio?.id === n.id} onClick={() => abrirNegocio(n)} />
                 </div>
               ))}
+
+              {/* Cerrados temporalmente (negocios vencidos) */}
+              {negociosCerradosTemp.length > 0 && (
+                <div className="mt-2">
+                  <button onClick={() => setNegCerradosVisible(v => !v)}
+                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-left hover:bg-gray-50 transition-colors">
+                    <span className="w-2 h-2 rounded-full bg-gray-300 shrink-0" />
+                    <span className="text-xs font-semibold text-gray-500 flex-1">
+                      Cerrados temporalmente ({negociosCerradosTemp.length})
+                    </span>
+                    <span className={`text-gray-400 text-xs transition-transform duration-200 ${negCerradosVisible ? 'rotate-180' : ''}`}>▾</span>
+                  </button>
+                  {negCerradosVisible && (
+                    <div className="flex flex-col gap-1.5 mt-1.5">
+                      {negociosCerradosTemp.map(n => (
+                        <div key={n.id} id={`negocio-${n.id}`}>
+                          <TarjetaNegocio negocio={n} seleccionado={seleccionadoNegocio?.id === n.id} onClick={() => abrirNegocio(n)} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             {/* Mapa — sticky */}
             <div className="hidden lg:block rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky relative"
