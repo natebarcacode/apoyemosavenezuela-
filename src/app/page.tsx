@@ -256,7 +256,7 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">¿Conoces un centro de acopio o negocio?</p>
-                <p className="text-xs text-amber-100">Escríbenos y lo publicamos aquí gratis.</p>
+                <p className="text-xs text-amber-100">Escríbenos y lo publicamos.</p>
               </div>
             </div>
             <a href="https://wa.me/50767810189"
