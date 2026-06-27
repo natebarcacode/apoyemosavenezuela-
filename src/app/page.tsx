@@ -96,7 +96,7 @@ export default function Home() {
   useEffect(() => {
     async function cargar() {
       const [{ data: dc }, { data: dn }, { data: dcat }] = await Promise.all([
-        supabase.from('centros_acopio').select('*').eq('activo', true).order('zona'),
+        supabase.from('centros_acopio').select('*').eq('activo', true).neq('cerrado', true).order('zona'),
         supabase.from('negocios_solidarios').select('*').eq('activo', true).order('zona'),
         supabase.from('categorias').select('*').order('nombre'),
       ])
