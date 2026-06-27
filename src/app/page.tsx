@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { supabase, CentroAcopio, NegocioSolidario, Categoria } from '@/lib/supabase'
+import { supabase, CentroAcopio, NegocioSolidario, Categoria, HorarioDia } from '@/lib/supabase'
 import TarjetaCentro from '@/components/TarjetaCentro'
 import TarjetaNegocio from '@/components/TarjetaNegocio'
 import ModalCentro from '@/components/ModalCentro'
@@ -30,10 +30,31 @@ function toPanamaUTC(fechaFin: string): number {
   return Date.UTC(y, mo - 1, d + 1, 5, 0, 0)
 }
 
+function estaAbiertoAhoraHorario(horarios: HorarioDia[]): boolean {
+  const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  const hoy = diasJS[p.getUTCDay()]
+  const entrada = horarios.find(h => h.dia === hoy)
+  if (!entrada?.apertura || !entrada?.cierre) return false
+  const [ha, ma] = entrada.apertura.split(':').map(Number)
+  const [hc, mc] = entrada.cierre.split(':').map(Number)
+  const min = p.getUTCHours() * 60 + p.getUTCMinutes()
+  return min >= ha * 60 + ma && min < hc * 60 + mc
+}
+
 function estaAbierto(cerrado: boolean, fechaFin?: string | null): boolean {
   if (cerrado) return false
   if (fechaFin && toPanamaUTC(fechaFin) <= Date.now()) return false
   return true
+}
+
+// Un lugar está "cerrado por hoy" si: no está cerrado manualmente,
+// tiene horarios, no está expirado, y actualmente está fuera de sus horas
+function cerradoPorHoy(c: { cerrado?: boolean; horarios?: HorarioDia[]; fecha_fin?: string | null }): boolean {
+  if (c.cerrado) return false
+  if (!c.horarios || c.horarios.length === 0) return false
+  if (c.fecha_fin && toPanamaUTC(c.fecha_fin) <= Date.now()) return false
+  return !estaAbiertoAhoraHorario(c.horarios)
 }
 
 function nivelUrgencia(fechaFin?: string | null): 'hoy' | 'semana' | 'normal' | 'permanente' | 'expirado' {
@@ -91,6 +112,7 @@ export default function Home() {
   const [zonasFiltro, setZonasFiltro] = useState<string[]>([])
   const [urgenciaFiltro, setUrgenciaFiltro] = useState<UrgenciaFiltro>('todos')
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>('todos')
+  const [cerradosHoyVisible, setCerradosHoyVisible] = useState(false)
   const [cerradosVisible, setCerradosVisible] = useState(false)
   const [cargando, setCargando] = useState(true)
 
@@ -115,10 +137,12 @@ export default function Home() {
 
   const q = busqueda.toLowerCase().trim()
 
-  const centrosCerrados = centros.filter(c => !!c.cerrado)
+  const centrosCerradosTemp = centros.filter(c => !!c.cerrado)
+  const centrosCerradosHoy = centros.filter(c => cerradoPorHoy(c))
 
   const centrosFiltrados = sortPorCierre(centros.filter(c => {
-    if (c.cerrado) return false  // los cerrados van a su propia sección
+    if (c.cerrado) return false
+    if (cerradoPorHoy(c)) return false  // cerrados por hoy van a su sección
     const matchB = q === '' ||
       c.nombre.toLowerCase().includes(q) ||
       c.direccion.toLowerCase().includes(q) ||
@@ -372,22 +396,43 @@ export default function Home() {
                 </div>
               ))}
 
-              {/* Sección cerrados temporalmente */}
-              {centrosCerrados.length > 0 && (
+              {/* Cerrados por hoy */}
+              {centrosCerradosHoy.length > 0 && (
                 <div className="mt-4">
-                  <button
-                    onClick={() => setCerradosVisible(v => !v)}
-                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-left hover:bg-gray-50 transition-colors"
-                  >
+                  <button onClick={() => setCerradosHoyVisible(v => !v)}
+                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border border-orange-100 bg-orange-50 text-left hover:bg-orange-100 transition-colors">
+                    <span className="w-2 h-2 rounded-full bg-orange-300 shrink-0" />
+                    <span className="text-xs font-semibold text-orange-500 flex-1">
+                      Cerrados por hoy ({centrosCerradosHoy.length})
+                    </span>
+                    <span className={`text-orange-400 text-xs transition-transform duration-200 ${cerradosHoyVisible ? 'rotate-180' : ''}`}>▾</span>
+                  </button>
+                  {cerradosHoyVisible && (
+                    <div className="flex flex-col gap-1.5 mt-1.5">
+                      {centrosCerradosHoy.map(centro => (
+                        <div key={centro.id} id={`centro-${centro.id}`}>
+                          <TarjetaCentro centro={centro} seleccionado={seleccionado?.id === centro.id} onClick={() => abrirCentro(centro)} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Cerrados temporalmente (manual) */}
+              {centrosCerradosTemp.length > 0 && (
+                <div className="mt-2">
+                  <button onClick={() => setCerradosVisible(v => !v)}
+                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-left hover:bg-gray-50 transition-colors">
                     <span className="w-2 h-2 rounded-full bg-gray-300 shrink-0" />
                     <span className="text-xs font-semibold text-gray-500 flex-1">
-                      Cerrados momentáneamente ({centrosCerrados.length})
+                      Cerrados temporalmente ({centrosCerradosTemp.length})
                     </span>
                     <span className={`text-gray-400 text-xs transition-transform duration-200 ${cerradosVisible ? 'rotate-180' : ''}`}>▾</span>
                   </button>
                   {cerradosVisible && (
                     <div className="flex flex-col gap-1.5 mt-1.5">
-                      {centrosCerrados.map(centro => (
+                      {centrosCerradosTemp.map(centro => (
                         <div key={centro.id} id={`centro-${centro.id}`}>
                           <TarjetaCentro centro={centro} seleccionado={seleccionado?.id === centro.id} onClick={() => abrirCentro(centro)} />
                         </div>
