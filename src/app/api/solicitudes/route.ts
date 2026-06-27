@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { verifyToken, COOKIE_NAME } from '@/lib/adminAuth'
+
+function unauthorized() {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+}
+
+function isAdmin(req: NextRequest): boolean {
+  const token = req.cookies.get(COOKIE_NAME)?.value
+  return Boolean(token && verifyToken(token))
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
@@ -18,7 +28,8 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAdmin(req)) return unauthorized()
   const supabase = getSupabaseAdmin()
   const { data, error } = await supabase
     .from('solicitudes')
@@ -30,6 +41,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
+  if (!isAdmin(req)) return unauthorized()
   const { id, estado } = await req.json()
   const supabase = getSupabaseAdmin()
   const { error } = await supabase.from('solicitudes').update({ estado }).eq('id', id)
