@@ -32,6 +32,17 @@ function countdownCorto(fechaFin: string) {
   return `Termina en ${Math.ceil(h / 24)}d`
 }
 
+function terminaLabel(fechaFin: string): string {
+  const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const [y, mo, d] = fechaFin.slice(0, 10).split('-').map(Number)
+  if (y === p.getUTCFullYear() && mo - 1 === p.getUTCMonth() && d === p.getUTCDate()) return 'Termina hoy'
+  const man = new Date(Date.UTC(p.getUTCFullYear(), p.getUTCMonth(), p.getUTCDate() + 1))
+  if (y === man.getUTCFullYear() && mo - 1 === man.getUTCMonth() && d === man.getUTCDate()) return 'Termina mañana'
+  const fecha = new Date(fechaFin.slice(0, 10) + 'T12:00:00Z')
+    .toLocaleDateString('es-PA', { weekday: 'short', day: 'numeric', month: 'short' })
+  return `Termina el ${fecha}`
+}
+
 function formatHora(t: string) {
   const [h, m] = t.split(':').map(Number)
   const ampm = h >= 12 ? 'pm' : 'am'
@@ -161,7 +172,9 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
                   : 'bg-amber-50 text-amber-600 border-amber-100'
               }`}>
                 <Clock size={8} />
-                {countdownCorto(negocio.fecha_fin!)}
+                {(negocio.consultar_horarios || negocio.todas_sucursales)
+                  ? terminaLabel(negocio.fecha_fin!)
+                  : countdownCorto(negocio.fecha_fin!)}
               </span>
             )}
             {!cerrado && !!negocio.consultar_horarios && (
