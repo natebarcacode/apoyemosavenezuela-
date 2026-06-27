@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { CentroAcopio, HorarioDia, Categoria } from '@/lib/supabase'
-import { X, MapPin, Clock, Calendar, Package, Globe, ChevronDown } from 'lucide-react'
+import { X, MapPin, Clock, Calendar, Package, Globe, ChevronDown, Building2 } from 'lucide-react'
 import { WazeIcon, GoogleMapsIcon, InstagramIcon } from './BrandIcons'
 import CountdownTimer from './CountdownTimer'
 
@@ -107,8 +107,48 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
             <span>{centro.zona}</span>
           </div>
 
+          {/* Sucursales */}
+          {centro.todas_sucursales && (
+            <div className="flex items-center gap-2.5 rounded-xl bg-blue-50 border border-blue-100 px-4 py-2.5">
+              <Building2 size={15} className="text-blue-400 shrink-0" />
+              <span className="text-sm font-semibold text-blue-700">Disponible en todas las sucursales</span>
+            </div>
+          )}
+          {!centro.todas_sucursales && centro.sucursales && centro.sucursales.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Sucursales</p>
+              {centro.sucursales.map((s, i) => (
+                <div key={i} className="flex items-start justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-2.5">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <Building2 size={13} className="text-blue-400 mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 leading-tight">{s.nombre}</p>
+                      {s.direccion && <p className="text-xs text-gray-400 mt-0.5 leading-snug">{s.direccion}</p>}
+                    </div>
+                  </div>
+                  {s.lat && s.lng && (
+                    <div className="flex gap-1.5 shrink-0">
+                      <a href={`https://waze.com/ul?ll=${s.lat},${s.lng}&navigate=yes`} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-white hover:opacity-90"
+                        style={{ background: '#00D4E4' }}><WazeIcon className="w-3 h-3" /> Waze</a>
+                      <a href={`https://www.google.com/maps?q=${s.lat},${s.lng}`} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-white hover:opacity-90"
+                        style={{ background: '#4285F4' }}><GoogleMapsIcon className="w-3 h-3" /> Maps</a>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Horario */}
-          {horarios.length > 0 && (
+          {centro.consultar_horarios && (
+            <div className="flex items-center gap-2.5 text-sm text-gray-500 bg-gray-50 rounded-xl px-3.5 py-2.5">
+              <Clock size={15} className="text-gray-400 shrink-0" />
+              <span>Consultar horarios directamente con el centro</span>
+            </div>
+          )}
+          {!centro.consultar_horarios && horarios.length > 0 && (
             <div className="flex items-start gap-2.5">
               <Clock size={15} className="text-gray-400 mt-1 shrink-0" />
               <div className="flex flex-col gap-1">

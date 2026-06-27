@@ -39,15 +39,21 @@ const FORM_CENTRO_VACIO = () => ({
   que_acepta: [] as string[], lat: '', lng: '', notas: '',
   instagram: '', sitio_web: '',
   horarios: horarioVacio(),
+  consultar_horarios: false,
   fecha_inicio: '', fecha_fin: '',
+  sucursales: [] as { nombre: string; direccion: string; lat: string; lng: string }[],
+  todas_sucursales: false,
 })
 
 const FORM_NEGOCIO_VACIO = () => ({
   nombre: '', tipo: 'restaurante', iniciativa: '', zona: '',
   direccion: '', instagram: '', sitio_web: '', vigencia: '',
   horarios: horarioVacio(),
+  consultar_horarios: false,
   fecha_inicio: '', fecha_fin: '',
   lat: '', lng: '',
+  sucursales: [] as { nombre: string; direccion: string; lat: string; lng: string }[],
+  todas_sucursales: false,
 })
 
 type Tab = 'centros' | 'negocios' | 'categorias' | 'solicitudes'
@@ -210,7 +216,9 @@ export default function AdminPage() {
         instagram: String(datos.instagram ?? ''),
         sitio_web: '',
         horarios: horarioVacio(),
+        consultar_horarios: false,
         fecha_inicio: '', fecha_fin: '',
+        sucursales: [], todas_sucursales: false,
       })
       setEditandoId(null)
       setNotificarWA(true)
@@ -227,8 +235,10 @@ export default function AdminPage() {
         instagram: String(datos.instagram ?? ''),
         sitio_web: '', vigencia: '',
         horarios: horarioVacio(),
+        consultar_horarios: false,
         fecha_inicio: '', fecha_fin: '',
         lat: '', lng: '',
+        sucursales: [], todas_sucursales: false,
       })
       setEditandoId(null)
       setNotificarWA(true)
@@ -322,8 +332,13 @@ export default function AdminPage() {
         const found = (c.horarios ?? []).find((h: {dia:string}) => h.dia === dia)
         return found ? { dia, activo: true, apertura: (found as {apertura:string}).apertura || '', cierre: (found as {cierre:string}).cierre || '' } : { dia, activo: false, apertura: '', cierre: '' }
       }),
+      consultar_horarios: !!c.consultar_horarios,
       fecha_inicio: c.fecha_inicio ? c.fecha_inicio.slice(0, 10) : '',
       fecha_fin: c.fecha_fin ? c.fecha_fin.slice(0, 16) : '',
+      sucursales: (c.sucursales ?? []).map((s: {nombre:string;direccion?:string;lat?:string;lng?:string}) => ({
+        nombre: s.nombre, direccion: s.direccion ?? '', lat: s.lat ?? '', lng: s.lng ?? '',
+      })),
+      todas_sucursales: !!c.todas_sucursales,
     })
     setEditandoId(c.id)
     setNotificarWA(false)
@@ -342,8 +357,13 @@ export default function AdminPage() {
         const found = (n.horarios ?? []).find((h: {dia:string}) => h.dia === dia)
         return found ? { dia, activo: true, apertura: (found as {apertura:string}).apertura || '', cierre: (found as {cierre:string}).cierre || '' } : { dia, activo: false, apertura: '', cierre: '' }
       }),
+      consultar_horarios: !!n.consultar_horarios,
       fecha_inicio: n.fecha_inicio ?? '',
       fecha_fin: n.fecha_fin ? n.fecha_fin.slice(0, 16) : '',
+      sucursales: (n.sucursales ?? []).map((s: {nombre:string;direccion?:string;lat?:string;lng?:string}) => ({
+        nombre: s.nombre, direccion: s.direccion ?? '', lat: s.lat ?? '', lng: s.lng ?? '',
+      })),
+      todas_sucursales: !!n.todas_sucursales,
     })
     setEditandoId(n.id)
     setNotificarWA(false)
@@ -368,6 +388,8 @@ export default function AdminPage() {
       }),
       fecha_inicio: c.fecha_inicio ? c.fecha_inicio.slice(0, 10) : '',
       fecha_fin: c.fecha_fin ? c.fecha_fin.slice(0, 16) : '',
+      consultar_horarios: false,
+      sucursales: [], todas_sucursales: false,
     })
     setEditandoId(null)
     setNotificarWA(true)
@@ -392,6 +414,8 @@ export default function AdminPage() {
       }),
       fecha_inicio: n.fecha_inicio ?? '',
       fecha_fin: n.fecha_fin ? n.fecha_fin.slice(0, 16) : '',
+      consultar_horarios: false,
+      sucursales: [], todas_sucursales: false,
     })
     setEditandoId(null)
     setNotificarWA(true)
@@ -420,9 +444,17 @@ export default function AdminPage() {
       que_acepta: f.que_acepta, lat: parseFloat(f.lat), lng: parseFloat(f.lng),
       notas: f.notas || null,
       instagram: f.instagram || null, sitio_web: f.sitio_web || null,
-      horarios: f.horarios.filter((h: {activo:boolean}) => h.activo).map(({dia, apertura, cierre}: {dia:string,apertura:string,cierre:string}) => ({ dia, apertura, cierre })),
+      horarios: f.consultar_horarios ? [] : f.horarios.filter((h: {activo:boolean}) => h.activo).map(({dia, apertura, cierre}: {dia:string,apertura:string,cierre:string}) => ({ dia, apertura, cierre })),
+      consultar_horarios: f.consultar_horarios,
       fecha_inicio: f.fecha_inicio || null,
       fecha_fin: f.fecha_fin || null,
+      todas_sucursales: f.todas_sucursales,
+      sucursales: f.todas_sucursales ? [] : f.sucursales.filter((s: {nombre:string}) => s.nombre.trim()).map((s: {nombre:string;direccion:string;lat:string;lng:string}) => ({
+        nombre: s.nombre.trim(),
+        direccion: s.direccion || undefined,
+        lat: s.lat || undefined,
+        lng: s.lng || undefined,
+      })),
     }
     const esNuevo = !editandoId
     let refId = editandoId
@@ -454,9 +486,17 @@ export default function AdminPage() {
       sitio_web: f.sitio_web || null, vigencia: f.vigencia || null,
       lat: f.lat ? parseFloat(f.lat) : null,
       lng: f.lng ? parseFloat(f.lng) : null,
-      horarios: f.horarios.filter((h: {activo:boolean}) => h.activo).map(({dia, apertura, cierre}: {dia:string,apertura:string,cierre:string}) => ({ dia, apertura, cierre })),
+      horarios: f.consultar_horarios ? [] : f.horarios.filter((h: {activo:boolean}) => h.activo).map(({dia, apertura, cierre}: {dia:string,apertura:string,cierre:string}) => ({ dia, apertura, cierre })),
+      consultar_horarios: f.consultar_horarios,
       fecha_inicio: f.fecha_inicio || null,
       fecha_fin: f.fecha_fin || null,
+      todas_sucursales: f.todas_sucursales,
+      sucursales: f.todas_sucursales ? [] : f.sucursales.filter((s: {nombre:string}) => s.nombre.trim()).map((s: {nombre:string;direccion:string;lat:string;lng:string}) => ({
+        nombre: s.nombre.trim(),
+        direccion: s.direccion || undefined,
+        lat: s.lat || undefined,
+        lng: s.lng || undefined,
+      })),
     }
     const esNuevo = !editandoId
     let refId = editandoId
@@ -780,9 +820,18 @@ export default function AdminPage() {
               })()}
             </div>
           </div>
+          {/* Horario */}
           <div className="sm:col-span-2 border-t border-gray-100 pt-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Horario de atención</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Horario de atención</p>
+              <button type="button"
+                onClick={() => setFormCentro(f => ({ ...f, consultar_horarios: !f.consultar_horarios }))}
+                className={`text-xs font-semibold px-3 py-1 rounded-full border transition-colors ${formCentro.consultar_horarios ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                Consultar por otro medio
+              </button>
+            </div>
           </div>
+          {!formCentro.consultar_horarios && (
           <div className="sm:col-span-2">
             <div className="rounded-xl border border-gray-200 overflow-hidden">
               {formCentro.horarios.map((h, i) => (
@@ -809,6 +858,51 @@ export default function AdminPage() {
               ))}
             </div>
           </div>
+          )}
+
+          {/* Sucursales */}
+          <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Sucursales</p>
+              <button type="button"
+                onClick={() => setFormCentro(f => ({ ...f, todas_sucursales: !f.todas_sucursales, sucursales: [] }))}
+                className={`text-xs font-semibold px-3 py-1 rounded-full border transition-colors ${formCentro.todas_sucursales ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'}`}>
+                Todas las sucursales
+              </button>
+            </div>
+            {!formCentro.todas_sucursales && (
+              <div className="flex flex-col gap-2">
+                {formCentro.sucursales.map((s, i) => (
+                  <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border border-gray-100 bg-gray-50">
+                    <div className="flex gap-2">
+                      <input placeholder="Nombre de sucursal *" value={s.nombre}
+                        onChange={e => { const ss = [...formCentro.sucursales]; ss[i] = { ...ss[i], nombre: e.target.value }; setFormCentro(f => ({ ...f, sucursales: ss })) }}
+                        className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
+                      <button type="button" onClick={() => setFormCentro(f => ({ ...f, sucursales: f.sucursales.filter((_, j) => j !== i) }))}
+                        className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+                    </div>
+                    <input placeholder="Dirección (opcional)" value={s.direccion}
+                      onChange={e => { const ss = [...formCentro.sucursales]; ss[i] = { ...ss[i], direccion: e.target.value }; setFormCentro(f => ({ ...f, sucursales: ss })) }}
+                      className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
+                    <div className="flex gap-2">
+                      <input placeholder="Lat (opcional)" value={s.lat}
+                        onChange={e => { const ss = [...formCentro.sucursales]; ss[i] = { ...ss[i], lat: e.target.value }; setFormCentro(f => ({ ...f, sucursales: ss })) }}
+                        className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
+                      <input placeholder="Lng (opcional)" value={s.lng}
+                        onChange={e => { const ss = [...formCentro.sucursales]; ss[i] = { ...ss[i], lng: e.target.value }; setFormCentro(f => ({ ...f, sucursales: ss })) }}
+                        className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300" />
+                    </div>
+                  </div>
+                ))}
+                <button type="button"
+                  onClick={() => setFormCentro(f => ({ ...f, sucursales: [...f.sucursales, { nombre: '', direccion: '', lat: '', lng: '' }] }))}
+                  className="flex items-center gap-1.5 text-sm text-red-500 font-semibold hover:text-red-600 transition-colors">
+                  <Plus size={14} /> Agregar sucursal
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="sm:col-span-2 border-t border-gray-100 pt-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Contacto y fecha de cierre</p>
           </div>
@@ -925,9 +1019,18 @@ export default function AdminPage() {
               </div>
             </>
           )}
+          {/* Horario */}
           <div className="sm:col-span-2 border-t border-gray-100 pt-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Horario de atención</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Horario de atención</p>
+              <button type="button"
+                onClick={() => setFormNegocio(f => ({ ...f, consultar_horarios: !f.consultar_horarios }))}
+                className={`text-xs font-semibold px-3 py-1 rounded-full border transition-colors ${formNegocio.consultar_horarios ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                Consultar por otro medio
+              </button>
+            </div>
           </div>
+          {!formNegocio.consultar_horarios && (
           <div className="sm:col-span-2">
             <div className="rounded-xl border border-gray-200 overflow-hidden">
               {formNegocio.horarios.map((h, i) => (
@@ -954,6 +1057,51 @@ export default function AdminPage() {
               ))}
             </div>
           </div>
+          )}
+
+          {/* Sucursales */}
+          <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Sucursales</p>
+              <button type="button"
+                onClick={() => setFormNegocio(f => ({ ...f, todas_sucursales: !f.todas_sucursales, sucursales: [] }))}
+                className={`text-xs font-semibold px-3 py-1 rounded-full border transition-colors ${formNegocio.todas_sucursales ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'}`}>
+                Todas las sucursales
+              </button>
+            </div>
+            {!formNegocio.todas_sucursales && (
+              <div className="flex flex-col gap-2">
+                {formNegocio.sucursales.map((s, i) => (
+                  <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border border-gray-100 bg-gray-50">
+                    <div className="flex gap-2">
+                      <input placeholder="Nombre de sucursal *" value={s.nombre}
+                        onChange={e => { const ss = [...formNegocio.sucursales]; ss[i] = { ...ss[i], nombre: e.target.value }; setFormNegocio(f => ({ ...f, sucursales: ss })) }}
+                        className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" />
+                      <button type="button" onClick={() => setFormNegocio(f => ({ ...f, sucursales: f.sucursales.filter((_, j) => j !== i) }))}
+                        className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+                    </div>
+                    <input placeholder="Dirección (opcional)" value={s.direccion}
+                      onChange={e => { const ss = [...formNegocio.sucursales]; ss[i] = { ...ss[i], direccion: e.target.value }; setFormNegocio(f => ({ ...f, sucursales: ss })) }}
+                      className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" />
+                    <div className="flex gap-2">
+                      <input placeholder="Lat (opcional)" value={s.lat}
+                        onChange={e => { const ss = [...formNegocio.sucursales]; ss[i] = { ...ss[i], lat: e.target.value }; setFormNegocio(f => ({ ...f, sucursales: ss })) }}
+                        className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" />
+                      <input placeholder="Lng (opcional)" value={s.lng}
+                        onChange={e => { const ss = [...formNegocio.sucursales]; ss[i] = { ...ss[i], lng: e.target.value }; setFormNegocio(f => ({ ...f, sucursales: ss })) }}
+                        className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" />
+                    </div>
+                  </div>
+                ))}
+                <button type="button"
+                  onClick={() => setFormNegocio(f => ({ ...f, sucursales: [...f.sucursales, { nombre: '', direccion: '', lat: '', lng: '' }] }))}
+                  className="flex items-center gap-1.5 text-sm text-yellow-600 font-semibold hover:text-yellow-700 transition-colors">
+                  <Plus size={14} /> Agregar sucursal
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="sm:col-span-2 border-t border-gray-100 pt-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Contacto y fecha de cierre</p>
           </div>

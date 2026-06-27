@@ -137,7 +137,13 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
                 {countdownCorto(negocio.fecha_fin!)}
               </span>
             )}
-            {!cerrado && !tieneFechaFin && !tieneHorarios && (
+            {!cerrado && !!negocio.consultar_horarios && (
+              <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                <Clock size={9} />
+                Consultar horarios
+              </span>
+            )}
+            {!cerrado && !tieneFechaFin && !tieneHorarios && !negocio.consultar_horarios && (
               <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
                 <Clock size={9} />
                 Ver horarios
@@ -147,10 +153,18 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
           </div>
         </div>
 
-        {/* Zona + tipo */}
-        <div className="flex items-center gap-1 mt-0.5 ml-4">
-          <MapPin size={10} className="text-gray-300 shrink-0" />
-          <p className="text-xs text-gray-400">{negocio.zona} · {TIPOS[negocio.tipo] ?? negocio.tipo}</p>
+        {/* Zona + tipo + sucursales */}
+        <div className="flex items-center gap-2 mt-0.5 ml-4 flex-wrap">
+          <div className="flex items-center gap-1">
+            <MapPin size={10} className="text-gray-300 shrink-0" />
+            <p className="text-xs text-gray-400">{negocio.zona} · {TIPOS[negocio.tipo] ?? negocio.tipo}</p>
+          </div>
+          {negocio.todas_sucursales && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-500">Todas las sucursales</span>
+          )}
+          {!negocio.todas_sucursales && negocio.sucursales && negocio.sucursales.length > 0 && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-500">{negocio.sucursales.length} sucursal{negocio.sucursales.length > 1 ? 'es' : ''}</span>
+          )}
         </div>
 
         {/* Iniciativa */}

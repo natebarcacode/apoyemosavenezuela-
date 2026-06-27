@@ -143,8 +143,15 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
                 {countdownCorto(centro.fecha_fin!)}
               </span>
             )}
+            {/* Horarios: consultar por otro medio */}
+            {!cerrado && !!centro.consultar_horarios && (
+              <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                <Clock size={9} />
+                Consultar horarios
+              </span>
+            )}
             {/* Sin fecha ni horarios → invitar a entrar */}
-            {!cerrado && !tieneFechaFin && !tieneHorarios && (
+            {!cerrado && !tieneFechaFin && !tieneHorarios && !centro.consultar_horarios && (
               <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
                 <Clock size={9} />
                 Ver horarios
@@ -154,10 +161,18 @@ export default function TarjetaCentro({ centro, seleccionado, onClick }: Props) 
           </div>
         </div>
 
-        {/* Zona */}
-        <div className="flex items-center gap-1 mt-0.5 ml-4">
-          <MapPin size={10} className="text-gray-300 shrink-0" />
-          <p className="text-xs text-gray-400">{centro.zona}</p>
+        {/* Zona + sucursales */}
+        <div className="flex items-center gap-2 mt-0.5 ml-4 flex-wrap">
+          <div className="flex items-center gap-1">
+            <MapPin size={10} className="text-gray-300 shrink-0" />
+            <p className="text-xs text-gray-400">{centro.zona}</p>
+          </div>
+          {centro.todas_sucursales && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-500">Todas las sucursales</span>
+          )}
+          {!centro.todas_sucursales && centro.sucursales && centro.sucursales.length > 0 && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-500">{centro.sucursales.length} sucursal{centro.sucursales.length > 1 ? 'es' : ''}</span>
+          )}
         </div>
 
         {/* Items aceptados */}

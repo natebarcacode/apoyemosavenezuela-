@@ -11,6 +11,13 @@ export type HorarioDia = {
   cierre: string
 }
 
+export type Sucursal = {
+  nombre: string
+  direccion?: string
+  lat?: string
+  lng?: string
+}
+
 export type MensajeWA = {
   id: number
   tipo: string
@@ -36,11 +43,14 @@ export type NegocioSolidario = {
   sitio_web?: string
   vigencia?: string
   horarios?: HorarioDia[]
+  consultar_horarios?: boolean
   fecha_inicio?: string
   fecha_fin?: string
   activo: boolean
   lat?: number
   lng?: number
+  sucursales?: Sucursal[]
+  todas_sucursales?: boolean
 }
 
 export type CentroAcopio = {
@@ -55,10 +65,13 @@ export type CentroAcopio = {
   cerrado?: boolean
   notas?: string
   horarios?: HorarioDia[]
+  consultar_horarios?: boolean
   fecha_inicio?: string
   fecha_fin?: string
   instagram?: string
   sitio_web?: string
+  sucursales?: Sucursal[]
+  todas_sucursales?: boolean
 }
 
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
