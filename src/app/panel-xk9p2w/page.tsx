@@ -838,19 +838,21 @@ export default function AdminPage() {
               }
             />
           </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">
-              Zona {formNegocio.tipo === 'ecommerce' ? <span className="text-gray-400 font-normal">(opcional)</span> : '*'}
-            </label>
-            <ZonaSelect value={formNegocio.zona} onChange={zona => setFormNegocio(f => ({ ...f, zona }))}
-              zonas={ZONAS_PANAMA} ringClass="focus:ring-yellow-400" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Dirección (opcional)</label>
-            <input value={formNegocio.direccion} onChange={(e) => setFormNegocio({ ...formNegocio, direccion: e.target.value })}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              placeholder="Ej: Calle 50, local 3" />
-          </div>
+          {formNegocio.tipo !== 'ecommerce' && (
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">Zona *</label>
+              <ZonaSelect value={formNegocio.zona} onChange={zona => setFormNegocio(f => ({ ...f, zona }))}
+                zonas={ZONAS_PANAMA} ringClass="focus:ring-yellow-400" />
+            </div>
+          )}
+          {formNegocio.tipo !== 'ecommerce' && (
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">Dirección (opcional)</label>
+              <input value={formNegocio.direccion} onChange={(e) => setFormNegocio({ ...formNegocio, direccion: e.target.value })}
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                placeholder="Ej: Calle 50, local 3" />
+            </div>
+          )}
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud</label>
             <input value={formNegocio.lat} onChange={(e) => setFormNegocio({ ...formNegocio, lat: e.target.value })}

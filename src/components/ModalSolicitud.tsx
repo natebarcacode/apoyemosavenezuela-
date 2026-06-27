@@ -535,17 +535,19 @@ export default function ModalSolicitud({ centros, negocios, onClose }: Props) {
                         {TIPOS_NEGOCIO.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                       </select>
                     </div>
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                        Zona {nnTipo === 'ecommerce' ? <span className="text-gray-400 font-normal">(opcional)</span> : '*'}
-                      </label>
-                      <ZonaSelect value={nnZona} onChange={setNnZona} zonas={zonas} ringClass="focus:ring-amber-300" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Dirección</label>
-                      <input value={nnDireccion} onChange={e => setNnDireccion(e.target.value)} placeholder="Calle, local..."
-                        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-                    </div>
+                    {nnTipo !== 'ecommerce' && (
+                      <div>
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Zona *</label>
+                        <ZonaSelect value={nnZona} onChange={setNnZona} zonas={zonas} ringClass="focus:ring-amber-300" />
+                      </div>
+                    )}
+                    {nnTipo !== 'ecommerce' && (
+                      <div>
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Dirección</label>
+                        <input value={nnDireccion} onChange={e => setNnDireccion(e.target.value)} placeholder="Calle, local..."
+                          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">¿En qué consiste la iniciativa? *</label>
