@@ -5,6 +5,7 @@ import { CentroAcopio, NegocioSolidario, Categoria, GrupoCategoria, MensajeWA } 
 import { useRef } from 'react'
 import { Plus, Pencil, Eye, EyeOff, LogOut, Package, Store, Tag, Trash2, MessageSquare, Copy, Check, X, CopyPlus, DoorClosed, DoorOpen, Inbox } from 'lucide-react'
 import BuscadorUbicacion from '@/components/BuscadorUbicacion'
+import ZonaSelect, { ZONAS_PANAMA } from '@/components/ZonaSelect'
 import dynamic from 'next/dynamic'
 const MapaPicker = dynamic(() => import('@/components/MapaPicker'), { ssr: false })
 
@@ -596,9 +597,8 @@ export default function AdminPage() {
           </div>
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Zona *</label>
-            <input value={formCentro.zona} onChange={(e) => setFormCentro({ ...formCentro, zona: e.target.value })}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-              placeholder="Ej: Bella Vista" />
+            <ZonaSelect value={formCentro.zona} onChange={zona => setFormCentro(f => ({ ...f, zona }))}
+              zonas={ZONAS_PANAMA} ringClass="focus:ring-red-400" />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud *</label>
@@ -840,9 +840,8 @@ export default function AdminPage() {
           </div>
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Zona *</label>
-            <input value={formNegocio.zona} onChange={(e) => setFormNegocio({ ...formNegocio, zona: e.target.value })}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              placeholder="Ej: Miraflores" />
+            <ZonaSelect value={formNegocio.zona} onChange={zona => setFormNegocio(f => ({ ...f, zona }))}
+              zonas={ZONAS_PANAMA} ringClass="focus:ring-yellow-400" />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Dirección (opcional)</label>
