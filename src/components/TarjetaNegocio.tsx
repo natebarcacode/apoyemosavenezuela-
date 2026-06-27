@@ -21,6 +21,23 @@ function countdownCorto(fechaFin: string) {
   return `Cierra en ${d}d`
 }
 
+function formatHora(t: string) {
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'pm' : 'am'
+  const h12 = h % 12 || 12
+  return m === 0 ? `${h12}${ampm}` : `${h12}:${String(m).padStart(2, '0')}${ampm}`
+}
+
+const DIAS_ORDEN = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+function hoyPanamaIdx() {
+  const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const m: Record<number, number> = {1:0,2:1,3:2,4:3,5:4,6:5,0:6}
+  return m[p.getUTCDay()]
+}
+function diaPasado(dia: string) {
+  return DIAS_ORDEN.indexOf(dia) < hoyPanamaIdx()
+}
+
 // Panama = UTC-5, sin cambio de horario
 function estaAbiertoAhora(horarios: HorarioDia[]): boolean {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
@@ -126,6 +143,28 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
           <p className="text-xs text-amber-700 bg-amber-50 rounded-xl px-3 py-1.5 mt-2.5 ml-4 line-clamp-2 leading-relaxed">
             {negocio.iniciativa}
           </p>
+        )}
+
+        {/* Horarios en la tarjeta */}
+        {!cerrado && tieneHorarios && (
+          <div className="flex items-start gap-1.5 mt-2.5 ml-4">
+            <Clock size={10} className="text-gray-300 shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-0.5">
+              {negocio.horarios!.map(h => {
+                const pasado = tieneFechaFin && diaPasado(h.dia)
+                return (
+                  <span key={h.dia} className={`text-[10px] flex gap-2 ${pasado ? 'line-through text-gray-300' : 'text-gray-500'}`}>
+                    <span className="font-semibold w-6 shrink-0">{h.dia}</span>
+                    {h.apertura && h.cierre && (
+                      <span className={pasado ? 'text-gray-300' : 'text-gray-400'}>
+                        {formatHora(h.apertura)} – {formatHora(h.cierre)}
+                      </span>
+                    )}
+                  </span>
+                )
+              })}
+            </div>
+          </div>
         )}
       </div>
     </div>

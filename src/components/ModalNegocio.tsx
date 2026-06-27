@@ -12,17 +12,14 @@ function formatHora(t: string) {
   return m === 0 ? `${h12}${ampm}` : `${h12}:${String(m).padStart(2, '0')}${ampm}`
 }
 
-function agruparHorarios(horarios: HorarioDia[]) {
-  const map = new Map<string, string[]>()
-  for (const h of horarios) {
-    const key = `${h.apertura}|${h.cierre}`
-    if (!map.has(key)) map.set(key, [])
-    map.get(key)!.push(h.dia)
-  }
-  return Array.from(map.entries()).map(([key, dias]) => {
-    const [ap, ci] = key.split('|')
-    return { dias, horas: ap && ci ? `${formatHora(ap)} – ${formatHora(ci)}` : '' }
-  })
+const DIAS_ORDEN = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+function hoyPanamaIdx() {
+  const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const m: Record<number, number> = {1:0,2:1,3:2,4:3,5:4,6:5,0:6}
+  return m[p.getUTCDay()]
+}
+function diaPasado(dia: string) {
+  return DIAS_ORDEN.indexOf(dia) < hoyPanamaIdx()
 }
 
 const TIPOS: Record<string, string> = {
@@ -36,7 +33,8 @@ type Props = {
 }
 
 export default function ModalNegocio({ negocio, onClose }: Props) {
-  const horarios = negocio.horarios && negocio.horarios.length > 0 ? agruparHorarios(negocio.horarios) : []
+  const horarios = negocio.horarios ?? []
+  const tieneFechaFin = !!negocio.fecha_fin
 
   return (
     <div
@@ -96,14 +94,24 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
           {/* Horario */}
           {horarios.length > 0 && (
             <div className="flex items-start gap-2.5">
-              <Clock size={15} className="text-amber-400 mt-0.5 shrink-0" />
-              <div className="flex flex-col gap-0.5">
-                {horarios.map((g, i) => (
-                  <span key={i} className="text-sm text-gray-600">
-                    {g.dias.join(' · ')}
-                    {g.horas && <span className="text-gray-400 ml-2">{g.horas}</span>}
-                  </span>
-                ))}
+              <Clock size={15} className="text-amber-400 mt-1 shrink-0" />
+              <div className="flex flex-col gap-1">
+                {horarios.map(h => {
+                  const pasado = tieneFechaFin && diaPasado(h.dia)
+                  return (
+                    <div key={h.dia} className={`flex gap-3 text-sm ${pasado ? 'line-through text-gray-300' : 'text-gray-700'}`}>
+                      <span className="font-semibold w-8 shrink-0">{h.dia}</span>
+                      {h.apertura && h.cierre && (
+                        <span className={pasado ? 'text-gray-300' : 'text-gray-400'}>
+                          {formatHora(h.apertura)} – {formatHora(h.cierre)}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
+                {!tieneFechaFin && (
+                  <span className="text-[11px] text-gray-400 mt-0.5">Horario semanal recurrente</span>
+                )}
               </div>
             </div>
           )}
