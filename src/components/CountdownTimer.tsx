@@ -24,21 +24,19 @@ function toPanamaUTC(fechaFin: string): number {
   return Date.UTC(y, mo - 1, d + 1, 5, 0, 0)
 }
 
-function labelFin(fechaFin: string): string {
-  // Fecha Panama de hoy
+function labelFin(fechaFin: string, conPunto = true): string {
   const ahoraPanama = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const hoyY = ahoraPanama.getUTCFullYear()
   const hoyM = ahoraPanama.getUTCMonth()
   const hoyD = ahoraPanama.getUTCDate()
-  // Fecha Panama del cierre (los primeros 10 chars son YYYY-MM-DD en hora Panama)
   const [y, mo, d] = fechaFin.slice(0, 10).split('-').map(Number)
-  if (y === hoyY && mo - 1 === hoyM && d === hoyD) return 'Termina hoy ·'
+  const p = conPunto ? ' ·' : ''
+  if (y === hoyY && mo - 1 === hoyM && d === hoyD) return `Termina hoy${p}`
   const mañana = new Date(Date.UTC(hoyY, hoyM, hoyD + 1))
-  if (y === mañana.getUTCFullYear() && mo - 1 === mañana.getUTCMonth() && d === mañana.getUTCDate()) return 'Termina mañana ·'
-  // Fecha formateada
+  if (y === mañana.getUTCFullYear() && mo - 1 === mañana.getUTCMonth() && d === mañana.getUTCDate()) return `Termina mañana${p}`
   const fecha = new Date(fechaFin.slice(0, 10) + 'T12:00:00Z')
     .toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' })
-  return `Termina el ${fecha} ·`
+  return `Termina el ${fecha}${p}`
 }
 
 function calcular(fechaFin: string) {
@@ -52,12 +50,14 @@ function calcular(fechaFin: string) {
 }
 
 export default function CountdownTimer({ fechaFin, label }: Props) {
+  const soloFecha = !fechaFin.includes('T')
   const [tiempo, setTiempo] = useState(() => calcular(fechaFin))
 
   useEffect(() => {
+    if (soloFecha) return
     const id = setInterval(() => setTiempo(calcular(fechaFin)), 1000)
     return () => clearInterval(id)
-  }, [fechaFin])
+  }, [fechaFin, soloFecha])
 
   if (!tiempo) {
     return (
@@ -68,10 +68,23 @@ export default function CountdownTimer({ fechaFin, label }: Props) {
     )
   }
 
-  const { d, h, m, s, totalHoras } = tiempo
+  const { totalHoras } = tiempo
   const urgente = totalHoras < 24
   const proximo = totalHoras >= 24 && totalHoras < 48
 
+  // Solo fecha: muestra el label sin countdown exacto
+  if (soloFecha) {
+    const textoFecha = label ?? labelFin(fechaFin, false)
+    const color = urgente ? 'bg-red-50 text-red-600' : proximo ? 'bg-yellow-50 text-yellow-700' : 'bg-gray-50 text-gray-500'
+    return (
+      <div className={`mt-2 flex items-center gap-1.5 rounded-lg px-3 py-1.5 ${color}`}>
+        <Clock size={12} className="shrink-0 opacity-60" />
+        <span className="text-xs font-medium">{textoFecha}</span>
+      </div>
+    )
+  }
+
+  const { d, h, m, s } = tiempo
   const prefijo = label ?? labelFin(fechaFin)
   const texto = d > 0
     ? `${prefijo} en ${d}d ${h}h ${m}m`

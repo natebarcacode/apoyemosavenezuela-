@@ -102,10 +102,12 @@ export default function ModalCentro({ centro, categorias, onClose }: Props) {
         <div className="overflow-y-auto flex-1 p-5 flex flex-col gap-4" style={{ scrollbarWidth: 'thin' }}>
 
           {/* Zona */}
-          <div className="flex items-center gap-2.5 text-sm text-gray-600">
-            <MapPin size={15} className="text-gray-400 shrink-0" />
-            <span>{centro.zona}</span>
-          </div>
+          {centro.zona && (
+            <div className="flex items-center gap-2.5 text-sm text-gray-600">
+              <MapPin size={15} className="text-gray-400 shrink-0" />
+              <span>{centro.zona}</span>
+            </div>
+          )}
 
           {/* Sucursales */}
           {centro.todas_sucursales && (

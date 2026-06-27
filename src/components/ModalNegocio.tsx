@@ -91,10 +91,12 @@ export default function ModalNegocio({ negocio, onClose }: Props) {
           </div>
 
           {/* Zona */}
-          <div className="flex items-center gap-2.5 text-sm text-gray-600">
-            <MapPin size={15} className="text-amber-400 shrink-0" />
-            <span>{negocio.zona}</span>
-          </div>
+          {negocio.zona && (
+            <div className="flex items-center gap-2.5 text-sm text-gray-600">
+              <MapPin size={15} className="text-amber-400 shrink-0" />
+              <span>{negocio.zona}</span>
+            </div>
+          )}
 
           {/* Sucursales */}
           {negocio.todas_sucursales && (
