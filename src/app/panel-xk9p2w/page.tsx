@@ -59,17 +59,34 @@ const FORM_NEGOCIO_VACIO = () => ({
 type Tab = 'centros' | 'negocios' | 'categorias' | 'solicitudes'
 type AdminEstado = 'todos' | 'abiertos' | 'cerrados_hoy' | 'cerrados_temp'
 
+function toMinA(h: number, m: number) { return h === 0 && m === 0 ? 1440 : h * 60 + m }
+
 function estaAbiertoAhoraAdmin(horarios: { dia: string; apertura: string; cierre: string }[]): boolean {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-  const hoy = diasJS[p.getUTCDay()]
-  const e = horarios.find(h => h.dia === hoy)
-  if (!e?.apertura || !e?.cierre) return false
-  const [ha, ma] = e.apertura.split(':').map(Number)
-  const [hc, mc] = e.cierre.split(':').map(Number)
-  const hcMin = hc === 0 && mc === 0 ? 1440 : hc * 60 + mc
+  const hoyIdx = p.getUTCDay()
   const min = p.getUTCHours() * 60 + p.getUTCMinutes()
-  return min >= ha * 60 + ma && min < hcMin
+
+  const hoyE = horarios.find(h => h.dia === diasJS[hoyIdx])
+  if (hoyE?.apertura && hoyE?.cierre) {
+    const [ha, ma] = hoyE.apertura.split(':').map(Number)
+    const [hc, mc] = hoyE.cierre.split(':').map(Number)
+    const ap = ha * 60 + ma
+    const ci = toMinA(hc, mc)
+    if (ci > ap) { if (min >= ap && min < ci) return true }
+    else { if (min >= ap) return true }
+  }
+
+  const ayerE = horarios.find(h => h.dia === diasJS[(hoyIdx + 6) % 7])
+  if (ayerE?.apertura && ayerE?.cierre) {
+    const [ha, ma] = ayerE.apertura.split(':').map(Number)
+    const [hc, mc] = ayerE.cierre.split(':').map(Number)
+    const ap = ha * 60 + ma
+    const ci = toMinA(hc, mc)
+    if (ci <= ap && min < ci) return true
+  }
+
+  return false
 }
 
 type Solicitud = {

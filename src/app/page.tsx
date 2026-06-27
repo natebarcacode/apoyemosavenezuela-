@@ -30,17 +30,36 @@ function toPanamaUTC(fechaFin: string): number {
   return Date.UTC(y, mo - 1, d + 1, 5, 0, 0)
 }
 
+function toMinH(h: number, m: number) { return h === 0 && m === 0 ? 1440 : h * 60 + m }
+
 function estaAbiertoAhoraHorario(horarios: HorarioDia[]): boolean {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-  const hoy = diasJS[p.getUTCDay()]
-  const entrada = horarios.find(h => h.dia === hoy)
-  if (!entrada?.apertura || !entrada?.cierre) return false
-  const [ha, ma] = entrada.apertura.split(':').map(Number)
-  const [hc, mc] = entrada.cierre.split(':').map(Number)
+  const hoyIdx = p.getUTCDay()
   const min = p.getUTCHours() * 60 + p.getUTCMinutes()
-  const hcMin = hc === 0 && mc === 0 ? 1440 : hc * 60 + mc
-  return min >= ha * 60 + ma && min < hcMin
+
+  // Horario de hoy
+  const hoyEntry = horarios.find(h => h.dia === diasJS[hoyIdx])
+  if (hoyEntry?.apertura && hoyEntry?.cierre) {
+    const [ha, ma] = hoyEntry.apertura.split(':').map(Number)
+    const [hc, mc] = hoyEntry.cierre.split(':').map(Number)
+    const ap = ha * 60 + ma
+    const ci = toMinH(hc, mc)
+    if (ci > ap) { if (min >= ap && min < ci) return true }  // normal
+    else { if (min >= ap) return true }                        // overnight (ej: 11am–2am)
+  }
+
+  // Cola overnight del día anterior (ej: son las 1am y ayer tenía 11pm–2am)
+  const ayerEntry = horarios.find(h => h.dia === diasJS[(hoyIdx + 6) % 7])
+  if (ayerEntry?.apertura && ayerEntry?.cierre) {
+    const [ha, ma] = ayerEntry.apertura.split(':').map(Number)
+    const [hc, mc] = ayerEntry.cierre.split(':').map(Number)
+    const ap = ha * 60 + ma
+    const ci = toMinH(hc, mc)
+    if (ci <= ap && min < ci) return true
+  }
+
+  return false
 }
 
 function estaAbierto(cerrado: boolean, fechaFin?: string | null): boolean {

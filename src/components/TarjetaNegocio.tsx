@@ -72,13 +72,29 @@ function toMin(h: number, m: number) { return h === 0 && m === 0 ? 1440 : h * 60
 function estaAbiertoAhora(horarios: HorarioDia[]): boolean {
   const p = new Date(Date.now() - 5 * 60 * 60 * 1000)
   const diasJS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-  const hoy = diasJS[p.getUTCDay()]
-  const entrada = horarios.find(h => h.dia === hoy)
-  if (!entrada?.apertura || !entrada?.cierre) return false
-  const [ha, ma] = entrada.apertura.split(':').map(Number)
-  const [hc, mc] = entrada.cierre.split(':').map(Number)
+  const hoyIdx = p.getUTCDay()
   const min = p.getUTCHours() * 60 + p.getUTCMinutes()
-  return min >= ha * 60 + ma && min < toMin(hc, mc)
+
+  const hoyEntry = horarios.find(h => h.dia === diasJS[hoyIdx])
+  if (hoyEntry?.apertura && hoyEntry?.cierre) {
+    const [ha, ma] = hoyEntry.apertura.split(':').map(Number)
+    const [hc, mc] = hoyEntry.cierre.split(':').map(Number)
+    const ap = ha * 60 + ma
+    const ci = toMin(hc, mc)
+    if (ci > ap) { if (min >= ap && min < ci) return true }
+    else { if (min >= ap) return true }
+  }
+
+  const ayerEntry = horarios.find(h => h.dia === diasJS[(hoyIdx + 6) % 7])
+  if (ayerEntry?.apertura && ayerEntry?.cierre) {
+    const [ha, ma] = ayerEntry.apertura.split(':').map(Number)
+    const [hc, mc] = ayerEntry.cierre.split(':').map(Number)
+    const ap = ha * 60 + ma
+    const ci = toMin(hc, mc)
+    if (ci <= ap && min < ci) return true
+  }
+
+  return false
 }
 
 function proximaApertura(horarios: HorarioDia[]): string | null {
@@ -91,10 +107,19 @@ function proximaApertura(horarios: HorarioDia[]): string | null {
     const entrada = horarios.find(h => h.dia === diaNombre)
     if (!entrada?.apertura) continue
     const [ha, ma] = entrada.apertura.split(':').map(Number)
+    const ap = ha * 60 + ma
     if (i === 0) {
       const [hc, mc] = (entrada.cierre || '00:00').split(':').map(Number)
-      if (minActual >= toMin(hc, mc)) continue  // ya cerró hoy
-      if (minActual >= ha * 60 + ma) continue   // está abierto ahora
+      const ci = toMin(hc, mc)
+      const overnight = ci <= ap
+      if (overnight) {
+        if (minActual >= ap) continue       // abierto ahora (porción diurna)
+        if (minActual < ci) continue        // abierto ahora (cola overnight)
+        // entre ci y ap → cerrado, abre hoy
+      } else {
+        if (minActual >= ci) continue       // ya cerró hoy
+        if (minActual >= ap) continue       // abierto ahora
+      }
     }
     const hora = formatHora(entrada.apertura)
     if (i === 0) return `Abre hoy a las ${hora}`
