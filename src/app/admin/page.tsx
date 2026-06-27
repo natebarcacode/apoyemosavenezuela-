@@ -262,6 +262,7 @@ export default function AdminPage() {
     setEditandoId(null)
     setNotificarWA(true)
     setMostrarForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function abrirEditarCentro(c: CentroAcopio) {
@@ -279,6 +280,7 @@ export default function AdminPage() {
     setEditandoId(c.id)
     setNotificarWA(false)
     setMostrarForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function abrirEditarNegocio(n: NegocioSolidario) {
@@ -298,6 +300,7 @@ export default function AdminPage() {
     setEditandoId(n.id)
     setNotificarWA(false)
     setMostrarForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function duplicarCentro(c: CentroAcopio) {
