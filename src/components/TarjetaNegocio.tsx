@@ -201,6 +201,11 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
                 Cerrado ahora
               </span>
             )}
+            {!cerrado && !!negocio.consultar_horarios && (
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-400 border border-gray-100 flex items-center gap-1">
+                <Clock size={8} /> Consultar horario
+              </span>
+            )}
             {!cerrado && tieneFechaFin && (nivel === 'urgente' || nivel === 'proximo') && (
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 border ${
                 nivel === 'urgente'
@@ -211,11 +216,6 @@ export default function TarjetaNegocio({ negocio, seleccionado, onClick }: Props
                 {(negocio.consultar_horarios || negocio.todas_sucursales)
                   ? terminaLabel(negocio.fecha_fin!)
                   : countdownCorto(negocio.fecha_fin!)}
-              </span>
-            )}
-            {!cerrado && !!negocio.consultar_horarios && (
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-400 border border-gray-100 flex items-center gap-1">
-                <Clock size={8} /> Consultar horario
               </span>
             )}
             {!cerrado && !tieneHorarios && !negocio.consultar_horarios && abiertoAhora === null && (
