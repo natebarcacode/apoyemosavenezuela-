@@ -974,9 +974,17 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
-            <input type={tipoFechaCentro === 'date' ? 'date' : 'datetime-local'} value={formCentro.fecha_fin}
-              onChange={(e) => setFormCentro({ ...formCentro, fecha_fin: e.target.value })}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+            <div className="flex gap-2">
+              <input type={tipoFechaCentro === 'date' ? 'date' : 'datetime-local'} value={formCentro.fecha_fin}
+                onChange={(e) => setFormCentro({ ...formCentro, fecha_fin: e.target.value })}
+                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+              {formCentro.fecha_fin && (
+                <button type="button" onClick={() => setFormCentro(f => ({ ...f, fecha_fin: '' }))}
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors text-sm">
+                  ×
+                </button>
+              )}
+            </div>
             <p className="text-xs text-gray-400 mt-1">
               {tipoFechaCentro === 'date' ? 'Cierra al final del día seleccionado.' : 'El timer de la tarjeta cambia según esta fecha.'}
             </p>
@@ -1195,9 +1203,17 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
-            <input type={tipoFechaNegocio === 'date' ? 'date' : 'datetime-local'} value={formNegocio.fecha_fin}
-              onChange={(e) => setFormNegocio({ ...formNegocio, fecha_fin: e.target.value })}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+            <div className="flex gap-2">
+              <input type={tipoFechaNegocio === 'date' ? 'date' : 'datetime-local'} value={formNegocio.fecha_fin}
+                onChange={(e) => setFormNegocio({ ...formNegocio, fecha_fin: e.target.value })}
+                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+              {formNegocio.fecha_fin && (
+                <button type="button" onClick={() => setFormNegocio(f => ({ ...f, fecha_fin: '' }))}
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors text-sm">
+                  ×
+                </button>
+              )}
+            </div>
             <p className="text-xs text-gray-400 mt-1">
               {tipoFechaNegocio === 'date' ? 'Cierra al final del día seleccionado.' : 'El timer de la tarjeta cambia según esta fecha.'}
             </p>
