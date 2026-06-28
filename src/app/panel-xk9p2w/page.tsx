@@ -467,6 +467,11 @@ export default function AdminPage() {
     cargar()
   }
 
+  async function toggleCerradoNegocio(id: number, actual: boolean) {
+    await db({ table: 'negocios_solidarios', op: 'update', data: { cerrado: !actual }, eq: [['id', id]] })
+    setNegocios(prev => prev.map(n => n.id === id ? { ...n, cerrado: !actual } : n))
+  }
+
   async function toggleCerrado(id: number, actual: boolean) {
     await db({ table: 'centros_acopio', op: 'update', data: { cerrado: !actual }, eq: [['id', id]] })
     cargar()
@@ -1849,6 +1854,10 @@ export default function AdminPage() {
                       className="p-2 rounded-lg text-green-500 hover:bg-green-50 transition-colors"><MessageSquare size={15} /></button>
                     <button onClick={() => duplicarNegocio(n)} title="Duplicar como sucursal" className="p-2 rounded-lg text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"><CopyPlus size={15} /></button>
                     <button onClick={() => abrirEditarNegocio(n)} title="Editar" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><Pencil size={15} /></button>
+                    <button onClick={() => toggleCerradoNegocio(n.id, !!n.cerrado)} title={n.cerrado ? 'Marcar como abierto' : 'Marcar como cerrado'}
+                      className={`p-2 rounded-lg transition-colors ${n.cerrado ? 'text-red-400 hover:bg-red-50' : 'text-gray-400 hover:bg-red-50 hover:text-red-400'}`}>
+                      {n.cerrado ? <DoorOpen size={15} /> : <DoorClosed size={15} />}
+                    </button>
                     <button onClick={() => toggleActivo('negocios_solidarios', n.id, n.activo)} title={n.activo ? 'Ocultar' : 'Publicar'}
                       className={`p-2 rounded-lg transition-colors ${n.activo ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
                       {n.activo ? <Eye size={15} /> : <EyeOff size={15} />}

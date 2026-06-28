@@ -195,10 +195,10 @@ export default function Home() {
     return matchB && matchZ && matchU && matchE
   }))
 
-  const negociosCerradosTemp = negocios.filter(n => !n.activo || isExpired(n.fecha_fin))
+  const negociosCerradosTemp = negocios.filter(n => !n.activo || !!n.cerrado || isExpired(n.fecha_fin))
 
   const negociosFiltrados = sortPorCierre(negocios.filter(n => {
-    if (!n.activo || isExpired(n.fecha_fin)) return false
+    if (!n.activo || !!n.cerrado || isExpired(n.fecha_fin)) return false
     const matchB = q === '' ||
       n.nombre.toLowerCase().includes(q) ||
       n.iniciativa.toLowerCase().includes(q) ||

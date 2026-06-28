@@ -47,6 +47,7 @@ export type NegocioSolidario = {
   fecha_inicio?: string
   fecha_fin?: string
   activo: boolean
+  cerrado?: boolean
   lat?: number
   lng?: number
   sucursales?: Sucursal[]
