@@ -26,9 +26,10 @@ export default function MapaCentros({ centros, onSelect }: Props) {
     L.Marker.prototype.options.icon = icon
   }, [])
 
-  const center: [number, number] = centros.length > 0
-    ? [centros[0].lat, centros[0].lng]
-    : [8.9936, -79.5197] // Ciudad de Panamá por defecto
+  const primero = centros.find(c => c.lat != null && c.lng != null)
+  const center: [number, number] = primero
+    ? [primero.lat!, primero.lng!]
+    : [8.9936, -79.5197]
 
   return (
     <MapContainer
@@ -41,10 +42,10 @@ export default function MapaCentros({ centros, onSelect }: Props) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {centros.map((centro) => (
+      {centros.filter(c => c.lat != null && c.lng != null).map((centro) => (
         <Marker
           key={centro.id}
-          position={[centro.lat, centro.lng]}
+          position={[centro.lat!, centro.lng!]}
           icon={icon}
           eventHandlers={{ click: () => onSelect(centro) }}
         >

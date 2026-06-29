@@ -57,11 +57,11 @@ export type NegocioSolidario = {
 export type CentroAcopio = {
   id: number
   nombre: string
-  direccion: string
+  direccion?: string | null
   zona: string
   que_acepta: string[]
-  lat: number
-  lng: number
+  lat?: number | null
+  lng?: number | null
   activo: boolean
   cerrado?: boolean
   notas?: string

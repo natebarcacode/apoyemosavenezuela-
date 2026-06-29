@@ -363,8 +363,8 @@ export default function AdminPage() {
 
   function abrirEditarCentro(c: CentroAcopio) {
     setFormCentro({
-      nombre: c.nombre, direccion: c.direccion, zona: c.zona,
-      que_acepta: c.que_acepta, lat: String(c.lat), lng: String(c.lng), notas: c.notas ?? '',
+      nombre: c.nombre, direccion: c.direccion ?? '', zona: c.zona,
+      que_acepta: c.que_acepta, lat: c.lat != null ? String(c.lat) : '', lng: c.lng != null ? String(c.lng) : '', notas: c.notas ?? '',
       instagram: c.instagram ?? '', sitio_web: c.sitio_web ?? '',
       horarios: DIAS_SEMANA.map(dia => {
         const found = (c.horarios ?? []).find((h: {dia:string}) => h.dia === dia)
@@ -414,11 +414,11 @@ export default function AdminPage() {
   function duplicarCentro(c: CentroAcopio) {
     setFormCentro({
       nombre: c.nombre + ' — Sucursal',
-      direccion: c.direccion,
+      direccion: c.direccion ?? '',
       zona: c.zona,
       que_acepta: [...c.que_acepta],
-      lat: String(c.lat),
-      lng: String(c.lng),
+      lat: c.lat != null ? String(c.lat) : '',
+      lng: c.lng != null ? String(c.lng) : '',
       notas: c.notas ?? '',
       instagram: c.instagram ?? '',
       sitio_web: c.sitio_web ?? '',

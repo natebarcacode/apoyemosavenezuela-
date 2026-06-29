@@ -176,7 +176,7 @@ export default function Home() {
     if (cerradoPorHoy(c)) return false  // cerrados por hoy van a su sección
     const matchB = q === '' ||
       c.nombre.toLowerCase().includes(q) ||
-      c.direccion.toLowerCase().includes(q) ||
+      (c.direccion ?? '').toLowerCase().includes(q) ||
       c.zona.toLowerCase().includes(q) ||
       c.que_acepta.some(i => i.toLowerCase().includes(q))
     const matchZ = zonasFiltro.length === 0 || zonasFiltro.includes(c.zona)
