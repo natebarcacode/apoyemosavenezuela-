@@ -505,9 +505,11 @@ export default function AdminPage() {
     const esNuevo = !editandoId
     let refId = editandoId
     if (editandoId) {
-      await db({ table: 'centros_acopio', op: 'update', data: payload, eq: [['id', editandoId]] })
+      const { error } = await db({ table: 'centros_acopio', op: 'update', data: payload, eq: [['id', editandoId]] })
+      if (error) { setMensaje(`Error al guardar: ${JSON.stringify(error)}`); setGuardando(false); return }
     } else {
-      const { data: ins } = await db({ table: 'centros_acopio', op: 'insert', data: { ...payload, activo: true }, single: true }) as { data: { id: number } | null; error: unknown }
+      const { data: ins, error } = await db({ table: 'centros_acopio', op: 'insert', data: { ...payload, activo: true }, single: true }) as { data: { id: number } | null; error: unknown }
+      if (error) { setMensaje(`Error al guardar: ${JSON.stringify(error)}`); setGuardando(false); return }
       refId = ins?.id ?? null
     }
     if (notificarWA && refId) {
