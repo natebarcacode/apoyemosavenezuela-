@@ -479,14 +479,15 @@ export default function AdminPage() {
 
   async function guardarCentro() {
     const f = formCentro
-    if (!f.nombre || !f.direccion || (!f.zona && !f.todas_sucursales) || !f.lat || !f.lng) {
+    const tieneUbicacionMultiple = f.todas_sucursales || f.sucursales.filter((s: {nombre:string}) => s.nombre.trim()).length > 0
+    if (!f.nombre || (!f.zona && !f.todas_sucursales) || (!tieneUbicacionMultiple && (!f.direccion || !f.lat || !f.lng))) {
       setMensaje('Completa todos los campos obligatorios.')
       return
     }
     setGuardando(true)
     const payload = {
-      nombre: f.nombre, direccion: f.direccion, zona: f.zona,
-      que_acepta: f.que_acepta, lat: parseFloat(f.lat), lng: parseFloat(f.lng),
+      nombre: f.nombre, direccion: f.direccion || null, zona: f.zona,
+      que_acepta: f.que_acepta, lat: f.lat ? parseFloat(f.lat) : null, lng: f.lng ? parseFloat(f.lng) : null,
       notas: f.notas || null,
       instagram: f.instagram || null, sitio_web: f.sitio_web || null,
       horarios: f.consultar_horarios ? [] : f.horarios.filter((h: {activo:boolean}) => h.activo).map(({dia, apertura, cierre}: {dia:string,apertura:string,cierre:string}) => ({ dia, apertura, cierre })),
@@ -722,7 +723,9 @@ export default function AdminPage() {
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Dirección *</label>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">
+              Dirección {(formCentro.todas_sucursales || formCentro.sucursales.filter(s => s.nombre.trim()).length > 0) ? <span className="text-gray-400 font-normal">(opcional)</span> : '*'}
+            </label>
             <input value={formCentro.direccion} onChange={(e) => setFormCentro({ ...formCentro, direccion: e.target.value })}
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
               placeholder="Se llena automáticamente o escribe manualmente" />
@@ -735,13 +738,17 @@ export default function AdminPage() {
               zonas={ZONAS_PANAMA} ringClass="focus:ring-red-400" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Latitud *</label>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">
+              Latitud {(formCentro.todas_sucursales || formCentro.sucursales.filter(s => s.nombre.trim()).length > 0) ? <span className="text-gray-400 font-normal">(opcional)</span> : '*'}
+            </label>
             <input value={formCentro.lat} onChange={(e) => setFormCentro({ ...formCentro, lat: e.target.value })}
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
               placeholder="Ej: 8.9936" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Longitud *</label>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">
+              Longitud {(formCentro.todas_sucursales || formCentro.sucursales.filter(s => s.nombre.trim()).length > 0) ? <span className="text-gray-400 font-normal">(opcional)</span> : '*'}
+            </label>
             <input value={formCentro.lng} onChange={(e) => setFormCentro({ ...formCentro, lng: e.target.value })}
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
               placeholder="Ej: -79.5197" />
